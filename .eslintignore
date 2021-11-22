@@ -1,0 +1,7 @@
+test_tmp/
+tmp/
+dist/
+package.json
+examples/
+node_modules
+docs
