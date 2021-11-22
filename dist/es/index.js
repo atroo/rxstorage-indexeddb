@@ -1,8 +1,19 @@
-import _asyncToGenerator from "@babel/runtime/helpers/asyncToGenerator";
-import _regeneratorRuntime from "@babel/runtime/regenerator";
-export var foo = /*#__PURE__*/function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
-    return _regeneratorRuntime.wrap(function _callee$(_context) {
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.foo = void 0;
+
+var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
+
+var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
+
+var foo = /*#__PURE__*/function () {
+  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee() {
+    return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -25,4 +36,6 @@ export var foo = /*#__PURE__*/function () {
     return _ref.apply(this, arguments);
   };
 }();
+
+exports.foo = foo;
 //# sourceMappingURL=index.js.map

@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "clear": "rimraf -rf dist/ && rimraf .transpile_state.json",
-    "build:es": "rimraf -rf dist/es && cross-env NODE_ENV=es6 babel src --out-dir dist/es --source-maps --extensions \".ts,.js\"",
+    "build:es": "rimraf -rf dist/es && cross-env NODE_ENV=es5 babel src --out-dir dist/es --source-maps --extensions \".ts,.js\"",
     "build:types": "rimraf -rf ./dist/types && tsc --project ./config/tsconfig.types.json",
     "build": "npm run clear && concurrently \"npm run build:es\" \"npm run build:types\""
   },
