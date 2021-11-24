@@ -45,6 +45,7 @@
     "browserify": "17.0.0",
     "concurrently": "6.2.1",
     "cross-env": "7.0.3",
+    "event-reduce-js": "^2.0.3",
     "rimraf": "3.0.2",
     "rxdb": "^10.5.3",
     "rxjs": "^7.4.0",

@@ -1,7 +1,13 @@
 import { openDB } from "idb";
-import { RxJsonSchema } from "rxdb";
-import { CompositePrimaryKey, PrimaryKey } from "rxdb/dist/types/types";
+import { overwritable, RxJsonSchema } from "rxdb";
+import {
+  CompositePrimaryKey,
+  PrimaryKey,
+  RxErrorKey,
+  RxErrorParameters,
+} from "rxdb/dist/types/types";
 import { BrowserStorageState } from "./types/browser-storeage-state";
+import { RxError } from "./rx-error";
 
 export const CHANGES_COLLECTION_SUFFIX = "-rxdb-changes";
 
@@ -109,4 +115,11 @@ export function getPrimaryFieldOfPrimaryKey<RxDocType>(
   } else {
     return (primaryKey as CompositePrimaryKey<RxDocType>).key;
   }
+}
+
+export function newRxError(
+  code: RxErrorKey,
+  parameters?: RxErrorParameters
+): RxError {
+  return new RxError(code, overwritable.tunnelErrorMessage(code), parameters);
 }

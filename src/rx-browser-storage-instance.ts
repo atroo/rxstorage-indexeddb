@@ -1,5 +1,7 @@
 import {
   MangoQuery,
+  MangoQuerySortDirection,
+  MangoQuerySortPart,
   RxDocumentData,
   RxJsonSchema,
   RxStorageChangeEvent,
@@ -12,6 +14,7 @@ import {
   BrowserStorageSettings,
 } from "./types/browser-storage";
 import { getIdbDatabase, getPrimaryFieldOfPrimaryKey } from "./helpers";
+import { DeterministicSortComparator } from "event-reduce-js/dist/lib/types";
 
 let instanceId = 1;
 
@@ -40,6 +43,54 @@ export class RxStorageBrowserInstance<RxDocType>
 
   prepareQuery(mutateableQuery: MangoQuery<RxDocType>) {
     return mutateableQuery;
+  }
+
+  getSortComparator(query: MangoQuery<RxDocType>) {
+    // TODO if no sort is given, use sort by primary.
+    // This should be done inside of RxDB and not in the storage implementations.
+    const sortOptions: MangoQuerySortPart<RxDocType>[] = query.sort
+      ? (query.sort as any)
+      : [
+          {
+            [this.internals.primaryPath]: "asc",
+          },
+        ];
+
+    const fun: DeterministicSortComparator<RxDocType> = (
+      a: RxDocType,
+      b: RxDocType
+    ) => {
+      let compareResult: number = 0;
+      sortOptions.forEach((sortPart) => {
+        const fieldName: string = Object.keys(sortPart)[0];
+        const direction: MangoQuerySortDirection = Object.values(sortPart)[0];
+        const directionMultiplier = direction === "asc" ? 1 : -1;
+        const valueA: any = (a as any)[fieldName];
+        const valueB: any = (b as any)[fieldName];
+        if (valueA === valueB) {
+          return;
+        } else {
+          if (valueA > valueB) {
+            compareResult = 1 * directionMultiplier;
+          } else {
+            compareResult = -1 * directionMultiplier;
+          }
+        }
+      });
+
+      /**
+       * Two different objects should never have the same sort position.
+       * We ensure this by having the unique primaryKey in the sort params
+       * at this.prepareQuery()
+       */
+      if (!compareResult) {
+        throw newRxError("SNH", { args: { query, a, b } });
+      }
+
+      return compareResult;
+    };
+
+    return fun;
   }
 }
 
