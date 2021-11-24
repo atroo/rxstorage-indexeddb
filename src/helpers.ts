@@ -1,5 +1,6 @@
 import { openDB } from "idb";
 import { RxJsonSchema } from "rxdb";
+import { CompositePrimaryKey, PrimaryKey } from "rxdb/dist/types/types";
 import { BrowserStorageState } from "./types/browser-storeage-state";
 
 export const CHANGES_COLLECTION_SUFFIX = "-rxdb-changes";
@@ -99,3 +100,13 @@ export const getIdbDatabase = async <RxDocType>(
 
   return newDbState;
 };
+
+export function getPrimaryFieldOfPrimaryKey<RxDocType>(
+  primaryKey: PrimaryKey<RxDocType>
+): keyof RxDocType {
+  if (typeof primaryKey === "string") {
+    return primaryKey as any;
+  } else {
+    return (primaryKey as CompositePrimaryKey<RxDocType>).key;
+  }
+}

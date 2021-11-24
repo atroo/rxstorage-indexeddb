@@ -11,7 +11,7 @@ import {
   BrowserStorageInternals,
   BrowserStorageSettings,
 } from "./types/browser-storage";
-import { openDB } from "idb";
+import { getIdbDatabase, getPrimaryFieldOfPrimaryKey } from "./helpers";
 
 let instanceId = 1;
 
@@ -33,8 +33,7 @@ export class RxStorageBrowserInstance<RxDocType>
     public readonly databaseName: string,
     public readonly collectionName: string,
     public readonly schema: Readonly<RxJsonSchema<RxDocType>>,
-    public readonly internals: BrowserStorageInternals,
-    public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
+    public readonly internals: BrowserStorageInternals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
   ) {
     // this.primaryPath = getPrimaryFieldOfPrimaryKey(this.schema.primaryKey);
   }
@@ -44,14 +43,41 @@ export class RxStorageBrowserInstance<RxDocType>
   }
 }
 
-export const createBrowserStorageLocalState = <RxDocType>(
+export const createBrowserStorageLocalState = async <RxDocType>(
   params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
 ) => {
-  //
+  const primaryPath = getPrimaryFieldOfPrimaryKey(
+    params.schema.primaryKey
+  ).toString();
+  const databaseState = await getIdbDatabase(
+    params.databaseName,
+    params.collectionName,
+    primaryPath,
+    params.schema
+  );
+
+  return {
+    databaseState,
+    primaryPath,
+  };
 };
 
 export const createBrowserStorageInstance = async <RxDocType>(
   params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
 ) => {
-  const internals: BrowserStorageInternals = {};
+  const internals: BrowserStorageInternals =
+    await createBrowserStorageLocalState(params);
+
+  const instance = new RxStorageBrowserInstance(
+    params.databaseName,
+    params.collectionName,
+    params.schema,
+    internals
+  );
+
+  /**
+   * TODO: should we do extra steps to enable CORRECT multiinstance?
+   */
+
+  return instance;
 };
