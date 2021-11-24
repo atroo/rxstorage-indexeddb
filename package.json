@@ -1,5 +1,5 @@
 {
-  "name": "isc-adapter",
+  "name": "atroo-storage",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/es/index.js",
@@ -16,6 +16,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "peerDependencies": {
+    "rxdb": "~10.5.3",
+    "rxjs": "^7.4.0"
+  },
   "dependencies": {
     "@babel/runtime": "7.15.4"
   },
