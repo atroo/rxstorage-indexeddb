@@ -3,6 +3,7 @@ import {
   MangoQuerySortDirection,
   MangoQuerySortPart,
   RxDocumentData,
+  RxDocumentWriteData,
   RxJsonSchema,
   RxStorageChangeEvent,
   RxStorageInstance,
@@ -13,8 +14,15 @@ import {
   BrowserStorageInternals,
   BrowserStorageSettings,
 } from "./types/browser-storage";
-import { getIdbDatabase, getPrimaryFieldOfPrimaryKey } from "./helpers";
-import { DeterministicSortComparator } from "event-reduce-js/dist/lib/types";
+import {
+  getIdbDatabase,
+  getPrimaryFieldOfPrimaryKey,
+  newRxError,
+} from "./helpers";
+import {
+  DeterministicSortComparator,
+  QueryMatcher,
+} from "event-reduce-js/dist/lib/types";
 
 let instanceId = 1;
 
@@ -87,7 +95,17 @@ export class RxStorageBrowserInstance<RxDocType>
         throw newRxError("SNH", { args: { query, a, b } });
       }
 
-      return compareResult;
+      return compareResult as 1 | -1;
+    };
+
+    return fun;
+  }
+
+  getQueryMatcher(query: MangoQuery<RxDocType>) {
+    const fun: QueryMatcher<RxDocumentWriteData<RxDocType>> = (
+      doc: RxDocumentWriteData<RxDocType>
+    ) => {
+      // query.
     };
 
     return fun;
