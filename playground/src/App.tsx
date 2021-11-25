@@ -5,27 +5,40 @@ import {
   createRxDatabase,
   getRxStoragePouch,
   RxDatabase,
-  RxDocument,
+  // RxDocument,
 } from "rxdb";
-import { getRxStorageLoki } from "rxdb/plugins/lokijs";
+// import { getRxStorageLoki } from "rxdb/plugins/lokijs";
 import { heroSchema } from "./schemas/hero-schema";
+// import { translateMangoQuery } from "atroo-browser-storage";
 const {
   uniqueNamesGenerator,
   adjectives,
   colors,
   animals,
 } = require("unique-names-generator");
-// addPouchPlugin(require("pouchdb-adapter-indexeddb"));
+addPouchPlugin(require("pouchdb-adapter-indexeddb"));
 
 function App() {
   const [database, setDatabase] = useState<RxDatabase | null>(null);
   const [docs, setDocs] = useState<any[]>();
 
+  // useEffect(() => {
+  //   const transformedQuerySelector = translateMangoQuery({
+  //     selector: {
+  //       userName: { $gt: 1 },
+  //       hey: 23,
+  //     },
+  //   });
+
+  //   console.log("trasnformedQuery: ", transformedQuerySelector);
+  // }, []);
+
   useEffect(() => {
     (async () => {
       const database = await createRxDatabase({
         name: "mydatabase",
-        storage: getRxStorageLoki(),
+        // storage: getRxStorageLoki(),
+        storage: getRxStoragePouch("indexeddb"),
       });
 
       await database.addCollections({
@@ -46,11 +59,18 @@ function App() {
 
     const coll = database.heroes;
     console.log("heroes collection:", coll);
-    coll.find().$.subscribe((docs) => {
-      setDocs(() => {
-        return docs;
+
+    coll
+      .find({
+        selector: {
+          name: { $eq: "mario1" },
+        },
+      })
+      .$.subscribe((docs) => {
+        setDocs(() => {
+          return docs;
+        });
       });
-    });
   }, [database]);
 
   useEffect(() => {
@@ -115,6 +135,24 @@ function App() {
 
   return (
     <div className="App">
+      <button
+        onClick={async () => {
+          if (!database) {
+            return;
+          }
+          const coll = database.heroes;
+          const q = coll.find({
+            selector: {
+              name: { $gt: "mario" },
+            },
+          });
+
+          var res = await q.exec();
+          console.log("search res:", res);
+        }}
+      >
+        RUN QUERY
+      </button>
       <button
         onClick={() => {
           const randomName = uniqueNamesGenerator({

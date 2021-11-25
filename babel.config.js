@@ -11,6 +11,7 @@ const plugins = [
   "@babel/transform-function-name",
   "@babel/transform-arrow-functions",
   "@babel/transform-block-scoped-functions",
+  "@babel/plugin-proposal-optional-chaining",
   [
     "@babel/plugin-transform-classes",
     {

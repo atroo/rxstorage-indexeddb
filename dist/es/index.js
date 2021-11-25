@@ -1,41 +1,32 @@
 "use strict";
 
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.foo = void 0;
 
-var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
+var _rxBrowserStorage = require("./rx-browser-storage");
 
-var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
+Object.keys(_rxBrowserStorage).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (key in exports && exports[key] === _rxBrowserStorage[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _rxBrowserStorage[key];
+    }
+  });
+});
 
-var foo = /*#__PURE__*/function () {
-  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee() {
-    return _regenerator["default"].wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            console.log("foo");
-            _context.next = 3;
-            return Promise.resolve(1);
+var _translateMangoQuery = require("./translate-mango-query");
 
-          case 3:
-            return _context.abrupt("return", [1].includes(1));
-
-          case 4:
-          case "end":
-            return _context.stop();
-        }
-      }
-    }, _callee);
-  }));
-
-  return function foo() {
-    return _ref.apply(this, arguments);
-  };
-}();
-
-exports.foo = foo;
+Object.keys(_translateMangoQuery).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (key in exports && exports[key] === _translateMangoQuery[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _translateMangoQuery[key];
+    }
+  });
+});
 //# sourceMappingURL=index.js.map

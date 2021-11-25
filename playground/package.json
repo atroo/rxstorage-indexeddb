@@ -11,6 +11,7 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "lokijs": "^1.5.12",
+    "pouchdb-adapter-idb": "^7.2.2",
     "pouchdb-adapter-indexeddb": "^7.2.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
