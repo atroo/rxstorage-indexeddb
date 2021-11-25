@@ -1,11 +1,11 @@
+import {
+  COLLATE_LO as COUCH_COLLATE_LO,
+  COLLATE_HI as COUCH_COLLATE_HI,
+} from "./variables";
+
 var IDB_NULL = Number.MIN_SAFE_INTEGER;
 var IDB_FALSE = Number.MIN_SAFE_INTEGER + 1;
 var IDB_TRUE = Number.MIN_SAFE_INTEGER + 2;
-// Adapted from
-// https://github.com/pouchdb/pouchdb/blob/master/packages/node_modules/pouchdb-find/src/adapters/local/find/query-planner.js#L20-L24
-// This could change / improve in the future?
-const COUCH_COLLATE_LO = null;
-const COUCH_COLLATE_HI = "\uffff"; // actually used as {"\uffff": {}}
 
 // Adapted from: https://www.w3.org/TR/IndexedDB/#compare-two-keys
 // Importantly, *there is no upper bound possible* in idb. The ideal data
@@ -16,19 +16,20 @@ const COUCH_COLLATE_HI = "\uffff"; // actually used as {"\uffff": {}}
 var IDB_COLLATE_LO = Number.NEGATIVE_INFINITY;
 var IDB_COLLATE_HI = [[[[[[[[[[[[]]]]]]]]]]]];
 
-const generateKeyRange = (opts) => {
-  function defined(obj, k) {
+// TODO: create type for opts
+export const generateKeyRange = (opts: any) => {
+  function defined(obj: any, k: string) {
     return obj[k] !== void 0;
   }
 
   // Converts a valid CouchDB key into a valid IndexedDB one
-  function convert(key, exact) {
+  function convert(key: any, exact?: boolean) {
     // The first item in every native index is doc.deleted, and we always want
     // to only search documents that are not deleted.
     // "foo" -> [0, "foo"]
     var filterDeleted = [0].concat(key);
 
-    return filterDeleted.map(function (k) {
+    return filterDeleted.map(function (k: any) {
       // null, true and false are not indexable by indexeddb. When we write
       // these values we convert them to these constants, and so when we
       // query for them we need to convert the query also.
