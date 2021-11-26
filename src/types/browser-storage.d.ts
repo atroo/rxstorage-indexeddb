@@ -1,7 +1,7 @@
 import { BrowserStorageState } from "./browser-storeage-state";
 
 export interface BrowserStorageInternals {
-  localState?: BrowserStorageState;
+  databaseState?: BrowserStorageState;
   primaryPath: string;
 }
 

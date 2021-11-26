@@ -11,22 +11,45 @@ var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"))
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
+var _objectWithoutPropertiesLoose2 = _interopRequireDefault(require("@babel/runtime/helpers/objectWithoutPropertiesLoose"));
+
 var _rxjs = require("rxjs");
 
-var _helpers = require("./helpers");
+var _dbHelpers = require("./db-helpers");
+
+var _find = require("./find");
+
+var _rxdb = require("rxdb");
+
+var _utils = require("./utils");
+
+var _idb = require("idb");
+
+var _excluded = ["_attachments", "_deleted", "_rev"];
+
+function _createForOfIteratorHelperLoose(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (it) return (it = it.call(o)).next.bind(it); if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; return function () { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+var _require = require("pouchdb-selector-core"),
+    filterInMemoryFields = _require.filterInMemoryFields;
 
 var instanceId = 1;
 
 var RxStorageBrowserInstance = /*#__PURE__*/function () {
   //   public readonly primaryPath: keyof RxDocType;
-  function RxStorageBrowserInstance(databaseName, collectionName, schema, internals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
+  function RxStorageBrowserInstance(databaseName, collectionName, options, schema, internals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
   ) {// this.primaryPath = getPrimaryFieldOfPrimaryKey(this.schema.primaryKey);
 
     this.changes$ = new _rxjs.Subject();
     this.instanceId = instanceId++;
     this.closed = false;
+    this.lastChangefeedSequence = 0;
     this.databaseName = databaseName;
     this.collectionName = collectionName;
+    this.options = options;
     this.schema = schema;
     this.internals = internals;
   }
@@ -70,7 +93,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
        */
 
       if (!compareResult) {
-        throw (0, _helpers.newRxError)("SNH", {
+        throw (0, _dbHelpers.newRxError)("SNH", {
           args: {
             query: query,
             a: a,
@@ -86,11 +109,704 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
   };
 
   _proto.getQueryMatcher = function getQueryMatcher(query) {
-    var fun = function fun(doc) {// query.
+    var fun = function fun(doc) {
+      console.log("getQueryMatcher doc:", doc);
+      var _attachments = doc._attachments,
+          _deleted = doc._deleted,
+          _rev = doc._rev,
+          json = (0, _objectWithoutPropertiesLoose2["default"])(doc, _excluded);
+      var inMemoryFields = Object.keys(json);
+      return filterInMemoryFields([json], query, inMemoryFields).length > 0;
     };
 
     return fun;
   };
+
+  _proto.query = /*#__PURE__*/function () {
+    var _query = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(preparedQuery) {
+      var db, rows;
+      return _regenerator["default"].wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              db = this.getLocalState().db;
+              _context.next = 3;
+              return (0, _find.find)(db, this.collectionName, preparedQuery);
+
+            case 3:
+              rows = _context.sent;
+              return _context.abrupt("return", rows);
+
+            case 5:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+
+    function query(_x) {
+      return _query.apply(this, arguments);
+    }
+
+    return query;
+  }();
+
+  _proto.bulkWrite = /*#__PURE__*/function () {
+    var _bulkWrite = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(documentWrites) {
+      var db, txn, store, ret, _iterator, _step, writeRow, startTime, id, documentInDbCursor, documentInDb, newRevision, insertedIsDeleted, writeDoc, revInDb, err, newRevHeight, _newRevision, previous, _change, _writeDoc, change;
+
+      return _regenerator["default"].wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              if (!(documentWrites.length === 0)) {
+                _context2.next = 2;
+                break;
+              }
+
+              throw (0, _dbHelpers.newRxError)("P2", {
+                args: {
+                  documentWrites: documentWrites
+                }
+              });
+
+            case 2:
+              db = this.getLocalState().db;
+              txn = db.transaction(this.collectionName, "readwrite");
+              store = txn.store;
+              ret = {
+                success: new Map(),
+                error: new Map()
+              };
+              _iterator = _createForOfIteratorHelperLoose(documentWrites);
+
+            case 7:
+              if ((_step = _iterator()).done) {
+                _context2.next = 59;
+                break;
+              }
+
+              writeRow = _step.value;
+              startTime = Date.now();
+              id = writeRow.document[this.internals.primaryPath]; // TODO: probably will have problems here.
+
+              _context2.next = 13;
+              return store.openCursor(id);
+
+            case 13:
+              documentInDbCursor = _context2.sent;
+              documentInDb = documentInDbCursor === null || documentInDbCursor === void 0 ? void 0 : documentInDbCursor.value;
+
+              if (documentInDb) {
+                _context2.next = 28;
+                break;
+              }
+
+              // insert new document
+              newRevision = "1-" + (0, _rxdb.createRevision)(writeRow.document);
+              /**
+               * It is possible to insert already deleted documents,
+               * this can happen on replication.
+               */
+
+              insertedIsDeleted = writeRow.document._deleted ? true : false;
+
+              if (insertedIsDeleted) {
+                _context2.next = 20;
+                break;
+              }
+
+              return _context2.abrupt("continue", 57);
+
+            case 20:
+              writeDoc = Object.assign({}, writeRow.document, {
+                _rev: newRevision,
+                _deleted: insertedIsDeleted,
+                // TODO attachments are currently not working with lokijs
+                _attachments: {}
+              });
+              _context2.next = 23;
+              return store.add(writeDoc);
+
+            case 23:
+              this.addChangeDocumentMeta(id);
+              this.changes$.next({
+                eventId: (0, _utils.getEventKey)(false, id, newRevision),
+                documentId: id,
+                change: {
+                  doc: writeDoc,
+                  id: id,
+                  operation: "INSERT",
+                  previous: null
+                },
+                startTime: startTime,
+                endTime: Date.now()
+              });
+              ret.success.set(id, writeDoc);
+              _context2.next = 57;
+              break;
+
+            case 28:
+              // update existing document
+              revInDb = documentInDb._rev; // inserting a deleted document is possible
+              // without sending the previous data.
+              // TODO: purge document
+              // if (!writeRow.previous && documentInDb._deleted) {
+              //   writeRow.previous = documentInDb;
+              // }
+
+              if (!(!writeRow.previous && !documentInDb._deleted || !!writeRow.previous && revInDb !== writeRow.previous._rev)) {
+                _context2.next = 34;
+                break;
+              }
+
+              // conflict error
+              err = {
+                isError: true,
+                status: 409,
+                documentId: id,
+                writeRow: writeRow
+              };
+              ret.error.set(id, err);
+              _context2.next = 57;
+              break;
+
+            case 34:
+              newRevHeight = (0, _rxdb.getHeightOfRevision)(revInDb) + 1;
+              _newRevision = newRevHeight + "-" + (0, _rxdb.createRevision)(writeRow.document);
+
+              if (!(writeRow.previous && !writeRow.previous._deleted && writeRow.document._deleted)) {
+                _context2.next = 45;
+                break;
+              }
+
+              _context2.next = 39;
+              return documentInDbCursor["delete"]();
+
+            case 39:
+              this.addChangeDocumentMeta(id); // TODO: do I need this here.
+
+              previous = Object.assign({}, writeRow.previous);
+              previous._rev = _newRevision;
+              _change = {
+                id: id,
+                operation: "DELETE",
+                previous: previous,
+                doc: null
+              };
+              this.changes$.next({
+                eventId: (0, _utils.getEventKey)(false, id, _newRevision),
+                documentId: id,
+                change: _change,
+                startTime: startTime,
+                endTime: Date.now()
+              });
+              return _context2.abrupt("continue", 57);
+
+            case 45:
+              if (!writeRow.document._deleted) {
+                _context2.next = 47;
+                break;
+              }
+
+              throw (0, _dbHelpers.newRxError)("SNH", {
+                args: {
+                  writeRow: writeRow
+                }
+              });
+
+            case 47:
+              _writeDoc = Object.assign({}, writeRow.document, {
+                $loki: documentInDb.$loki,
+                _rev: _newRevision,
+                _deleted: false,
+                _attachments: {} // TODO: attachments
+
+              });
+              _context2.next = 50;
+              return documentInDbCursor.update(_writeDoc);
+
+            case 50:
+              this.addChangeDocumentMeta(id); // TODO: stripIdbKey(writeDoc) ?
+
+              change = null;
+
+              if (writeRow.previous && writeRow.previous._deleted && !_writeDoc._deleted) {
+                change = {
+                  id: id,
+                  operation: "INSERT",
+                  previous: null,
+                  doc: _writeDoc
+                };
+              } else if (writeRow.previous && !writeRow.previous._deleted && !_writeDoc._deleted) {
+                change = {
+                  id: id,
+                  operation: "UPDATE",
+                  previous: writeRow.previous,
+                  doc: _writeDoc
+                };
+              }
+
+              if (change) {
+                _context2.next = 55;
+                break;
+              }
+
+              throw (0, _dbHelpers.newRxError)("SNH", {
+                args: {
+                  writeRow: writeRow
+                }
+              });
+
+            case 55:
+              this.changes$.next({
+                eventId: (0, _utils.getEventKey)(false, id, _newRevision),
+                documentId: id,
+                change: change,
+                startTime: startTime,
+                endTime: Date.now()
+              });
+              ret.success.set(id, _writeDoc);
+
+            case 57:
+              _context2.next = 7;
+              break;
+
+            case 59:
+              txn.commit();
+              return _context2.abrupt("return", ret);
+
+            case 61:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2, this);
+    }));
+
+    function bulkWrite(_x2) {
+      return _bulkWrite.apply(this, arguments);
+    }
+
+    return bulkWrite;
+  }();
+
+  _proto.bulkAddRevisions = /*#__PURE__*/function () {
+    var _bulkAddRevisions = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(documents) {
+      var localState, db, txn, store, _iterator2, _step2, docData, startTime, id, documentInDbCursor, documentInDb, newWriteRevision, oldRevision, mustUpdate, docDataCpy, change;
+
+      return _regenerator["default"].wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              if (!(documents.length === 0)) {
+                _context3.next = 2;
+                break;
+              }
+
+              throw (0, _dbHelpers.newRxError)("P3", {
+                args: {
+                  documents: documents
+                }
+              });
+
+            case 2:
+              localState = this.getLocalState();
+              db = localState.db;
+              txn = db.transaction(this.collectionName, "readwrite");
+              store = txn.store; // TODO: stripKey(documentInDb) ?
+
+              _iterator2 = _createForOfIteratorHelperLoose(documents);
+
+            case 7:
+              if ((_step2 = _iterator2()).done) {
+                _context3.next = 29;
+                break;
+              }
+
+              docData = _step2.value;
+              startTime = Date.now();
+              id = docData[this.internals.primaryPath]; // TODO: probably will have problems here.
+
+              _context3.next = 13;
+              return store.openCursor(id);
+
+            case 13:
+              documentInDbCursor = _context3.sent;
+              documentInDb = documentInDbCursor === null || documentInDbCursor === void 0 ? void 0 : documentInDbCursor.value;
+
+              if (documentInDb) {
+                _context3.next = 22;
+                break;
+              }
+
+              _context3.next = 18;
+              return store.add(Object.assign({}, docData));
+
+            case 18:
+              this.changes$.next({
+                documentId: id,
+                eventId: (0, _utils.getEventKey)(false, id, docData._rev),
+                change: {
+                  doc: docData,
+                  id: id,
+                  operation: "INSERT",
+                  previous: null
+                },
+                startTime: startTime,
+                endTime: Date.now()
+              });
+              this.addChangeDocumentMeta(id);
+              _context3.next = 27;
+              break;
+
+            case 22:
+              newWriteRevision = (0, _rxdb.parseRevision)(docData._rev);
+              oldRevision = (0, _rxdb.parseRevision)(documentInDb._rev);
+              mustUpdate = false;
+
+              if (newWriteRevision.height !== oldRevision.height) {
+                // height not equal, compare base on height
+                if (newWriteRevision.height > oldRevision.height) {
+                  mustUpdate = true;
+                }
+              } else if (newWriteRevision.hash > oldRevision.hash) {
+                // equal height but new write has the 'winning' hash
+                mustUpdate = true;
+              }
+
+              if (mustUpdate) {
+                docDataCpy = Object.assign({}, docData);
+                documentInDbCursor.update(docDataCpy);
+                change = null;
+
+                if (documentInDb._deleted && !docData._deleted) {
+                  change = {
+                    id: id,
+                    operation: "INSERT",
+                    previous: null,
+                    doc: docData
+                  };
+                } else if (!documentInDb._deleted && !docData._deleted) {
+                  change = {
+                    id: id,
+                    operation: "UPDATE",
+                    previous: documentInDb,
+                    doc: docData
+                  };
+                } else if (!documentInDb._deleted && docData._deleted) {
+                  change = {
+                    id: id,
+                    operation: "DELETE",
+                    previous: documentInDb,
+                    doc: null
+                  };
+                } else if (documentInDb._deleted && docData._deleted) {
+                  change = null;
+                }
+
+                if (change) {
+                  this.changes$.next({
+                    documentId: id,
+                    eventId: (0, _utils.getEventKey)(false, id, docData._rev),
+                    change: change,
+                    startTime: startTime,
+                    endTime: Date.now()
+                  });
+                  this.addChangeDocumentMeta(id);
+                }
+              }
+
+            case 27:
+              _context3.next = 7;
+              break;
+
+            case 29:
+              txn.commit();
+
+            case 30:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, this);
+    }));
+
+    function bulkAddRevisions(_x3) {
+      return _bulkAddRevisions.apply(this, arguments);
+    }
+
+    return bulkAddRevisions;
+  }();
+
+  _proto.findDocumentsById = /*#__PURE__*/function () {
+    var _findDocumentsById = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(ids, deleted) {
+      var localState, ret, db, store, _iterator3, _step3, id, documentInDb;
+
+      return _regenerator["default"].wrap(function _callee4$(_context4) {
+        while (1) {
+          switch (_context4.prev = _context4.next) {
+            case 0:
+              localState = this.getLocalState();
+              ret = new Map();
+              db = localState.db;
+              _context4.next = 5;
+              return db.transaction(this.collectionName, "readwrite").store;
+
+            case 5:
+              store = _context4.sent;
+              _iterator3 = _createForOfIteratorHelperLoose(ids);
+
+            case 7:
+              if ((_step3 = _iterator3()).done) {
+                _context4.next = 15;
+                break;
+              }
+
+              id = _step3.value;
+              _context4.next = 11;
+              return store.get(id);
+
+            case 11:
+              documentInDb = _context4.sent;
+
+              if (documentInDb && (!documentInDb._deleted || deleted)) {
+                // TODO: stripKey(documentInDb) ?
+                ret.set(id, documentInDb);
+              }
+
+            case 13:
+              _context4.next = 7;
+              break;
+
+            case 15:
+              return _context4.abrupt("return", ret);
+
+            case 16:
+            case "end":
+              return _context4.stop();
+          }
+        }
+      }, _callee4, this);
+    }));
+
+    function findDocumentsById(_x4, _x5) {
+      return _findDocumentsById.apply(this, arguments);
+    }
+
+    return findDocumentsById;
+  }();
+
+  _proto.getChangedDocuments = /*#__PURE__*/function () {
+    var _getChangedDocuments = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(options) {
+      var localState, desc, operator, changesCollectionName, db, store, cursor, changedDocuments, value, useForLastSequence, ret;
+      return _regenerator["default"].wrap(function _callee5$(_context5) {
+        while (1) {
+          switch (_context5.prev = _context5.next) {
+            case 0:
+              localState = this.getLocalState();
+              desc = options.direction === "before";
+              operator = options.direction === "after" ? "$gt" : "$lt";
+              changesCollectionName = localState.changesCollectionName;
+              db = localState.db;
+              store = db.transaction(changesCollectionName, "readwrite").store;
+              _context5.next = 8;
+              return store.index("sequence").openCursor(null, desc ? "prev" : "next");
+
+            case 8:
+              cursor = _context5.sent;
+              changedDocuments = [];
+
+            case 10:
+              if (!cursor) {
+                _context5.next = 18;
+                break;
+              }
+
+              value = cursor.value;
+              changedDocuments.push(value);
+              _context5.next = 15;
+              return cursor["continue"]();
+
+            case 15:
+              cursor = _context5.sent;
+              _context5.next = 10;
+              break;
+
+            case 18:
+              if (options.limit) {
+                changedDocuments = changedDocuments.slice(0, options.limit);
+              }
+
+              changedDocuments = changedDocuments.map(function (result) {
+                return {
+                  id: result.id,
+                  sequence: result.sequence
+                };
+              });
+              useForLastSequence = !desc ? changedDocuments[changedDocuments.length - 1] : changedDocuments[0];
+              ret = {
+                changedDocuments: changedDocuments,
+                lastSequence: useForLastSequence ? useForLastSequence.sequence : options.sinceSequence
+              };
+              return _context5.abrupt("return", ret);
+
+            case 23:
+            case "end":
+              return _context5.stop();
+          }
+        }
+      }, _callee5, this);
+    }));
+
+    function getChangedDocuments(_x6) {
+      return _getChangedDocuments.apply(this, arguments);
+    }
+
+    return getChangedDocuments;
+  }();
+
+  _proto.changeStream = function changeStream() {
+    return this.changes$.asObservable();
+  };
+
+  _proto.getAttachmentData = function getAttachmentData(_documentId, _attachmentId) {
+    // TODO: attacments
+    throw new Error("Attachments are not implemented in the lokijs RxStorage. Make a pull request.");
+  };
+
+  _proto.close = /*#__PURE__*/function () {
+    var _close = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6() {
+      var localState;
+      return _regenerator["default"].wrap(function _callee6$(_context6) {
+        while (1) {
+          switch (_context6.prev = _context6.next) {
+            case 0:
+              this.closed = true;
+              this.changes$.complete();
+
+              _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
+
+              localState = this.getLocalState();
+              localState.db.close();
+
+            case 5:
+            case "end":
+              return _context6.stop();
+          }
+        }
+      }, _callee6, this);
+    }));
+
+    function close() {
+      return _close.apply(this, arguments);
+    }
+
+    return close;
+  }();
+
+  _proto.remove = /*#__PURE__*/function () {
+    var _remove = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee7() {
+      return _regenerator["default"].wrap(function _callee7$(_context7) {
+        while (1) {
+          switch (_context7.prev = _context7.next) {
+            case 0:
+              this.close(); // TODO: it can be a problem actually.
+              // The connection is not actually closed until all transactions created using this connection are complete.
+
+              _context7.next = 3;
+              return (0, _idb.deleteDB)(this.databaseName);
+
+            case 3:
+              this.closed = true;
+
+            case 4:
+            case "end":
+              return _context7.stop();
+          }
+        }
+      }, _callee7, this);
+    }));
+
+    function remove() {
+      return _remove.apply(this, arguments);
+    }
+
+    return remove;
+  }();
+
+  _proto.getLocalState = function getLocalState() {
+    var localState = this.internals.databaseState;
+
+    if (!localState) {
+      throw new Error("localState is undefind (dbName: " + this.databaseName + ")");
+    }
+
+    return localState;
+  }
+  /**
+   * Adds an entry to the changes feed
+   * that can be queried to check which documents have been
+   * changed since sequence X.
+   */
+  ;
+
+  _proto.addChangeDocumentMeta =
+  /*#__PURE__*/
+  function () {
+    var _addChangeDocumentMeta = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee8(id) {
+      var localState, changesCollectionName, db, store, cursor, lastDoc, nextFeedSequence;
+      return _regenerator["default"].wrap(function _callee8$(_context8) {
+        while (1) {
+          switch (_context8.prev = _context8.next) {
+            case 0:
+              localState = this.getLocalState();
+              changesCollectionName = localState.changesCollectionName;
+              db = localState.db;
+              store = db.transaction(changesCollectionName, "readwrite").store;
+
+              if (this.lastChangefeedSequence) {
+                _context8.next = 10;
+                break;
+              }
+
+              _context8.next = 7;
+              return store.index("sequence").openCursor(null, "prev");
+
+            case 7:
+              cursor = _context8.sent;
+              lastDoc = cursor === null || cursor === void 0 ? void 0 : cursor.value;
+
+              if (lastDoc) {
+                this.lastChangefeedSequence = lastDoc.sequence;
+              }
+
+            case 10:
+              nextFeedSequence = this.lastChangefeedSequence + 1;
+              _context8.next = 13;
+              return store.add({
+                id: id,
+                sequence: nextFeedSequence
+              });
+
+            case 13:
+              this.lastChangefeedSequence = nextFeedSequence;
+
+            case 14:
+            case "end":
+              return _context8.stop();
+          }
+        }
+      }, _callee8, this);
+    }));
+
+    function addChangeDocumentMeta(_x7) {
+      return _addChangeDocumentMeta.apply(this, arguments);
+    }
+
+    return addChangeDocumentMeta;
+  }();
 
   return RxStorageBrowserInstance;
 }();
@@ -98,32 +814,32 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 exports.RxStorageBrowserInstance = RxStorageBrowserInstance;
 
 var createBrowserStorageLocalState = /*#__PURE__*/function () {
-  var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(params) {
+  var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee9(params) {
     var primaryPath, databaseState;
-    return _regenerator["default"].wrap(function _callee$(_context) {
+    return _regenerator["default"].wrap(function _callee9$(_context9) {
       while (1) {
-        switch (_context.prev = _context.next) {
+        switch (_context9.prev = _context9.next) {
           case 0:
-            primaryPath = (0, _helpers.getPrimaryFieldOfPrimaryKey)(params.schema.primaryKey).toString();
-            _context.next = 3;
-            return (0, _helpers.getIdbDatabase)(params.databaseName, params.collectionName, primaryPath, params.schema);
+            primaryPath = (0, _dbHelpers.getPrimaryFieldOfPrimaryKey)(params.schema.primaryKey).toString();
+            _context9.next = 3;
+            return (0, _dbHelpers.getIdbDatabase)(params.databaseName, params.collectionName, primaryPath, params.schema);
 
           case 3:
-            databaseState = _context.sent;
-            return _context.abrupt("return", {
+            databaseState = _context9.sent;
+            return _context9.abrupt("return", {
               databaseState: databaseState,
               primaryPath: primaryPath
             });
 
           case 5:
           case "end":
-            return _context.stop();
+            return _context9.stop();
         }
       }
-    }, _callee);
+    }, _callee9);
   }));
 
-  return function createBrowserStorageLocalState(_x) {
+  return function createBrowserStorageLocalState(_x8) {
     return _ref2.apply(this, arguments);
   };
 }();
@@ -131,33 +847,33 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
 exports.createBrowserStorageLocalState = createBrowserStorageLocalState;
 
 var createBrowserStorageInstance = /*#__PURE__*/function () {
-  var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(params) {
+  var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(params) {
     var internals, instance;
-    return _regenerator["default"].wrap(function _callee2$(_context2) {
+    return _regenerator["default"].wrap(function _callee10$(_context10) {
       while (1) {
-        switch (_context2.prev = _context2.next) {
+        switch (_context10.prev = _context10.next) {
           case 0:
-            _context2.next = 2;
+            _context10.next = 2;
             return createBrowserStorageLocalState(params);
 
           case 2:
-            internals = _context2.sent;
-            instance = new RxStorageBrowserInstance(params.databaseName, params.collectionName, params.schema, internals);
+            internals = _context10.sent;
+            instance = new RxStorageBrowserInstance(params.databaseName, params.collectionName, {}, params.schema, internals);
             /**
              * TODO: should we do extra steps to enable CORRECT multiinstance?
              */
 
-            return _context2.abrupt("return", instance);
+            return _context10.abrupt("return", instance);
 
           case 5:
           case "end":
-            return _context2.stop();
+            return _context10.stop();
         }
       }
-    }, _callee2);
+    }, _callee10);
   }));
 
-  return function createBrowserStorageInstance(_x2) {
+  return function createBrowserStorageInstance(_x9) {
     return _ref3.apply(this, arguments);
   };
 }();

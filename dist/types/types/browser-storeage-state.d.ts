@@ -10,4 +10,5 @@ export interface BrowserStorageState {
     collections: string[];
     upgradeVersion: number;
     version: number;
+    changesCollectionName: string;
 }

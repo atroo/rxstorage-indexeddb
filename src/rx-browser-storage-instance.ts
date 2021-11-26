@@ -511,7 +511,7 @@ export class RxStorageBrowserInstance<RxDocType>
   }
 
   private getLocalState() {
-    const localState = this.internals.localState;
+    const localState = this.internals.databaseState;
     if (!localState) {
       throw new Error(`localState is undefind (dbName: ${this.databaseName})`);
     }
@@ -551,7 +551,7 @@ export class RxStorageBrowserInstance<RxDocType>
 
 export const createBrowserStorageLocalState = async <RxDocType>(
   params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
-) => {
+): Promise<BrowserStorageInternals> => {
   const primaryPath = getPrimaryFieldOfPrimaryKey(
     params.schema.primaryKey
   ).toString();

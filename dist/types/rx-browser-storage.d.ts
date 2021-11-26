@@ -6,6 +6,7 @@ import { BrowserStorageInternals, BrowserStorageSettings } from "./types/browser
 export declare class RxBrowserStorage implements RxStorage<BrowserStorageInternals, BrowserStorageSettings> {
     name: string;
     hash(data: Buffer | Blob | string): Promise<string>;
-    createStorageInstance<RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>): Promise<void>;
-    createKeyObjectStorageInstance(params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>): Promise<void>;
+    createStorageInstance<RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>): Promise<import("./rx-browser-storage-instance").RxStorageBrowserInstance<RxDocType>>;
+    createKeyObjectStorageInstance(params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>): Promise<import("./rx-browser-key-object-storage-instance").RxStorageKeyObjectInstanceLoki<unknown>>;
 }
+export declare function getRxSBrowserIdbStorage(databaseSettings?: BrowserStorageSettings): RxBrowserStorage;

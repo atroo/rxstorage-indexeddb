@@ -29,7 +29,8 @@ var generateKeyRange = function generateKeyRange(opts) {
     // The first item in every native index is doc.deleted, and we always want
     // to only search documents that are not deleted.
     // "foo" -> [0, "foo"]
-    var filterDeleted = [0].concat(key);
+    // var filterDeleted = [0].concat(key);
+    var filterDeleted = key;
     return filterDeleted.map(function (k) {
       // null, true and false are not indexable by indexeddb. When we write
       // these values we convert them to these constants, and so when we

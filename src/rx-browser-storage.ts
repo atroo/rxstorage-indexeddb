@@ -32,3 +32,10 @@ export class RxBrowserStorage
     return createBrowserKeyObjectStorageInstance(params);
   }
 }
+
+export function getRxSBrowserIdbStorage(
+  databaseSettings: BrowserStorageSettings = {}
+) {
+  const storage = new RxBrowserStorage();
+  return storage;
+}

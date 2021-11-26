@@ -29,7 +29,7 @@ export const getIdbDatabase = async <RxDocType>(
   schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">
 ) => {
   const dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
-  let version = schema.version;
+  let version = schema.version + 1;
   if (dbState) {
     const newCollectionAdded =
       dbState.collections.indexOf(collectionName) === -1;

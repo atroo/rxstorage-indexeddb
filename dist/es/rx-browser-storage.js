@@ -6,12 +6,17 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.RxBrowserStorage = void 0;
+exports.getRxSBrowserIdbStorage = getRxSBrowserIdbStorage;
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
 var _rxdb = require("rxdb");
+
+var _rxBrowserKeyObjectStorageInstance = require("./rx-browser-key-object-storage-instance");
+
+var _rxBrowserStorageInstance = require("./rx-browser-storage-instance");
 
 var RxBrowserStorage = /*#__PURE__*/function () {
   function RxBrowserStorage() {
@@ -30,6 +35,9 @@ var RxBrowserStorage = /*#__PURE__*/function () {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
+              return _context.abrupt("return", (0, _rxBrowserStorageInstance.createBrowserStorageInstance)(params));
+
+            case 1:
             case "end":
               return _context.stop();
           }
@@ -50,6 +58,10 @@ var RxBrowserStorage = /*#__PURE__*/function () {
         while (1) {
           switch (_context2.prev = _context2.next) {
             case 0:
+              params.collectionName = params.collectionName + "-key-object";
+              return _context2.abrupt("return", (0, _rxBrowserKeyObjectStorageInstance.createBrowserKeyObjectStorageInstance)(params));
+
+            case 2:
             case "end":
               return _context2.stop();
           }
@@ -68,4 +80,10 @@ var RxBrowserStorage = /*#__PURE__*/function () {
 }();
 
 exports.RxBrowserStorage = RxBrowserStorage;
+
+function getRxSBrowserIdbStorage() {
+  var databaseSettings = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var storage = new RxBrowserStorage();
+  return storage;
+}
 //# sourceMappingURL=rx-browser-storage.js.map

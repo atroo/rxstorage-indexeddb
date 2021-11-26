@@ -215,7 +215,7 @@ export class RxStorageKeyObjectInstanceLoki<RxDocType>
   }
 
   private getLocalState() {
-    const localState = this.internals.localState;
+    const localState = this.internals.databaseState;
     if (!localState) {
       throw new Error(
         `localState(keyVal storage) is undefind (dbName: ${this.databaseName})`
@@ -228,7 +228,7 @@ export class RxStorageKeyObjectInstanceLoki<RxDocType>
 
 export async function createBrowserKeyValueStorageLocalState(
   params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>
-) {
+): Promise<BrowserStorageInternals> {
   const primaryPath = "_id";
 
   const databaseState = await getIdbDatabase(

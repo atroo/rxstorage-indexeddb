@@ -17,7 +17,6 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 var extend = require("pouchdb-extend");
 
-console.log("Extend: ", extend);
 var combinationFields = ["$or", "$nor", "$not"];
 var logicalMatchers = ["$eq", "$gt", "$gte", "$lt", "$lte"];
 

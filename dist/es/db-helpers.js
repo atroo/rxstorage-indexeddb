@@ -5,7 +5,7 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getIdbDatabase = exports.CHANGES_COLLECTION_SUFFIX = void 0;
+exports.getIdbDatabase = exports.IDB_DATABASE_STATE_BY_NAME = exports.CHANGES_COLLECTION_SUFFIX = void 0;
 exports.getPrimaryFieldOfPrimaryKey = getPrimaryFieldOfPrimaryKey;
 exports.newRxError = newRxError;
 
@@ -31,15 +31,17 @@ var IDB_DATABASE_STATE_BY_NAME = new Map();
  * TODO: "close" notifications ?
  */
 
+exports.IDB_DATABASE_STATE_BY_NAME = IDB_DATABASE_STATE_BY_NAME;
+
 var getIdbDatabase = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(databaseName, collectionName, primaryPath, schema) {
-    var dbState, version, newCollectionAdded, db, newDbState;
+    var dbState, version, newCollectionAdded, changesCollectionName, db, newDbState;
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
             dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
-            version = schema.version;
+            version = schema.version + 1;
 
             if (!dbState) {
               _context.next = 11;
@@ -65,7 +67,8 @@ var getIdbDatabase = /*#__PURE__*/function () {
             dbState.db.close();
 
           case 11:
-            _context.next = 13;
+            changesCollectionName = collectionName + CHANGES_COLLECTION_SUFFIX;
+            _context.next = 14;
             return (0, _idb.openDB)(databaseName + ".db", version, {
               upgrade: function upgrade(db) {
                 var store = db.createObjectStore(collectionName, {
@@ -93,7 +96,6 @@ var getIdbDatabase = /*#__PURE__*/function () {
                 indices.forEach(function (idxName) {
                   store.createIndex(idxName, idxName);
                 });
-                var changesCollectionName = collectionName + CHANGES_COLLECTION_SUFFIX;
                 var changesStore = db.createObjectStore(changesCollectionName, {
                   keyPath: "eventId"
                 });
@@ -114,18 +116,19 @@ var getIdbDatabase = /*#__PURE__*/function () {
               terminated: function terminated() {}
             });
 
-          case 13:
+          case 14:
             db = _context.sent;
             newDbState = {
               db: db,
               collections: dbState ? dbState.collections.concat(collectionName) : [collectionName],
               upgradeVersion: dbState ? dbState.upgradeVersion : 0,
+              changesCollectionName: changesCollectionName,
               version: version
             };
             IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
             return _context.abrupt("return", newDbState);
 
-          case 17:
+          case 18:
           case "end":
             return _context.stop();
         }
@@ -151,4 +154,4 @@ function getPrimaryFieldOfPrimaryKey(primaryKey) {
 function newRxError(code, parameters) {
   return new _rxError.RxError(code, _rxdb.overwritable.tunnelErrorMessage(code), parameters);
 }
-//# sourceMappingURL=helpers.js.map
+//# sourceMappingURL=db-helpers.js.map
