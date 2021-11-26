@@ -1,4 +1,5 @@
 import { MangoQuery, MangoQuerySelector, MangoQuerySortPart } from "rxdb";
+import { ITranslatedQuery } from "./types/translate-mango-query";
 import { COLLATE_HI, COLLATE_LO } from "./variables";
 const extend = require("pouchdb-extend");
 console.log("Extend: ", extend);
@@ -13,9 +14,9 @@ const logicalMatchers: LogicalOperator[] = [
   "$lte",
 ];
 
-export const translateMangoQuery = <RxDocType>(
+export const translateMangoQuerySelector = <RxDocType>(
   query: MangoQuery<RxDocType>
-) => {
+): ITranslatedQuery => {
   if (query.selector) {
     query.selector = massageSelector(query.selector);
   }
@@ -24,6 +25,10 @@ export const translateMangoQuery = <RxDocType>(
   }
 
   validateFindRequest(query);
+
+  if (Object.keys(query.selector).length <= 1) {
+    return getSingleFieldCoreQueryPlan(query.selector);
+  }
 
   return getMultiFieldQueryOpts(query.selector);
 };
@@ -257,6 +262,27 @@ function mergeEq(value: string | number, fieldMatchers: any) {
   fieldMatchers.$eq = value;
 }
 
+function getSingleFieldQueryOptsFor(userOperator: string, userValue: any) {
+  switch (userOperator) {
+    case "$eq":
+      return { key: [userValue] };
+    case "$lte":
+      return { endkey: [userValue] };
+    case "$gte":
+      return { startkey: [userValue] };
+    case "$lt":
+      return {
+        endkey: [userValue],
+        inclusive_end: false,
+      };
+    case "$gt":
+      return {
+        startkey: [userValue],
+        inclusive_start: false,
+      };
+  }
+}
+
 function getMultiFieldCoreQueryPlan(userOperator: string, userValue: any) {
   switch (userOperator) {
     case "$eq":
@@ -285,10 +311,47 @@ function getMultiFieldCoreQueryPlan(userOperator: string, userValue: any) {
   }
 }
 
+function getSingleFieldCoreQueryPlan<RxDocType>(
+  selector: MangoQuerySelector<RxDocType>
+) {
+  const fields = Object.keys(selector);
+  const field = fields[0];
+  //ignoring this because the test to exercise the branch is skipped at the moment
+  /* istanbul ignore next */
+  var matcher = selector[field] || {};
+  var inMemoryFields: string[] = [];
+
+  var userOperators = Object.keys(matcher) as LogicalOperator[];
+
+  var combinedOpts: Record<any, any>;
+
+  userOperators.forEach(function (userOperator) {
+    if (isNonLogicalMatcher(userOperator)) {
+      inMemoryFields.push(field);
+    }
+
+    var userValue = matcher[userOperator];
+
+    var newQueryOpts = getSingleFieldQueryOptsFor(userOperator, userValue);
+
+    if (combinedOpts) {
+      combinedOpts = mergeObjects([combinedOpts, newQueryOpts]);
+    } else {
+      combinedOpts = newQueryOpts as Record<any, any>;
+    }
+  });
+
+  return {
+    queryOpts: combinedOpts!,
+    inMemoryFields: inMemoryFields,
+    fields,
+  };
+}
+
 function getMultiFieldQueryOpts<RxDocType>(
   selector: MangoQuerySelector<RxDocType>
 ) {
-  const indexFields = Object.keys(selector);
+  const fields = Object.keys(selector);
 
   let inMemoryFields: string[] = [];
   let startkey = [];
@@ -305,11 +368,11 @@ function getMultiFieldQueryOpts<RxDocType>(
     }
     // keep track of the fields where we lost specificity,
     // and therefore need to filter in-memory
-    inMemoryFields = indexFields.slice(i);
+    inMemoryFields = fields.slice(i);
   }
 
-  for (var i = 0, len = indexFields.length; i < len; i++) {
-    var indexField = indexFields[i];
+  for (var i = 0, len = fields.length; i < len; i++) {
+    var indexField = fields[i];
 
     var matcher = selector[indexField];
 
@@ -330,7 +393,7 @@ function getMultiFieldQueryOpts<RxDocType>(
         "$gte" in matcher ||
         "$lt" in matcher ||
         "$lte" in matcher;
-      var previousKeys = Object.keys(selector[indexFields[i - 1]]);
+      var previousKeys = Object.keys(selector[fields[i - 1]]);
       var previousWasEq = arrayEquals(previousKeys, ["$eq"]);
       var previousWasSame = arrayEquals(previousKeys, Object.keys(matcher));
       var gtltLostSpecificity = usingGtlt && !previousWasEq && !previousWasSame;
@@ -384,6 +447,7 @@ function getMultiFieldQueryOpts<RxDocType>(
   return {
     queryOpts: res,
     inMemoryFields: inMemoryFields,
+    fields: fields,
   };
 }
 

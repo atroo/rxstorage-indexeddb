@@ -5,7 +5,7 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.translateMangoQuery = void 0;
+exports.translateMangoQuerySelector = void 0;
 
 var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
 
@@ -21,7 +21,7 @@ console.log("Extend: ", extend);
 var combinationFields = ["$or", "$nor", "$not"];
 var logicalMatchers = ["$eq", "$gt", "$gte", "$lt", "$lte"];
 
-var translateMangoQuery = function translateMangoQuery(query) {
+var translateMangoQuerySelector = function translateMangoQuerySelector(query) {
   if (query.selector) {
     query.selector = massageSelector(query.selector);
   }
@@ -31,6 +31,11 @@ var translateMangoQuery = function translateMangoQuery(query) {
   }
 
   validateFindRequest(query);
+
+  if (Object.keys(query.selector).length <= 1) {
+    return getSingleFieldCoreQueryPlan(query.selector);
+  }
+
   return getMultiFieldQueryOpts(query.selector);
 };
 /**
@@ -38,7 +43,7 @@ var translateMangoQuery = function translateMangoQuery(query) {
  */
 
 
-exports.translateMangoQuery = translateMangoQuery;
+exports.translateMangoQuerySelector = translateMangoQuerySelector;
 
 function massageSelector(input) {
   var result = _objectSpread({}, input);
@@ -267,6 +272,37 @@ function mergeEq(value, fieldMatchers) {
   fieldMatchers.$eq = value;
 }
 
+function getSingleFieldQueryOptsFor(userOperator, userValue) {
+  switch (userOperator) {
+    case "$eq":
+      return {
+        key: [userValue]
+      };
+
+    case "$lte":
+      return {
+        endkey: [userValue]
+      };
+
+    case "$gte":
+      return {
+        startkey: [userValue]
+      };
+
+    case "$lt":
+      return {
+        endkey: [userValue],
+        inclusive_end: false
+      };
+
+    case "$gt":
+      return {
+        startkey: [userValue],
+        inclusive_start: false
+      };
+  }
+}
+
 function getMultiFieldCoreQueryPlan(userOperator, userValue) {
   switch (userOperator) {
     case "$eq":
@@ -299,8 +335,39 @@ function getMultiFieldCoreQueryPlan(userOperator, userValue) {
   }
 }
 
+function getSingleFieldCoreQueryPlan(selector) {
+  var fields = Object.keys(selector);
+  var field = fields[0]; //ignoring this because the test to exercise the branch is skipped at the moment
+
+  /* istanbul ignore next */
+
+  var matcher = selector[field] || {};
+  var inMemoryFields = [];
+  var userOperators = Object.keys(matcher);
+  var combinedOpts;
+  userOperators.forEach(function (userOperator) {
+    if (isNonLogicalMatcher(userOperator)) {
+      inMemoryFields.push(field);
+    }
+
+    var userValue = matcher[userOperator];
+    var newQueryOpts = getSingleFieldQueryOptsFor(userOperator, userValue);
+
+    if (combinedOpts) {
+      combinedOpts = mergeObjects([combinedOpts, newQueryOpts]);
+    } else {
+      combinedOpts = newQueryOpts;
+    }
+  });
+  return {
+    queryOpts: combinedOpts,
+    inMemoryFields: inMemoryFields,
+    fields: fields
+  };
+}
+
 function getMultiFieldQueryOpts(selector) {
-  var indexFields = Object.keys(selector);
+  var fields = Object.keys(selector);
   var inMemoryFields = [];
   var startkey = [];
   var endkey = [];
@@ -318,13 +385,13 @@ function getMultiFieldQueryOpts(selector) {
     // and therefore need to filter in-memory
 
 
-    inMemoryFields = indexFields.slice(i);
+    inMemoryFields = fields.slice(i);
   }
 
-  for (var i = 0, len = indexFields.length; i < len; i++) {
+  for (var i = 0, len = fields.length; i < len; i++) {
     var _combinedOpts;
 
-    var indexField = indexFields[i];
+    var indexField = fields[i];
     var matcher = selector[indexField];
 
     if (!matcher) {
@@ -339,7 +406,7 @@ function getMultiFieldQueryOpts(selector) {
       }
 
       var usingGtlt = "$gt" in matcher || "$gte" in matcher || "$lt" in matcher || "$lte" in matcher;
-      var previousKeys = Object.keys(selector[indexFields[i - 1]]);
+      var previousKeys = Object.keys(selector[fields[i - 1]]);
       var previousWasEq = arrayEquals(previousKeys, ["$eq"]);
       var previousWasSame = arrayEquals(previousKeys, Object.keys(matcher));
       var gtltLostSpecificity = usingGtlt && !previousWasEq && !previousWasSame;
@@ -392,7 +459,8 @@ function getMultiFieldQueryOpts(selector) {
 
   return {
     queryOpts: res,
-    inMemoryFields: inMemoryFields
+    inMemoryFields: inMemoryFields,
+    fields: fields
   };
 }
 

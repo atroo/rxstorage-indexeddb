@@ -1,5 +1,5 @@
 import { MangoQuery } from "rxdb";
-export declare const translateMangoQuery: <RxDocType>(query: MangoQuery<RxDocType>) => {
+export declare const translateMangoQuerySelector: <RxDocType>(query: MangoQuery<RxDocType>) => {
     queryOpts: any;
     inMemoryFields: string[];
 };

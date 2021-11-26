@@ -9,7 +9,7 @@ import {
 } from "rxdb";
 // import { getRxStorageLoki } from "rxdb/plugins/lokijs";
 import { heroSchema } from "./schemas/hero-schema";
-// import { translateMangoQuery } from "atroo-browser-storage";
+import { translateMangoQuerySelector } from "atroo-browser-storage";
 const {
   uniqueNamesGenerator,
   adjectives,
@@ -22,16 +22,16 @@ function App() {
   const [database, setDatabase] = useState<RxDatabase | null>(null);
   const [docs, setDocs] = useState<any[]>();
 
-  // useEffect(() => {
-  //   const transformedQuerySelector = translateMangoQuery({
-  //     selector: {
-  //       userName: { $gt: 1 },
-  //       hey: 23,
-  //     },
-  //   });
+  useEffect(() => {
+    const transformedQuerySelector = translateMangoQuerySelector({
+      selector: {
+        userName: { $gt: 1 },
+        hey: 23,
+      },
+    });
 
-  //   console.log("trasnformedQuery: ", transformedQuerySelector);
-  // }, []);
+    console.log("trasnformedQuery: ", transformedQuerySelector);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -64,6 +64,7 @@ function App() {
       .find({
         selector: {
           name: { $eq: "mario1" },
+          color: { $exists: true },
         },
       })
       .$.subscribe((docs) => {
@@ -144,6 +145,8 @@ function App() {
           const q = coll.find({
             selector: {
               name: { $gt: "mario" },
+              birthyear: { $lt: 3000 },
+              color: { $exists: true },
             },
           });
 
