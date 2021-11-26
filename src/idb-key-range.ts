@@ -1,4 +1,9 @@
 import {
+  EndKey,
+  IIdbKeyRangeOptions,
+  StartKey,
+} from "./types/translate-mango-query";
+import {
   COLLATE_LO as COUCH_COLLATE_LO,
   COLLATE_HI as COUCH_COLLATE_HI,
 } from "./variables";
@@ -17,7 +22,7 @@ var IDB_COLLATE_LO = Number.NEGATIVE_INFINITY;
 var IDB_COLLATE_HI = [[[[[[[[[[[[]]]]]]]]]]]];
 
 // TODO: create type for opts
-export const generateKeyRange = (opts: any) => {
+export const generateKeyRange = (opts: IIdbKeyRangeOptions) => {
   function defined(obj: any, k: string) {
     return obj[k] !== void 0;
   }
@@ -27,7 +32,9 @@ export const generateKeyRange = (opts: any) => {
     // The first item in every native index is doc.deleted, and we always want
     // to only search documents that are not deleted.
     // "foo" -> [0, "foo"]
-    var filterDeleted = [0].concat(key);
+    // var filterDeleted = [0].concat(key);
+
+    const filterDeleted = key;
 
     return filterDeleted.map(function (k: any) {
       // null, true and false are not indexable by indexeddb. When we write
@@ -73,7 +80,7 @@ export const generateKeyRange = (opts: any) => {
       realInclusiveEnd = opts.inclusive_start;
 
     opts.startkey = opts.endkey;
-    opts.endkey = realEndkey;
+    opts.endkey = realEndkey as EndKey | StartKey;
     opts.inclusive_start = opts.inclusive_end;
     opts.inclusive_end = realInclusiveEnd;
   }

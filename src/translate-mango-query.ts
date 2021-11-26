@@ -2,7 +2,6 @@ import { MangoQuery, MangoQuerySelector, MangoQuerySortPart } from "rxdb";
 import { ITranslatedQuery } from "./types/translate-mango-query";
 import { COLLATE_HI, COLLATE_LO } from "./variables";
 const extend = require("pouchdb-extend");
-console.log("Extend: ", extend);
 
 const combinationFields = ["$or", "$nor", "$not"];
 type LogicalOperator = "$eq" | "$lte" | "$gte" | "$lt" | "$gt";

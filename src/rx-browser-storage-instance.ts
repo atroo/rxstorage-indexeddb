@@ -18,7 +18,7 @@ import {
   getIdbDatabase,
   getPrimaryFieldOfPrimaryKey,
   newRxError,
-} from "./helpers";
+} from "./db-helpers";
 import {
   DeterministicSortComparator,
   QueryMatcher,
