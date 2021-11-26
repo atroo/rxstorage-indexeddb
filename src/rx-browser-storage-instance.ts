@@ -15,7 +15,7 @@ import {
   RxStorageInstanceCreationParams,
   RxStorageQueryResult,
 } from "rxdb/dist/types/types";
-import { Subject } from "rxjs";
+import { Observable, Subject } from "rxjs";
 import {
   BrowserStorageInternals,
   BrowserStorageSettings,
@@ -34,6 +34,7 @@ import {
 import { find } from "./find";
 import { createRevision, getHeightOfRevision, parseRevision } from "rxdb";
 import { getEventKey } from "./utils";
+import { deleteDB } from "idb";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 let instanceId = 1;
@@ -475,6 +476,26 @@ export class RxStorageBrowserInstance<RxDocType>
     };
 
     return ret;
+  }
+
+  changeStream(): Observable<RxStorageChangeEvent<RxDocumentData<RxDocType>>> {
+    return this.changes$.asObservable();
+  }
+
+  async close(): Promise<void> {
+    this.closed = true;
+    this.changes$.complete();
+    IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
+
+    const localState = this.getLocalState();
+    localState.db.close();
+  }
+  async remove(): Promise<void> {
+    this.close();
+    // TODO: it can be a problem actually.
+    // The connection is not actually closed until all transactions created using this connection are complete.
+    await deleteDB(this.databaseName);
+    this.closed = true;
   }
 
   private getLocalState() {
