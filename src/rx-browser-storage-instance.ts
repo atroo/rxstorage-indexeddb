@@ -6,6 +6,7 @@ import {
   RxDocumentData,
   RxDocumentWriteData,
   RxJsonSchema,
+  RxStorageBulkWriteError,
   RxStorageBulkWriteResponse,
   RxStorageChangeEvent,
   RxStorageInstance,
@@ -24,11 +25,13 @@ import {
   newRxError,
 } from "./db-helpers";
 import {
+  ChangeEvent,
   DeterministicSortComparator,
   QueryMatcher,
 } from "event-reduce-js/dist/lib/types";
 import { find } from "./find";
-import { createRevision } from "rxdb";
+import { createRevision, getHeightOfRevision } from "rxdb";
+import { getEventKey } from "./utils";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 let instanceId = 1;
@@ -154,7 +157,10 @@ export class RxStorageBrowserInstance<RxDocType>
       const startTime = Date.now();
       const id: string = (writeRow.document as any)[this.internals.primaryPath];
       // TODO: probably will have problems here.
-      const documentInDb = await store.get(this.internals.primaryPath);
+      const documentInDbCursor = await store.openCursor(
+        this.internals.primaryPath
+      );
+      const documentInDb = documentInDbCursor?.value;
       if (!documentInDb) {
         // insert new document
         const newRevision = "1-" + createRevision(writeRow.document);
@@ -179,7 +185,7 @@ export class RxStorageBrowserInstance<RxDocType>
         await store.add(writeDoc);
         this.addChangeDocumentMeta(id);
         this.changes$.next({
-          eventId: "1", // TODO: fixed eventId
+          eventId: getEventKey(false, id, newRevision),
           documentId: id,
           change: {
             doc: writeDoc,
@@ -190,8 +196,116 @@ export class RxStorageBrowserInstance<RxDocType>
           startTime,
           endTime: Date.now(),
         });
+        ret.success.set(id, writeDoc as any);
+      } else {
+        // update existing document
+        const revInDb: string = documentInDb._rev;
+
+        // inserting a deleted document is possible
+        // without sending the previous data.
+        // TODO: purge document
+        // if (!writeRow.previous && documentInDb._deleted) {
+        //   writeRow.previous = documentInDb;
+        // }
+
+        if (
+          (!writeRow.previous && !documentInDb._deleted) ||
+          (!!writeRow.previous && revInDb !== writeRow.previous._rev)
+        ) {
+          // conflict error
+          const err: RxStorageBulkWriteError<RxDocType> = {
+            isError: true,
+            status: 409,
+            documentId: id,
+            writeRow: writeRow,
+          };
+          ret.error.set(id, err);
+        } else {
+          const newRevHeight = getHeightOfRevision(revInDb) + 1;
+          const newRevision =
+            newRevHeight + "-" + createRevision(writeRow.document);
+
+          if (
+            writeRow.previous &&
+            !writeRow.previous._deleted &&
+            writeRow.document._deleted
+          ) {
+            // TODO: purge
+            await documentInDbCursor.delete();
+            this.addChangeDocumentMeta(id); // TODO: do I need this here.
+            const previous = Object.assign({}, writeRow.previous);
+            previous._rev = newRevision;
+            const change = {
+              id,
+              operation: "DELETE" as "DELETE",
+              previous,
+              doc: null,
+            };
+            this.changes$.next({
+              eventId: getEventKey(false, id, newRevision),
+              documentId: id,
+              change,
+              startTime,
+              endTime: Date.now(),
+            });
+            continue;
+          }
+
+          if (writeRow.document._deleted) {
+            throw newRxError("SNH", { args: { writeRow } });
+          }
+
+          const writeDoc: any = Object.assign({}, writeRow.document, {
+            $loki: documentInDb.$loki,
+            _rev: newRevision,
+            _deleted: false,
+            _attachments: {}, // TODO: attachments
+          });
+          await documentInDbCursor.update(writeDoc);
+          this.addChangeDocumentMeta(id);
+
+          // TODO: stripIdbKey(writeDoc) ?
+          let change: ChangeEvent<RxDocumentData<RxDocType>> | null = null;
+          if (
+            writeRow.previous &&
+            writeRow.previous._deleted &&
+            !writeDoc._deleted
+          ) {
+            change = {
+              id,
+              operation: "INSERT",
+              previous: null,
+              doc: writeDoc,
+            };
+          } else if (
+            writeRow.previous &&
+            !writeRow.previous._deleted &&
+            !writeDoc._deleted
+          ) {
+            change = {
+              id,
+              operation: "UPDATE",
+              previous: writeRow.previous,
+              doc: writeDoc,
+            };
+          }
+          if (!change) {
+            throw newRxError("SNH", { args: { writeRow } });
+          }
+          this.changes$.next({
+            eventId: getEventKey(false, id, newRevision),
+            documentId: id,
+            change,
+            startTime,
+            endTime: Date.now(),
+          });
+          ret.success.set(id, writeDoc);
+        }
       }
     }
+
+    txn.commit();
+    return ret;
   }
 
   private getLocalState() {
