@@ -26,7 +26,7 @@ export const getIdbDatabase = async <RxDocType>(
   databaseName: string,
   collectionName: string,
   primaryPath: string,
-  schema: RxJsonSchema<RxDocType>
+  schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">
 ) => {
   const dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
   let version = schema.version;
