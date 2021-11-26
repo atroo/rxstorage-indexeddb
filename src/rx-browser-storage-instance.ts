@@ -8,6 +8,7 @@ import {
   RxStorageChangeEvent,
   RxStorageInstance,
   RxStorageInstanceCreationParams,
+  RxStorageQueryResult,
 } from "rxdb/dist/types/types";
 import { Subject } from "rxjs";
 import {
@@ -115,6 +116,18 @@ export class RxStorageBrowserInstance<RxDocType>
     };
 
     return fun;
+  }
+
+  async query(
+    preparedQuery: MangoQuery<RxDocType>
+  ): Promise<RxStorageQueryResult<RxDocType>> {
+    const dbState = IDB_DATABASE_STATE_BY_NAME.get(this.databaseName);
+    if (!dbState) {
+      throw new Error(`dbState is undefind (dbName: ${this.databaseName})`);
+    }
+
+    const rows = await find(dbState.db, this.collectionName, preparedQuery);
+    return rows;
   }
 }
 
