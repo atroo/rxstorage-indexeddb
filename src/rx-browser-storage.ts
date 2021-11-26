@@ -3,6 +3,7 @@ import {
   RxKeyObjectStorageInstanceCreationParams,
   RxStorageInstanceCreationParams,
 } from "rxdb/dist/types/types/rx-storage";
+import { createBrowserKeyObjectStorageInstance } from "./rx-browser-key-object-storage-instance";
 import { createBrowserStorageInstance } from "./rx-browser-storage-instance";
 import {
   BrowserStorageInternals,
@@ -27,6 +28,7 @@ export class RxBrowserStorage
   public async createKeyObjectStorageInstance(
     params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>
   ) {
-    //
+    params.collectionName = params.collectionName + "-key-object";
+    return createBrowserKeyObjectStorageInstance(params);
   }
 }
