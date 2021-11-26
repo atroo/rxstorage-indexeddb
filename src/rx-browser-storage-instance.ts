@@ -405,6 +405,26 @@ export class RxStorageBrowserInstance<RxDocType>
     txn.commit();
   }
 
+  async findDocumentsById(
+    ids: string[],
+    deleted: boolean
+  ): Promise<Map<string, RxDocumentData<RxDocType>>> {
+    const localState = this.getLocalState();
+    const ret: Map<string, RxDocumentData<RxDocType>> = new Map();
+
+    const db = localState.db;
+    const store = await db.transaction(this.collectionName, "readwrite").store;
+    for (const id of ids) {
+      const documentInDb = await store.get(id);
+      if (documentInDb && (!documentInDb._deleted || deleted)) {
+        // TODO: stripKey(documentInDb) ?
+        ret.set(id, documentInDb);
+      }
+    }
+
+    return ret;
+  }
+
   private getLocalState() {
     const localState = this.internals.localState;
     if (!localState) {
