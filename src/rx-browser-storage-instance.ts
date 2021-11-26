@@ -1,5 +1,6 @@
 import {
   BulkWriteRow,
+  ChangeStreamOnceOptions,
   MangoQuery,
   MangoQuerySortDirection,
   MangoQuerySortPart,
@@ -8,6 +9,7 @@ import {
   RxJsonSchema,
   RxStorageBulkWriteError,
   RxStorageBulkWriteResponse,
+  RxStorageChangedDocumentMeta,
   RxStorageChangeEvent,
   RxStorageInstance,
   RxStorageInstanceCreationParams,
@@ -421,6 +423,56 @@ export class RxStorageBrowserInstance<RxDocType>
         ret.set(id, documentInDb);
       }
     }
+
+    return ret;
+  }
+
+  async getChangedDocuments(options: ChangeStreamOnceOptions): Promise<{
+    changedDocuments: RxStorageChangedDocumentMeta[];
+    lastSequence: number;
+  }> {
+    const localState = this.getLocalState();
+
+    const desc = options.direction === "before";
+    const operator = options.direction === "after" ? "$gt" : "$lt";
+
+    const changesCollectionName = localState.changesCollectionName;
+    const db = localState.db;
+    const store = db.transaction(changesCollectionName, "readwrite").store;
+    let cursor = await store
+      .index("sequence")
+      .openCursor(null, desc ? "prev" : "next");
+    let changedDocuments = [];
+    while (cursor) {
+      const value = cursor.value;
+      changedDocuments.push(value);
+      cursor = await cursor.continue();
+    }
+
+    if (options.limit) {
+      changedDocuments = changedDocuments.slice(0, options.limit);
+    }
+
+    changedDocuments = changedDocuments.map((result) => {
+      return {
+        id: result.id,
+        sequence: result.sequence,
+      };
+    });
+
+    const useForLastSequence = !desc
+      ? changedDocuments[changedDocuments.length - 1]
+      : changedDocuments[0];
+
+    const ret: {
+      changedDocuments: RxStorageChangedDocumentMeta[];
+      lastSequence: number;
+    } = {
+      changedDocuments,
+      lastSequence: useForLastSequence
+        ? useForLastSequence.sequence
+        : options.sinceSequence,
+    };
 
     return ret;
   }
