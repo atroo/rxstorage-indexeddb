@@ -30,7 +30,7 @@ import {
   QueryMatcher,
 } from "event-reduce-js/dist/lib/types";
 import { find } from "./find";
-import { createRevision, getHeightOfRevision } from "rxdb";
+import { createRevision, getHeightOfRevision, parseRevision } from "rxdb";
 import { getEventKey } from "./utils";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
 
@@ -157,9 +157,7 @@ export class RxStorageBrowserInstance<RxDocType>
       const startTime = Date.now();
       const id: string = (writeRow.document as any)[this.internals.primaryPath];
       // TODO: probably will have problems here.
-      const documentInDbCursor = await store.openCursor(
-        this.internals.primaryPath
-      );
+      const documentInDbCursor = await store.openCursor(id);
       const documentInDb = documentInDbCursor?.value;
       if (!documentInDb) {
         // insert new document
@@ -306,6 +304,105 @@ export class RxStorageBrowserInstance<RxDocType>
 
     txn.commit();
     return ret;
+  }
+
+  async bulkAddRevisions(
+    documents: RxDocumentData<RxDocType>[]
+  ): Promise<void> {
+    if (documents.length === 0) {
+      throw newRxError("P3", {
+        args: {
+          documents,
+        },
+      });
+    }
+
+    const localState = this.getLocalState();
+    const db = localState.db;
+    const txn = db.transaction(this.collectionName, "readwrite");
+    const store = txn.store;
+
+    // TODO: stripKey(documentInDb) ?
+    for (const docData of documents) {
+      const startTime = Date.now();
+      const id: string = (docData as any)[this.internals.primaryPath];
+      // TODO: probably will have problems here.
+      const documentInDbCursor = await store.openCursor(id);
+      const documentInDb = documentInDbCursor?.value;
+      if (!documentInDb) {
+        // document not here, so we can directly insert
+        await store.add(Object.assign({}, docData));
+
+        this.changes$.next({
+          documentId: id,
+          eventId: getEventKey(false, id, docData._rev),
+          change: {
+            doc: docData,
+            id,
+            operation: "INSERT",
+            previous: null,
+          },
+          startTime,
+          endTime: Date.now(),
+        });
+        this.addChangeDocumentMeta(id);
+      } else {
+        const newWriteRevision = parseRevision(docData._rev);
+        const oldRevision = parseRevision(documentInDb._rev);
+
+        let mustUpdate: boolean = false;
+        if (newWriteRevision.height !== oldRevision.height) {
+          // height not equal, compare base on height
+          if (newWriteRevision.height > oldRevision.height) {
+            mustUpdate = true;
+          }
+        } else if (newWriteRevision.hash > oldRevision.hash) {
+          // equal height but new write has the 'winning' hash
+          mustUpdate = true;
+        }
+        if (mustUpdate) {
+          const docDataCpy = Object.assign({}, docData);
+          documentInDbCursor.update(docDataCpy);
+          let change: ChangeEvent<RxDocumentData<RxDocType>> | null = null;
+          if (documentInDb._deleted && !docData._deleted) {
+            change = {
+              id,
+              operation: "INSERT",
+              previous: null,
+              doc: docData,
+            };
+          } else if (!documentInDb._deleted && !docData._deleted) {
+            change = {
+              id,
+              operation: "UPDATE",
+              previous: documentInDb,
+              doc: docData,
+            };
+          } else if (!documentInDb._deleted && docData._deleted) {
+            change = {
+              id,
+              operation: "DELETE",
+              previous: documentInDb,
+              doc: null,
+            };
+          } else if (documentInDb._deleted && docData._deleted) {
+            change = null;
+          }
+          if (change) {
+            this.changes$.next({
+              documentId: id,
+              eventId: getEventKey(false, id, docData._rev),
+              change,
+              startTime,
+              endTime: Date.now(),
+            });
+            this.addChangeDocumentMeta(id);
+          }
+        }
+      }
+    }
+
+    txn.commit();
   }
 
   private getLocalState() {
