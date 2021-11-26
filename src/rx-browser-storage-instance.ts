@@ -1,10 +1,12 @@
 import {
+  BulkWriteRow,
   MangoQuery,
   MangoQuerySortDirection,
   MangoQuerySortPart,
   RxDocumentData,
   RxDocumentWriteData,
   RxJsonSchema,
+  RxStorageBulkWriteResponse,
   RxStorageChangeEvent,
   RxStorageInstance,
   RxStorageInstanceCreationParams,
@@ -26,6 +28,7 @@ import {
   QueryMatcher,
 } from "event-reduce-js/dist/lib/types";
 import { find } from "./find";
+import { createRevision } from "rxdb";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 let instanceId = 1;
@@ -43,6 +46,7 @@ export class RxStorageBrowserInstance<RxDocType>
     new Subject();
   public readonly instanceId = instanceId++;
   private closed = false;
+  private lastChangefeedSequence: number = 0;
 
   constructor(
     public readonly databaseName: string,
@@ -121,13 +125,111 @@ export class RxStorageBrowserInstance<RxDocType>
   async query(
     preparedQuery: MangoQuery<RxDocType>
   ): Promise<RxStorageQueryResult<RxDocType>> {
-    const dbState = IDB_DATABASE_STATE_BY_NAME.get(this.databaseName);
-    if (!dbState) {
-      throw new Error(`dbState is undefind (dbName: ${this.databaseName})`);
+    const db = this.getLocalState().db;
+    const rows = await find(db, this.collectionName, preparedQuery);
+    return rows;
+  }
+
+  async bulkWrite(
+    documentWrites: BulkWriteRow<RxDocType>[]
+  ): Promise<RxStorageBulkWriteResponse<RxDocType>> {
+    if (documentWrites.length === 0) {
+      throw newRxError("P2", {
+        args: {
+          documentWrites,
+        },
+      });
     }
 
-    const rows = await find(dbState.db, this.collectionName, preparedQuery);
-    return rows;
+    const db = this.getLocalState().db;
+    const txn = db.transaction(this.collectionName, "readwrite");
+    const store = txn.store;
+
+    const ret: RxStorageBulkWriteResponse<RxDocType> = {
+      success: new Map(),
+      error: new Map(),
+    };
+
+    for (const writeRow of documentWrites) {
+      const startTime = Date.now();
+      const id: string = (writeRow.document as any)[this.internals.primaryPath];
+      // TODO: probably will have problems here.
+      const documentInDb = await store.get(this.internals.primaryPath);
+      if (!documentInDb) {
+        // insert new document
+        const newRevision = "1-" + createRevision(writeRow.document);
+
+        /**
+         * It is possible to insert already deleted documents,
+         * this can happen on replication.
+         */
+        const insertedIsDeleted = writeRow.document._deleted ? true : false;
+        if (!insertedIsDeleted) {
+          // TODO: purge documents
+          continue;
+        }
+
+        const writeDoc = Object.assign({}, writeRow.document, {
+          _rev: newRevision,
+          _deleted: insertedIsDeleted,
+          // TODO attachments are currently not working with lokijs
+          _attachments: {} as any,
+        });
+
+        await store.add(writeDoc);
+        this.addChangeDocumentMeta(id);
+        this.changes$.next({
+          eventId: "1", // TODO: fixed eventId
+          documentId: id,
+          change: {
+            doc: writeDoc,
+            id,
+            operation: "INSERT",
+            previous: null,
+          },
+          startTime,
+          endTime: Date.now(),
+        });
+      }
+    }
+  }
+
+  private getLocalState() {
+    const localState = this.internals.localState;
+    if (!localState) {
+      throw new Error(`localState is undefind (dbName: ${this.databaseName})`);
+    }
+
+    return localState;
+  }
+
+  /**
+   * Adds an entry to the changes feed
+   * that can be queried to check which documents have been
+   * changed since sequence X.
+   */
+  private async addChangeDocumentMeta(id: string) {
+    const localState = this.getLocalState();
+    const changesCollectionName = localState.changesCollectionName;
+    const db = localState.db;
+    const store = db.transaction(changesCollectionName, "readwrite").store;
+
+    if (!this.lastChangefeedSequence) {
+      const cursor = await store.index("sequence").openCursor(null, "prev");
+      const lastDoc = cursor?.value;
+      if (lastDoc) {
+        this.lastChangefeedSequence = lastDoc.sequence;
+      }
+    }
+
+    const nextFeedSequence = this.lastChangefeedSequence + 1;
+
+    await store.add({
+      id,
+      sequence: nextFeedSequence,
+    });
+
+    this.lastChangefeedSequence = nextFeedSequence;
   }
 }
 

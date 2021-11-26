@@ -11,7 +11,8 @@ import { RxError } from "./rx-error";
 
 export const CHANGES_COLLECTION_SUFFIX = "-rxdb-changes";
 
-const IDB_DATABASE_STATE_BY_NAME: Map<string, BrowserStorageState> = new Map();
+export const IDB_DATABASE_STATE_BY_NAME: Map<string, BrowserStorageState> =
+  new Map();
 
 /**
  * TODO: migrations
@@ -48,6 +49,7 @@ export const getIdbDatabase = async <RxDocType>(
     }
   }
 
+  const changesCollectionName = collectionName + CHANGES_COLLECTION_SUFFIX;
   const db = await openDB(`${databaseName}.db`, version, {
     upgrade(db) {
       const store = db.createObjectStore(collectionName, {
@@ -71,7 +73,6 @@ export const getIdbDatabase = async <RxDocType>(
         store.createIndex(idxName, idxName);
       });
 
-      const changesCollectionName = collectionName + CHANGES_COLLECTION_SUFFIX;
       const changesStore = db.createObjectStore(changesCollectionName, {
         keyPath: "eventId",
       });
@@ -99,6 +100,7 @@ export const getIdbDatabase = async <RxDocType>(
       ? dbState.collections.concat(collectionName)
       : [collectionName],
     upgradeVersion: dbState ? dbState.upgradeVersion : 0,
+    changesCollectionName,
     version,
   };
 

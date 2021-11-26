@@ -27,7 +27,7 @@ export const find = async <RxDocType>(
 
   const keyRange = generateKeyRange(opts);
 
-  const store = db.transaction(collectionName).store;
+  const store = db.transaction(collectionName, "readwrite").store;
   const index = store.index(firstIndexedField);
   let cursor = await index.openCursor(keyRange);
 
