@@ -1,4 +1,5 @@
 import {
+  BlobBuffer,
   BulkWriteRow,
   ChangeStreamOnceOptions,
   MangoQuery,
@@ -57,6 +58,7 @@ export class RxStorageBrowserInstance<RxDocType>
   constructor(
     public readonly databaseName: string,
     public readonly collectionName: string,
+    public readonly options: Readonly<BrowserStorageSettings>,
     public readonly schema: Readonly<RxJsonSchema<RxDocType>>,
     public readonly internals: BrowserStorageInternals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
   ) {
@@ -482,6 +484,16 @@ export class RxStorageBrowserInstance<RxDocType>
     return this.changes$.asObservable();
   }
 
+  getAttachmentData(
+    _documentId: string,
+    _attachmentId: string
+  ): Promise<BlobBuffer> {
+    // TODO: attacments
+    throw new Error(
+      "Attachments are not implemented in the lokijs RxStorage. Make a pull request."
+    );
+  }
+
   async close(): Promise<void> {
     this.closed = true;
     this.changes$.complete();
@@ -565,6 +577,7 @@ export const createBrowserStorageInstance = async <RxDocType>(
   const instance = new RxStorageBrowserInstance(
     params.databaseName,
     params.collectionName,
+    {},
     params.schema,
     internals
   );
