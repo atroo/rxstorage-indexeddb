@@ -17,12 +17,15 @@ import {
 import {
   getIdbDatabase,
   getPrimaryFieldOfPrimaryKey,
+  IDB_DATABASE_STATE_BY_NAME,
   newRxError,
 } from "./db-helpers";
 import {
   DeterministicSortComparator,
   QueryMatcher,
 } from "event-reduce-js/dist/lib/types";
+import { find } from "./find";
+const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 let instanceId = 1;
 
@@ -105,7 +108,10 @@ export class RxStorageBrowserInstance<RxDocType>
     const fun: QueryMatcher<RxDocumentWriteData<RxDocType>> = (
       doc: RxDocumentWriteData<RxDocType>
     ) => {
-      // query.
+      console.log("getQueryMatcher doc:", doc);
+      const { _attachments, _deleted, _rev, ...json } = doc;
+      const inMemoryFields = Object.keys(json);
+      return filterInMemoryFields([json], query, inMemoryFields).length > 0;
     };
 
     return fun;
