@@ -133,7 +133,7 @@ export class RxStorageBrowserInstance<RxDocType>
   async query(
     preparedQuery: MangoQuery<RxDocType>
   ): Promise<RxStorageQueryResult<RxDocType>> {
-    const db = this.getLocalState().db;
+    const db = await this.getLocalState().getDb();
     const rows = await find(db, this.collectionName, preparedQuery);
     return rows;
   }
@@ -149,7 +149,7 @@ export class RxStorageBrowserInstance<RxDocType>
       });
     }
 
-    const db = this.getLocalState().db;
+    const db = await this.getLocalState().getDb();
     const txn = db.transaction(this.collectionName, "readwrite");
     const store = txn.store;
 
@@ -323,7 +323,7 @@ export class RxStorageBrowserInstance<RxDocType>
     }
 
     const localState = this.getLocalState();
-    const db = localState.db;
+    const db = await localState.getDb();
     const txn = db.transaction(this.collectionName, "readwrite");
     const store = txn.store;
 
@@ -417,7 +417,7 @@ export class RxStorageBrowserInstance<RxDocType>
     const localState = this.getLocalState();
     const ret: Map<string, RxDocumentData<RxDocType>> = new Map();
 
-    const db = localState.db;
+    const db = await localState.getDb();
     const store = await db.transaction(this.collectionName, "readwrite").store;
     for (const id of ids) {
       const documentInDb = await store.get(id);
@@ -440,7 +440,7 @@ export class RxStorageBrowserInstance<RxDocType>
     const operator = options.direction === "after" ? "$gt" : "$lt";
 
     const changesCollectionName = localState.changesCollectionName;
-    const db = localState.db;
+    const db = await localState.getDb();
     const store = db.transaction(changesCollectionName, "readwrite").store;
     let cursor = await store
       .index("sequence")
@@ -500,7 +500,8 @@ export class RxStorageBrowserInstance<RxDocType>
     IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
 
     const localState = this.getLocalState();
-    localState.db.close();
+    const db = await localState.getDb();
+    db.close();
   }
   async remove(): Promise<void> {
     this.close();
@@ -527,7 +528,7 @@ export class RxStorageBrowserInstance<RxDocType>
   private async addChangeDocumentMeta(id: string) {
     const localState = this.getLocalState();
     const changesCollectionName = localState.changesCollectionName;
-    const db = localState.db;
+    const db = await localState.getDb();
     const store = db.transaction(changesCollectionName, "readwrite").store;
 
     if (!this.lastChangefeedSequence) {

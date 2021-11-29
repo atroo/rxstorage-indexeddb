@@ -60,6 +60,7 @@ function App() {
     const coll = database.heroes;
     console.log("heroes collection:", coll);
 
+    console.log("find is dispatched");
     coll.find().$.subscribe((docs) => {
       setDocs(() => {
         return docs;

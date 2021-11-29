@@ -129,15 +129,19 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              db = this.getLocalState().db;
-              _context.next = 3;
+              _context.next = 2;
+              return this.getLocalState().getDb();
+
+            case 2:
+              db = _context.sent;
+              _context.next = 5;
               return (0, _find.find)(db, this.collectionName, preparedQuery);
 
-            case 3:
+            case 5:
               rows = _context.sent;
               return _context.abrupt("return", rows);
 
-            case 5:
+            case 7:
             case "end":
               return _context.stop();
           }
@@ -172,7 +176,11 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               });
 
             case 2:
-              db = this.getLocalState().db;
+              _context2.next = 4;
+              return this.getLocalState().getDb();
+
+            case 4:
+              db = _context2.sent;
               txn = db.transaction(this.collectionName, "readwrite");
               store = txn.store;
               ret = {
@@ -181,9 +189,9 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               };
               _iterator = _createForOfIteratorHelperLoose(documentWrites);
 
-            case 7:
+            case 9:
               if ((_step = _iterator()).done) {
-                _context2.next = 59;
+                _context2.next = 61;
                 break;
               }
 
@@ -191,15 +199,15 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               startTime = Date.now();
               id = writeRow.document[this.internals.primaryPath]; // TODO: probably will have problems here.
 
-              _context2.next = 13;
+              _context2.next = 15;
               return store.openCursor(id);
 
-            case 13:
+            case 15:
               documentInDbCursor = _context2.sent;
               documentInDb = documentInDbCursor === null || documentInDbCursor === void 0 ? void 0 : documentInDbCursor.value;
 
               if (documentInDb) {
-                _context2.next = 28;
+                _context2.next = 30;
                 break;
               }
 
@@ -213,23 +221,23 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               insertedIsDeleted = writeRow.document._deleted ? true : false;
 
               if (insertedIsDeleted) {
-                _context2.next = 20;
+                _context2.next = 22;
                 break;
               }
 
-              return _context2.abrupt("continue", 57);
+              return _context2.abrupt("continue", 59);
 
-            case 20:
+            case 22:
               writeDoc = Object.assign({}, writeRow.document, {
                 _rev: newRevision,
                 _deleted: insertedIsDeleted,
                 // TODO attachments are currently not working with lokijs
                 _attachments: {}
               });
-              _context2.next = 23;
+              _context2.next = 25;
               return store.add(writeDoc);
 
-            case 23:
+            case 25:
               this.addChangeDocumentMeta(id);
               this.changes$.next({
                 eventId: (0, _utils.getEventKey)(false, id, newRevision),
@@ -244,10 +252,10 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 endTime: Date.now()
               });
               ret.success.set(id, writeDoc);
-              _context2.next = 57;
+              _context2.next = 59;
               break;
 
-            case 28:
+            case 30:
               // update existing document
               revInDb = documentInDb._rev; // inserting a deleted document is possible
               // without sending the previous data.
@@ -257,7 +265,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               // }
 
               if (!(!writeRow.previous && !documentInDb._deleted || !!writeRow.previous && revInDb !== writeRow.previous._rev)) {
-                _context2.next = 34;
+                _context2.next = 36;
                 break;
               }
 
@@ -269,22 +277,22 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 writeRow: writeRow
               };
               ret.error.set(id, err);
-              _context2.next = 57;
+              _context2.next = 59;
               break;
 
-            case 34:
+            case 36:
               newRevHeight = (0, _rxdb.getHeightOfRevision)(revInDb) + 1;
               _newRevision = newRevHeight + "-" + (0, _rxdb.createRevision)(writeRow.document);
 
               if (!(writeRow.previous && !writeRow.previous._deleted && writeRow.document._deleted)) {
-                _context2.next = 45;
+                _context2.next = 47;
                 break;
               }
 
-              _context2.next = 39;
+              _context2.next = 41;
               return documentInDbCursor["delete"]();
 
-            case 39:
+            case 41:
               this.addChangeDocumentMeta(id); // TODO: do I need this here.
 
               previous = Object.assign({}, writeRow.previous);
@@ -302,11 +310,11 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 startTime: startTime,
                 endTime: Date.now()
               });
-              return _context2.abrupt("continue", 57);
+              return _context2.abrupt("continue", 59);
 
-            case 45:
+            case 47:
               if (!writeRow.document._deleted) {
-                _context2.next = 47;
+                _context2.next = 49;
                 break;
               }
 
@@ -316,7 +324,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 }
               });
 
-            case 47:
+            case 49:
               _writeDoc = Object.assign({}, writeRow.document, {
                 $loki: documentInDb.$loki,
                 _rev: _newRevision,
@@ -324,10 +332,10 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 _attachments: {} // TODO: attachments
 
               });
-              _context2.next = 50;
+              _context2.next = 52;
               return documentInDbCursor.update(_writeDoc);
 
-            case 50:
+            case 52:
               this.addChangeDocumentMeta(id); // TODO: stripIdbKey(writeDoc) ?
 
               change = null;
@@ -349,7 +357,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               }
 
               if (change) {
-                _context2.next = 55;
+                _context2.next = 57;
                 break;
               }
 
@@ -359,7 +367,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 }
               });
 
-            case 55:
+            case 57:
               this.changes$.next({
                 eventId: (0, _utils.getEventKey)(false, id, _newRevision),
                 documentId: id,
@@ -369,15 +377,15 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               });
               ret.success.set(id, _writeDoc);
 
-            case 57:
-              _context2.next = 7;
+            case 59:
+              _context2.next = 9;
               break;
 
-            case 59:
+            case 61:
               txn.commit();
               return _context2.abrupt("return", ret);
 
-            case 61:
+            case 63:
             case "end":
               return _context2.stop();
           }
@@ -413,15 +421,19 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 2:
               localState = this.getLocalState();
-              db = localState.db;
+              _context3.next = 5;
+              return localState.getDb();
+
+            case 5:
+              db = _context3.sent;
               txn = db.transaction(this.collectionName, "readwrite");
               store = txn.store; // TODO: stripKey(documentInDb) ?
 
               _iterator2 = _createForOfIteratorHelperLoose(documents);
 
-            case 7:
+            case 9:
               if ((_step2 = _iterator2()).done) {
-                _context3.next = 29;
+                _context3.next = 31;
                 break;
               }
 
@@ -429,22 +441,22 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               startTime = Date.now();
               id = docData[this.internals.primaryPath]; // TODO: probably will have problems here.
 
-              _context3.next = 13;
+              _context3.next = 15;
               return store.openCursor(id);
 
-            case 13:
+            case 15:
               documentInDbCursor = _context3.sent;
               documentInDb = documentInDbCursor === null || documentInDbCursor === void 0 ? void 0 : documentInDbCursor.value;
 
               if (documentInDb) {
-                _context3.next = 22;
+                _context3.next = 24;
                 break;
               }
 
-              _context3.next = 18;
+              _context3.next = 20;
               return store.add(Object.assign({}, docData));
 
-            case 18:
+            case 20:
               this.changes$.next({
                 documentId: id,
                 eventId: (0, _utils.getEventKey)(false, id, docData._rev),
@@ -458,10 +470,10 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 endTime: Date.now()
               });
               this.addChangeDocumentMeta(id);
-              _context3.next = 27;
+              _context3.next = 29;
               break;
 
-            case 22:
+            case 24:
               newWriteRevision = (0, _rxdb.parseRevision)(docData._rev);
               oldRevision = (0, _rxdb.parseRevision)(documentInDb._rev);
               mustUpdate = false;
@@ -518,14 +530,14 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 }
               }
 
-            case 27:
-              _context3.next = 7;
+            case 29:
+              _context3.next = 9;
               break;
 
-            case 29:
+            case 31:
               txn.commit();
 
-            case 30:
+            case 32:
             case "end":
               return _context3.stop();
           }
@@ -550,25 +562,29 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
             case 0:
               localState = this.getLocalState();
               ret = new Map();
-              db = localState.db;
-              _context4.next = 5;
+              _context4.next = 4;
+              return localState.getDb();
+
+            case 4:
+              db = _context4.sent;
+              _context4.next = 7;
               return db.transaction(this.collectionName, "readwrite").store;
 
-            case 5:
+            case 7:
               store = _context4.sent;
               _iterator3 = _createForOfIteratorHelperLoose(ids);
 
-            case 7:
+            case 9:
               if ((_step3 = _iterator3()).done) {
-                _context4.next = 15;
+                _context4.next = 17;
                 break;
               }
 
               id = _step3.value;
-              _context4.next = 11;
+              _context4.next = 13;
               return store.get(id);
 
-            case 11:
+            case 13:
               documentInDb = _context4.sent;
 
               if (documentInDb && (!documentInDb._deleted || deleted)) {
@@ -576,14 +592,14 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 ret.set(id, documentInDb);
               }
 
-            case 13:
-              _context4.next = 7;
+            case 15:
+              _context4.next = 9;
               break;
 
-            case 15:
+            case 17:
               return _context4.abrupt("return", ret);
 
-            case 16:
+            case 18:
             case "end":
               return _context4.stop();
           }
@@ -609,32 +625,36 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               desc = options.direction === "before";
               operator = options.direction === "after" ? "$gt" : "$lt";
               changesCollectionName = localState.changesCollectionName;
-              db = localState.db;
+              _context5.next = 6;
+              return localState.getDb();
+
+            case 6:
+              db = _context5.sent;
               store = db.transaction(changesCollectionName, "readwrite").store;
-              _context5.next = 8;
+              _context5.next = 10;
               return store.index("sequence").openCursor(null, desc ? "prev" : "next");
 
-            case 8:
+            case 10:
               cursor = _context5.sent;
               changedDocuments = [];
 
-            case 10:
+            case 12:
               if (!cursor) {
-                _context5.next = 18;
+                _context5.next = 20;
                 break;
               }
 
               value = cursor.value;
               changedDocuments.push(value);
-              _context5.next = 15;
+              _context5.next = 17;
               return cursor["continue"]();
 
-            case 15:
+            case 17:
               cursor = _context5.sent;
-              _context5.next = 10;
+              _context5.next = 12;
               break;
 
-            case 18:
+            case 20:
               if (options.limit) {
                 changedDocuments = changedDocuments.slice(0, options.limit);
               }
@@ -652,7 +672,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               };
               return _context5.abrupt("return", ret);
 
-            case 23:
+            case 25:
             case "end":
               return _context5.stop();
           }
@@ -678,7 +698,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
   _proto.close = /*#__PURE__*/function () {
     var _close = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6() {
-      var localState;
+      var localState, db;
       return _regenerator["default"].wrap(function _callee6$(_context6) {
         while (1) {
           switch (_context6.prev = _context6.next) {
@@ -689,9 +709,14 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
 
               localState = this.getLocalState();
-              localState.db.close();
+              _context6.next = 6;
+              return localState.getDb();
 
-            case 5:
+            case 6:
+              db = _context6.sent;
+              db.close();
+
+            case 8:
             case "end":
               return _context6.stop();
           }
@@ -763,18 +788,22 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
             case 0:
               localState = this.getLocalState();
               changesCollectionName = localState.changesCollectionName;
-              db = localState.db;
+              _context8.next = 4;
+              return localState.getDb();
+
+            case 4:
+              db = _context8.sent;
               store = db.transaction(changesCollectionName, "readwrite").store;
 
               if (this.lastChangefeedSequence) {
-                _context8.next = 10;
+                _context8.next = 12;
                 break;
               }
 
-              _context8.next = 7;
+              _context8.next = 9;
               return store.index("sequence").openCursor(null, "prev");
 
-            case 7:
+            case 9:
               cursor = _context8.sent;
               lastDoc = cursor === null || cursor === void 0 ? void 0 : cursor.value;
 
@@ -782,18 +811,18 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 this.lastChangefeedSequence = lastDoc.sequence;
               }
 
-            case 10:
+            case 12:
               nextFeedSequence = this.lastChangefeedSequence + 1;
-              _context8.next = 13;
+              _context8.next = 15;
               return store.add({
                 id: id,
                 sequence: nextFeedSequence
               });
 
-            case 13:
+            case 15:
               this.lastChangefeedSequence = nextFeedSequence;
 
-            case 14:
+            case 16:
             case "end":
               return _context8.stop();
           }

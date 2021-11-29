@@ -55,7 +55,7 @@ export class RxStorageKeyObjectInstanceLoki<RxDocType>
       });
     }
 
-    const db = this.getLocalState().db;
+    const db = await this.getLocalState().getDb();
     const txn = db.transaction(this.collectionName, "readwrite");
     const store = txn.store;
 
@@ -180,7 +180,7 @@ export class RxStorageKeyObjectInstanceLoki<RxDocType>
 
     const ret: Map<string, RxLocalDocumentData<RxDocType>> = new Map();
 
-    const db = localState.db;
+    const db = await localState.getDb();
     const store = await db.transaction(this.collectionName, "readwrite").store;
     for (const id of ids) {
       const documentInDb = await store.get(id);
@@ -204,7 +204,8 @@ export class RxStorageKeyObjectInstanceLoki<RxDocType>
     IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
 
     const localState = this.getLocalState();
-    localState.db.close();
+    const db = await localState.getDb();
+    db.close();
   }
   async remove(): Promise<void> {
     this.close();

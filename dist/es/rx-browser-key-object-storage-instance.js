@@ -65,7 +65,11 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
               });
 
             case 2:
-              db = this.getLocalState().db;
+              _context.next = 4;
+              return this.getLocalState().getDb();
+
+            case 4:
+              db = _context.sent;
               txn = db.transaction(this.collectionName, "readwrite");
               store = txn.store;
               ret = {
@@ -76,19 +80,19 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
               startTime = Date.now();
               _iterator = _createForOfIteratorHelperLoose(documentWrites);
 
-            case 9:
+            case 11:
               if ((_step = _iterator()).done) {
-                _context.next = 49;
+                _context.next = 51;
                 break;
               }
 
               writeRow = _step.value;
               id = writeRow.document._id;
               writeRowById.set(id, writeRow);
-              _context.next = 15;
+              _context.next = 17;
               return store.openCursor(id);
 
-            case 15:
+            case 17:
               documentInDbCursor = _context.sent;
               writeDoc = Object.assign({}, writeRow.document);
               docInDb = documentInDbCursor === null || documentInDbCursor === void 0 ? void 0 : documentInDbCursor.value;
@@ -98,12 +102,12 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
               writeDoc._rev = newRevision;
 
               if (!docInDb) {
-                _context.next = 39;
+                _context.next = 41;
                 break;
               }
 
               if (!(!writeRow.previous || docInDb._rev !== writeRow.previous._rev)) {
-                _context.next = 29;
+                _context.next = 31;
                 break;
               }
 
@@ -115,40 +119,40 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
                 writeRow: writeRow
               };
               ret.error.set(id, err);
-              return _context.abrupt("continue", 47);
+              return _context.abrupt("continue", 49);
 
-            case 29:
+            case 31:
               if (writeRow.document._deleted) {
-                _context.next = 35;
+                _context.next = 37;
                 break;
               }
 
               docCpy = Object.assign({}, writeDoc);
-              _context.next = 33;
+              _context.next = 35;
               return documentInDbCursor.update(writeDoc);
 
-            case 33:
-              _context.next = 37;
-              break;
-
             case 35:
-              _context.next = 37;
-              return documentInDbCursor["delete"]();
+              _context.next = 39;
+              break;
 
             case 37:
-              _context.next = 42;
-              break;
+              _context.next = 39;
+              return documentInDbCursor["delete"]();
 
             case 39:
+              _context.next = 44;
+              break;
+
+            case 41:
               if (writeRow.document._deleted) {
-                _context.next = 42;
+                _context.next = 44;
                 break;
               }
 
-              _context.next = 42;
+              _context.next = 44;
               return store.add(Object.assign({}, writeDoc));
 
-            case 42:
+            case 44:
               // TODO: strip?
               ret.success.set(id, writeDoc);
               endTime = Date.now();
@@ -204,15 +208,15 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
                 this.changes$.next(storageChangeEvent);
               }
 
-            case 47:
-              _context.next = 9;
+            case 49:
+              _context.next = 11;
               break;
 
-            case 49:
+            case 51:
               txn.commit();
               return _context.abrupt("return", ret);
 
-            case 51:
+            case 53:
             case "end":
               return _context.stop();
           }
@@ -237,25 +241,29 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
             case 0:
               localState = this.getLocalState();
               ret = new Map();
-              db = localState.db;
-              _context2.next = 5;
+              _context2.next = 4;
+              return localState.getDb();
+
+            case 4:
+              db = _context2.sent;
+              _context2.next = 7;
               return db.transaction(this.collectionName, "readwrite").store;
 
-            case 5:
+            case 7:
               store = _context2.sent;
               _iterator2 = _createForOfIteratorHelperLoose(ids);
 
-            case 7:
+            case 9:
               if ((_step2 = _iterator2()).done) {
-                _context2.next = 15;
+                _context2.next = 17;
                 break;
               }
 
               id = _step2.value;
-              _context2.next = 11;
+              _context2.next = 13;
               return store.get(id);
 
-            case 11:
+            case 13:
               documentInDb = _context2.sent;
 
               if (documentInDb && !documentInDb._deleted) {
@@ -263,14 +271,14 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
                 ret.set(id, documentInDb);
               }
 
-            case 13:
-              _context2.next = 7;
+            case 15:
+              _context2.next = 9;
               break;
 
-            case 15:
+            case 17:
               return _context2.abrupt("return", ret);
 
-            case 16:
+            case 18:
             case "end":
               return _context2.stop();
           }
@@ -291,7 +299,7 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
 
   _proto.close = /*#__PURE__*/function () {
     var _close = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3() {
-      var localState;
+      var localState, db;
       return _regenerator["default"].wrap(function _callee3$(_context3) {
         while (1) {
           switch (_context3.prev = _context3.next) {
@@ -302,9 +310,14 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
               _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
 
               localState = this.getLocalState();
-              localState.db.close();
+              _context3.next = 6;
+              return localState.getDb();
 
-            case 5:
+            case 6:
+              db = _context3.sent;
+              db.close();
+
+            case 8:
             case "end":
               return _context3.stop();
           }

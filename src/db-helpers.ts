@@ -1,4 +1,4 @@
-import { openDB } from "idb";
+import { IDBPDatabase, openDB } from "idb";
 import { overwritable, RxJsonSchema } from "rxdb";
 import {
   CompositePrimaryKey,
@@ -22,12 +22,18 @@ export const IDB_DATABASE_STATE_BY_NAME: Map<string, BrowserStorageState> =
  *
  * TODO: "close" notifications ?
  */
+
+// poc
+const storesData: any[] = [];
+let openedDb: IDBPDatabase<unknown>;
+
 export const getIdbDatabase = async <RxDocType>(
   databaseName: string,
   collectionName: string,
   primaryPath: string,
   schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">
 ) => {
+  console.log("DB NAME");
   const dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
   let version = schema.version + 1;
   if (dbState) {
@@ -45,57 +51,104 @@ export const getIdbDatabase = async <RxDocType>(
        */
       return dbState;
     } else {
-      dbState.db.close();
+      console.log("db name: ", databaseName);
+      console.log("col name: ", collectionName);
+      console.log("primary path: ", primaryPath);
+      console.log("schema: ", schema);
+      console.log("---------------------");
+      // dbState.db.close();
     }
   }
 
-  const changesCollectionName = collectionName + CHANGES_COLLECTION_SUFFIX;
-  const db = await openDB(`${databaseName}.db`, version, {
-    upgrade(db) {
-      const store = db.createObjectStore(collectionName, {
-        keyPath: primaryPath,
-      });
-
-      /**
-       * Construct loki indexes from RxJsonSchema indexes.
-       * TODO what about compound indexes?
-       */
-      const indices: string[] = [];
-      if (schema.indexes) {
-        schema.indexes.forEach((idx) => {
-          if (!Array.isArray(idx)) {
-            indices.push(idx);
-          }
-        });
+  const indexes: string[] = [];
+  if (schema.indexes) {
+    schema.indexes.forEach((idx) => {
+      if (!Array.isArray(idx)) {
+        indexes.push(idx);
       }
+    });
+  }
 
-      indices.forEach((idxName) => {
-        store.createIndex(idxName, idxName);
-      });
+  const changesCollectionName = collectionName + CHANGES_COLLECTION_SUFFIX;
 
-      const changesStore = db.createObjectStore(changesCollectionName, {
-        keyPath: "eventId",
-      });
-      changesStore.createIndex("sequence", "sequence");
-    },
-    blocked() {
-      alert("Please close all other tabs with this site open!");
-    },
-    blocking() {
-      // Make sure to add a handler to be notified if another page requests a version
-      // change. We must close the database. This allows the other page to upgrade the database.
-      // If you don't do this then the upgrade won't happen until the user closes the tab.
-      //
-      //   db.close();
-      //   alert(
-      //     "A new version of this page is ready. Please reload or close this tab!"
-      //   );
-    },
-    terminated() {},
+  storesData.push({
+    collectionName,
+    primaryPath,
+    indexes,
+  });
+
+  /** should I created this only once or for every db?? */
+  storesData.push({
+    collectionName: changesCollectionName,
+    primaryPath: "eventId",
+    indexes: ["sequence"],
   });
 
   const newDbState: BrowserStorageState = {
-    db,
+    getDb: async () => {
+      if (openedDb) {
+        return openedDb;
+      }
+
+      const db = await openDB(`${databaseName}.db`, 1, {
+        upgrade(db) {
+          console.log("storesData:", storesData);
+          for (const storeData of storesData) {
+            /**
+             * Construct loki indexes from RxJsonSchema indexes.
+             * TODO what about compound indexes?
+             */
+            const store = db.createObjectStore(storeData.collectionName, {
+              keyPath: storeData.primaryPath,
+            });
+
+            storeData.indexes.forEach((idxName: string) => {
+              store.createIndex(idxName, idxName);
+            });
+          }
+
+          // const store = db.createObjectStore(collectionName, {
+          //   keyPath: primaryPath,
+          // });
+
+          // const indices: string[] = [];
+          // if (schema.indexes) {
+          //   schema.indexes.forEach((idx) => {
+          //     if (!Array.isArray(idx)) {
+          //       indices.push(idx);
+          //     }
+          //   });
+          // }
+
+          // indices.forEach((idxName) => {
+          //   store.createIndex(idxName, idxName);
+          // });
+
+          // const changesStore = db.createObjectStore(changesCollectionName, {
+          //   keyPath: "eventId",
+          // });
+          // changesStore.createIndex("sequence", "sequence");
+        },
+        blocked() {
+          alert("Please close all other tabs with this site open!");
+        },
+        blocking() {
+          // Make sure to add a handler to be notified if another page requests a version
+          // change. We must close the database. This allows the other page to upgrade the database.
+          // If you don't do this then the upgrade won't happen until the user closes the tab.
+          //
+          db.close();
+          alert(
+            "A new version of this page is ready. Please reload or close this tab!"
+          );
+        },
+        terminated() {},
+      });
+
+      openedDb = db;
+
+      return openedDb;
+    },
     collections: dbState
       ? dbState.collections.concat(collectionName)
       : [collectionName],

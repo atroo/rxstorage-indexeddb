@@ -7,7 +7,7 @@ import { IDBPDatabase } from "idb";
  *  Can be used to detect migrations.
  */
 export interface BrowserStorageState {
-  db: IDBPDatabase<unknown>;
+  getDb: () => Promise<IDBPDatabase<unknown>>;
   collections: string[];
   upgradeVersion: number;
   version: number;
