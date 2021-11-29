@@ -391,7 +391,7 @@ function _createBrowserKeyValueStorageLocalState() {
           case 0:
             primaryPath = "_id";
             _context6.next = 3;
-            return (0, _dbHelpers.getIdbDatabase)(params.databaseName, params.collectionName, "_id", {
+            return (0, _dbHelpers.createIdbDatabase)(params.databaseName, params.collectionName, "_id", {
               indexes: [],
               version: 1
             });

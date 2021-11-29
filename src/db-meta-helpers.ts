@@ -11,13 +11,20 @@ export const getDbMeta = async () => {
   const db = await openDB<IMetaDB>("rx-browser-storage-meta", 1, {
     upgrade: (db) => {
       // store version, collections
-      db.createObjectStore("dbMetaData", {
+      const dbMetaDataStore = db.createObjectStore("dbMetaData", {
         keyPath: "dbName",
       });
 
-      db.createObjectStore("indexedCols", {
+      dbMetaDataStore.createIndex("dbName", "dbName");
+
+      const indexedColsStore = db.createObjectStore("indexedCols", {
         keyPath: "collection",
       });
+
+      indexedColsStore.createIndex("collection", "collection");
+    },
+    blocking: () => {
+      db.close();
     },
   });
 

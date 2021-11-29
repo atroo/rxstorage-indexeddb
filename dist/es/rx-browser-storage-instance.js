@@ -326,7 +326,6 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 49:
               _writeDoc = Object.assign({}, writeRow.document, {
-                $loki: documentInDb.$loki,
                 _rev: _newRevision,
                 _deleted: false,
                 _attachments: {} // TODO: attachments
@@ -851,7 +850,7 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
           case 0:
             primaryPath = (0, _dbHelpers.getPrimaryFieldOfPrimaryKey)(params.schema.primaryKey).toString();
             _context9.next = 3;
-            return (0, _dbHelpers.getIdbDatabase)(params.databaseName, params.collectionName, primaryPath, params.schema);
+            return (0, _dbHelpers.createIdbDatabase)(params.databaseName, params.collectionName, primaryPath, params.schema);
 
           case 3:
             databaseState = _context9.sent;

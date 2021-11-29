@@ -9,15 +9,14 @@ import { DBSchema, IDBPDatabase } from "idb";
 export interface BrowserStorageState {
   getDb: () => Promise<IDBPDatabase<unknown>>;
   db?: IDBPDatabase<unknown>;
-  collections: string[];
-  upgradeVersion: number;
-  version: number;
   changesCollectionName: string;
-  meta: Array<{
+  updateNeeded: boolean;
+  newCollections: Array<{
     collectionName: string;
     indexes: Array<string | string[]>;
     primaryPath: string | string[];
   }>;
+  metaData: IMetaDB["dbMetaData"]["value"];
 }
 
 export interface IMetaDB extends DBSchema {
@@ -26,6 +25,10 @@ export interface IMetaDB extends DBSchema {
     value: {
       version: number;
       collections: string[];
+      dbName: string;
+    };
+    indexes: {
+      dbName: string;
     };
   };
   indexedCols: {
@@ -33,6 +36,10 @@ export interface IMetaDB extends DBSchema {
     value: {
       name: string;
       value: string;
+      collection: string;
+    };
+    indexes: {
+      collection: string;
     };
   };
 }

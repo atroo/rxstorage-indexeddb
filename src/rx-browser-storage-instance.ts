@@ -259,7 +259,6 @@ export class RxStorageBrowserInstance<RxDocType>
           }
 
           const writeDoc: any = Object.assign({}, writeRow.document, {
-            $loki: documentInDb.$loki,
             _rev: newRevision,
             _deleted: false,
             _attachments: {}, // TODO: attachments
