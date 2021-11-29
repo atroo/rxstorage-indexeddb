@@ -8,8 +8,14 @@ import { IDBPDatabase } from "idb";
  */
 export interface BrowserStorageState {
   getDb: () => Promise<IDBPDatabase<unknown>>;
+  db?: IDBPDatabase<unknown>;
   collections: string[];
   upgradeVersion: number;
   version: number;
   changesCollectionName: string;
+  meta: Array<{
+    collectionName: string;
+    indexes: Array<string | string[]>;
+    primaryPath: string | string[];
+  }>;
 }

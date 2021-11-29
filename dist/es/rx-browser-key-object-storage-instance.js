@@ -304,20 +304,21 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
+              console.log("WILL close1");
               this.closed = true;
               this.changes$.complete();
 
               _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
 
               localState = this.getLocalState();
-              _context3.next = 6;
+              _context3.next = 7;
               return localState.getDb();
 
-            case 6:
+            case 7:
               db = _context3.sent;
               db.close();
 
-            case 8:
+            case 9:
             case "end":
               return _context3.stop();
           }

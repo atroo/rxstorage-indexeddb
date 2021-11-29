@@ -1,8 +1,9 @@
 import { IDBPDatabase } from "idb";
 import { MangoQuery } from "rxdb/dist/types/types";
 import { translateMangoQuerySelector } from ".";
+import { getIndexesMetaCollName, INDEXES_META_PRIMARY_KEY } from "./db-helpers";
 import { generateKeyRange } from "./idb-key-range";
-import { IIdbKeyRangeOptions } from "./types/translate-mango-query";
+import { IIdbKeyRangeOptions, IIndex } from "./types/translate-mango-query";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 export const find = async <RxDocType>(
@@ -10,6 +11,22 @@ export const find = async <RxDocType>(
   collectionName: string,
   query: MangoQuery<RxDocType>
 ) => {
+  const collName = getIndexesMetaCollName(collectionName);
+  console.log("COLL NAME: ", collName);
+  const indexesMetaStore = db.transaction(
+    getIndexesMetaCollName(collectionName)
+  ).store;
+
+  const indexNameIndex = indexesMetaStore.index(INDEXES_META_PRIMARY_KEY);
+  const indexesMeta: IIndex[] = [];
+  let indexesMetaCursor = await indexNameIndex.openCursor();
+  while (indexesMetaCursor) {
+    indexesMeta.push(indexesMetaCursor.value);
+    indexesMetaCursor = await indexesMetaCursor.continue();
+  }
+
+  console.log("indexesMeta:", indexesMeta);
+
   const translatedSelector = translateMangoQuerySelector(query);
 
   // TODO: use indexed field to generate opts

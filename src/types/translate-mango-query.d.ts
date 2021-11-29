@@ -20,3 +20,8 @@ export interface IIdbKeyRangeOptions {
   descending?: boolean;
   key?: string;
 }
+
+export interface IIndex {
+  indexName: string;
+  keyPath: string | string[];
+}

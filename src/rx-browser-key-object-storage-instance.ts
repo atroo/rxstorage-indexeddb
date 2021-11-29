@@ -199,6 +199,7 @@ export class RxStorageKeyObjectInstanceLoki<RxDocType>
   }
 
   async close(): Promise<void> {
+    console.log("WILL close1");
     this.closed = true;
     this.changes$.complete();
     IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);

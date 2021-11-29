@@ -1,4 +1,4 @@
-import { IDBPDatabase, openDB } from "idb";
+import { openDB } from "idb";
 import { overwritable, RxJsonSchema } from "rxdb";
 import {
   CompositePrimaryKey,
@@ -10,9 +10,19 @@ import { BrowserStorageState } from "./types/browser-storeage-state";
 import { RxError } from "./rx-error";
 
 export const CHANGES_COLLECTION_SUFFIX = "-rxdb-changes";
+export const INDEXES_META_COLLECTION_SUFFIX = "-idb-meta";
+export const INDEXES_META_PRIMARY_KEY = "indexNameIdbMeta";
 
 export const IDB_DATABASE_STATE_BY_NAME: Map<string, BrowserStorageState> =
   new Map();
+
+export const getChangesCollName = (collName: string) => {
+  return collName + CHANGES_COLLECTION_SUFFIX;
+};
+
+export const getIndexesMetaCollName = (collName: string) => {
+  return collName + INDEXES_META_COLLECTION_SUFFIX;
+};
 
 /**
  * TODO: migrations
@@ -23,11 +33,7 @@ export const IDB_DATABASE_STATE_BY_NAME: Map<string, BrowserStorageState> =
  * TODO: "close" notifications ?
  */
 
-// poc
-const storesData: any[] = [];
-let openedDb: IDBPDatabase<unknown>;
-
-export const getIdbDatabase = async <RxDocType>(
+export const getIdbDatabase = <RxDocType>(
   databaseName: string,
   collectionName: string,
   primaryPath: string,
@@ -36,6 +42,7 @@ export const getIdbDatabase = async <RxDocType>(
   console.log("DB NAME");
   const dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
   let version = schema.version + 1;
+  let meta: BrowserStorageState["meta"] = [];
   if (dbState) {
     const newCollectionAdded =
       dbState.collections.indexOf(collectionName) === -1;
@@ -49,19 +56,15 @@ export const getIdbDatabase = async <RxDocType>(
       /**
        * nothing has changed. no need to create new connection
        */
-      return dbState;
-    } else {
-      console.log("db name: ", databaseName);
-      console.log("col name: ", collectionName);
-      console.log("primary path: ", primaryPath);
-      console.log("schema: ", schema);
-      console.log("---------------------");
-      // dbState.db.close();
+      // return dbState;
     }
+
+    meta = meta.concat(dbState.meta);
   }
 
   const indexes: string[] = [];
   if (schema.indexes) {
+    // TODO: compund indexes;
     schema.indexes.forEach((idx) => {
       if (!Array.isArray(idx)) {
         indexes.push(idx);
@@ -69,31 +72,58 @@ export const getIdbDatabase = async <RxDocType>(
     });
   }
 
-  const changesCollectionName = collectionName + CHANGES_COLLECTION_SUFFIX;
+  const changesCollectionName = getChangesCollName(collectionName);
 
-  storesData.push({
+  meta.push({
     collectionName,
     primaryPath,
     indexes,
   });
 
   /** should I created this only once or for every db?? */
-  storesData.push({
+  meta.push({
     collectionName: changesCollectionName,
     primaryPath: "eventId",
     indexes: ["sequence"],
   });
 
+  // TODO: ADD IT ONlY ONCE
+  meta.push({
+    collectionName: getIndexesMetaCollName(collectionName),
+    primaryPath: INDEXES_META_PRIMARY_KEY,
+    indexes: ["keyPath"],
+  });
+
+  console.log("META!!!: ", meta);
+
   const newDbState: BrowserStorageState = {
     getDb: async () => {
-      if (openedDb) {
-        return openedDb;
+      const dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
+      console.log("REQ DATBASE: ", [...(dataBaseState?.meta as any)]);
+      if (!dataBaseState) {
+        throw new Error("dataBase state is undefined");
       }
 
-      const db = await openDB(`${databaseName}.db`, 1, {
-        upgrade(db) {
-          console.log("storesData:", storesData);
-          for (const storeData of storesData) {
+      if (dataBaseState.db && !dataBaseState.meta.length) {
+        console.log("ALREADY EXISTS: ", [...(dataBaseState?.meta as any)]);
+        return dataBaseState.db;
+      }
+
+      if (dataBaseState.db) {
+        dataBaseState.db.close();
+      }
+
+      // TODO: manage version change.
+      const db = await openDB(`${databaseName}.db`, dataBaseState.version, {
+        async upgrade(db) {
+          const dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
+          const meta = dbState?.meta;
+          console.log("META:", meta);
+          if (!meta) {
+            return;
+          }
+          console.log("storesData:", meta);
+          for (const storeData of meta) {
             /**
              * Construct loki indexes from RxJsonSchema indexes.
              * TODO what about compound indexes?
@@ -102,35 +132,14 @@ export const getIdbDatabase = async <RxDocType>(
               keyPath: storeData.primaryPath,
             });
 
-            storeData.indexes.forEach((idxName: string) => {
-              store.createIndex(idxName, idxName);
+            storeData.indexes.forEach((idxName) => {
+              // FIXME
+              store.createIndex(idxName as string, idxName);
             });
           }
-
-          // const store = db.createObjectStore(collectionName, {
-          //   keyPath: primaryPath,
-          // });
-
-          // const indices: string[] = [];
-          // if (schema.indexes) {
-          //   schema.indexes.forEach((idx) => {
-          //     if (!Array.isArray(idx)) {
-          //       indices.push(idx);
-          //     }
-          //   });
-          // }
-
-          // indices.forEach((idxName) => {
-          //   store.createIndex(idxName, idxName);
-          // });
-
-          // const changesStore = db.createObjectStore(changesCollectionName, {
-          //   keyPath: "eventId",
-          // });
-          // changesStore.createIndex("sequence", "sequence");
         },
         blocked() {
-          alert("Please close all other tabs with this site open!");
+          // alert("Please close all other tabs with this site open!");
         },
         blocking() {
           // Make sure to add a handler to be notified if another page requests a version
@@ -138,16 +147,62 @@ export const getIdbDatabase = async <RxDocType>(
           // If you don't do this then the upgrade won't happen until the user closes the tab.
           //
           db.close();
-          alert(
-            "A new version of this page is ready. Please reload or close this tab!"
-          );
+          // alert(
+          //   "A new version of this page is ready. Please reload or close this tab!"
+          // );
         },
         terminated() {},
       });
 
-      openedDb = db;
+      IDB_DATABASE_STATE_BY_NAME.set(databaseName, { ...dataBaseState, db });
+      db.addEventListener("versionchange", () => {
+        console.log("versionchange fired");
+      });
 
-      return openedDb;
+      const indexesStore = db.transaction(
+        getIndexesMetaCollName(collectionName),
+        "readwrite"
+      ).store;
+
+      /**
+       * Store meta data about index
+       * Use it later to understand what index to use to query data
+       *
+       */
+
+      const dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
+      const meta = dbState?.meta;
+      if (!meta) {
+        return db;
+      }
+
+      for (const storeData of meta) {
+        if (storeData.primaryPath === INDEXES_META_PRIMARY_KEY) {
+          continue;
+        }
+
+        await indexesStore.put({
+          [INDEXES_META_PRIMARY_KEY]: storeData.primaryPath,
+          keyPath: storeData.primaryPath,
+        });
+
+        const indexes = storeData.indexes;
+        for (const index of indexes) {
+          await indexesStore.put({
+            [INDEXES_META_PRIMARY_KEY]: index,
+            keyPath: index,
+          });
+        }
+      }
+
+      // clear meta after transaction went successfully
+      IDB_DATABASE_STATE_BY_NAME.set(databaseName, {
+        ...dataBaseState,
+        db,
+        meta: [],
+      });
+
+      return db;
     },
     collections: dbState
       ? dbState.collections.concat(collectionName)
@@ -155,6 +210,7 @@ export const getIdbDatabase = async <RxDocType>(
     upgradeVersion: dbState ? dbState.upgradeVersion : 0,
     changesCollectionName,
     version,
+    meta,
   };
 
   IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
