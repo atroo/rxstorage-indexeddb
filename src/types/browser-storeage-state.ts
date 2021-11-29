@@ -1,4 +1,4 @@
-import { IDBPDatabase } from "idb";
+import { DBSchema, IDBPDatabase } from "idb";
 
 /**
  * @param {number} upgradeVersion Will increment every time new collection are added.
@@ -18,4 +18,17 @@ export interface BrowserStorageState {
     indexes: Array<string | string[]>;
     primaryPath: string | string[];
   }>;
+}
+
+export interface IMetaDB extends DBSchema {
+  versionChange: {
+    key: string;
+    value: number;
+    indexes: { version: number };
+  };
+  indexedCols: {
+    key: string;
+    value: string | string[];
+    indexes: { name: string; value: string | string[] };
+  };
 }

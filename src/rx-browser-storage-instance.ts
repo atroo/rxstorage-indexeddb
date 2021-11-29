@@ -22,7 +22,7 @@ import {
   BrowserStorageSettings,
 } from "./types/browser-storage";
 import {
-  getIdbDatabase,
+  createIdbDatabase,
   getPrimaryFieldOfPrimaryKey,
   IDB_DATABASE_STATE_BY_NAME,
   newRxError,
@@ -556,7 +556,7 @@ export const createBrowserStorageLocalState = async <RxDocType>(
   const primaryPath = getPrimaryFieldOfPrimaryKey(
     params.schema.primaryKey
   ).toString();
-  const databaseState = await getIdbDatabase(
+  const databaseState = await createIdbDatabase(
     params.databaseName,
     params.collectionName,
     primaryPath,

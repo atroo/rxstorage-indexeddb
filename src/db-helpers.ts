@@ -1,4 +1,4 @@
-import { openDB } from "idb";
+import { IDBPDatabase, openDB } from "idb";
 import { overwritable, RxJsonSchema } from "rxdb";
 import {
   CompositePrimaryKey,
@@ -6,7 +6,7 @@ import {
   RxErrorKey,
   RxErrorParameters,
 } from "rxdb/dist/types/types";
-import { BrowserStorageState } from "./types/browser-storeage-state";
+import { BrowserStorageState, IMetaDB } from "./types/browser-storeage-state";
 import { RxError } from "./rx-error";
 
 export const CHANGES_COLLECTION_SUFFIX = "-rxdb-changes";
@@ -33,11 +33,12 @@ export const getIndexesMetaCollName = (collName: string) => {
  * TODO: "close" notifications ?
  */
 
-export const getIdbDatabase = <RxDocType>(
+export const createIdbDatabase = <RxDocType>(
   databaseName: string,
   collectionName: string,
   primaryPath: string,
-  schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">
+  schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">,
+  metaDb: IDBPDatabase<IMetaDB>
 ) => {
   console.log("DB NAME");
   const dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);

@@ -13,7 +13,7 @@ import {
 } from "rxdb/dist/types/types";
 import { Observable, Subject } from "rxjs";
 import {
-  getIdbDatabase,
+  createIdbDatabase,
   IDB_DATABASE_STATE_BY_NAME,
   newRxError,
 } from "./db-helpers";
@@ -233,7 +233,7 @@ export async function createBrowserKeyValueStorageLocalState(
 ): Promise<BrowserStorageInternals> {
   const primaryPath = "_id";
 
-  const databaseState = await getIdbDatabase(
+  const databaseState = await createIdbDatabase(
     params.databaseName,
     params.collectionName,
     "_id",
