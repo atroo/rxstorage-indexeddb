@@ -55,14 +55,19 @@ export class RxBrowserKeyValStorageInstance<RxDocType>
       });
     }
 
-    const db = await this.getLocalState().getDb();
-    const txn = db.transaction(this.collectionName, "readwrite");
-    const store = txn.store;
-
     const ret: RxLocalStorageBulkWriteResponse<RxDocType> = {
       success: new Map(),
       error: new Map(),
     };
+
+    if (this.closed) {
+      return ret;
+    }
+
+    const db = await this.getLocalState().getDb();
+    const txn = db.transaction(this.collectionName, "readwrite");
+    const store = txn.store;
+
     const writeRowById: Map<string, BulkWriteLocalRow<RxDocType>> = new Map();
     const startTime = Date.now();
 
@@ -175,9 +180,13 @@ export class RxBrowserKeyValStorageInstance<RxDocType>
   async findLocalDocumentsById<RxDocType = any>(
     ids: string[]
   ): Promise<Map<string, RxLocalDocumentData<RxDocType>>> {
-    const localState = this.getLocalState();
-
     const ret: Map<string, RxLocalDocumentData<RxDocType>> = new Map();
+
+    if (this.closed) {
+      return ret;
+    }
+
+    const localState = this.getLocalState();
 
     const db = await localState.getDb();
     const store = await db.transaction(this.collectionName, "readwrite").store;
@@ -198,15 +207,23 @@ export class RxBrowserKeyValStorageInstance<RxDocType>
 
   async close(): Promise<void> {
     this.closed = true;
-    this.changes$.complete();
-    IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
 
+    if (!IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
+      // already closed.
+      // different instance could already close db.
+      return;
+    }
+
+    this.changes$.complete();
     const localState = this.getLocalState();
     const db = await localState.getDb();
     db.close();
+    IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
   }
   async remove(): Promise<void> {
-    this.close();
+    if (!this.closed) {
+      this.close();
+    }
     // TODO: it can be a problem actually.
     // The connection is not actually closed until all transactions created using this connection are complete.
     await deleteDB(this.databaseName);

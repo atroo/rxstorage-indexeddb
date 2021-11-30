@@ -133,6 +133,10 @@ export class RxStorageBrowserInstance<RxDocType>
   async query(
     preparedQuery: MangoQuery<RxDocType>
   ): Promise<RxStorageQueryResult<RxDocType>> {
+    if (this.closed) {
+      return Promise.resolve({ documents: [] });
+    }
+
     const db = await this.getLocalState().getDb();
     const rows = await find(db, this.collectionName, preparedQuery);
     return { documents: rows };
@@ -149,14 +153,18 @@ export class RxStorageBrowserInstance<RxDocType>
       });
     }
 
-    const db = await this.getLocalState().getDb();
-    const txn = db.transaction(this.collectionName, "readwrite");
-    const store = txn.store;
-
     const ret: RxStorageBulkWriteResponse<RxDocType> = {
       success: new Map(),
       error: new Map(),
     };
+
+    if (this.closed) {
+      return ret;
+    }
+
+    const db = await this.getLocalState().getDb();
+    const txn = db.transaction(this.collectionName, "readwrite");
+    const store = txn.store;
 
     for (const writeRow of documentWrites) {
       const startTime = Date.now();
@@ -318,6 +326,10 @@ export class RxStorageBrowserInstance<RxDocType>
       });
     }
 
+    if (this.closed) {
+      return;
+    }
+
     const localState = this.getLocalState();
     const db = await localState.getDb();
     const txn = db.transaction(this.collectionName, "readwrite");
@@ -407,9 +419,13 @@ export class RxStorageBrowserInstance<RxDocType>
     ids: string[],
     deleted: boolean
   ): Promise<Map<string, RxDocumentData<RxDocType>>> {
-    const localState = this.getLocalState();
     const ret: Map<string, RxDocumentData<RxDocType>> = new Map();
 
+    if (this.closed) {
+      return ret;
+    }
+
+    const localState = this.getLocalState();
     const db = await localState.getDb();
     const store = await db.transaction(this.collectionName, "readwrite").store;
     for (const id of ids) {
@@ -426,10 +442,17 @@ export class RxStorageBrowserInstance<RxDocType>
     changedDocuments: RxStorageChangedDocumentMeta[];
     lastSequence: number;
   }> {
+    if (this.closed) {
+      return {
+        changedDocuments: [],
+        lastSequence: options.sinceSequence,
+      };
+    }
+
     const localState = this.getLocalState();
 
     const desc = options.direction === "before";
-    const operator = options.direction === "after" ? "$gt" : "$lt";
+    const operator = options.direction === "after" ? "$gt" : "$lt"; // TODO: ?
 
     const changesCollectionName = this.getChangesCollectionName();
     const db = await localState.getDb();
@@ -488,15 +511,23 @@ export class RxStorageBrowserInstance<RxDocType>
 
   async close(): Promise<void> {
     this.closed = true;
-    this.changes$.complete();
-    IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
 
+    if (!IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
+      // already closed.
+      // different instance could already close db.
+      return;
+    }
+
+    this.changes$.complete();
     const localState = this.getLocalState();
     const db = await localState.getDb();
     db.close();
+    IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
   }
   async remove(): Promise<void> {
-    this.close();
+    if (!this.closed) {
+      this.close();
+    }
     // TODO: it can be a problem actually.
     // The connection is not actually closed until all transactions created using this connection are complete.
     await deleteDB(this.databaseName);

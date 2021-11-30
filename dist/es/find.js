@@ -40,7 +40,7 @@ var find = /*#__PURE__*/function () {
             translatedSelector = (0, _.translateMangoQuerySelector)(query, indexedCols);
 
             if (!(translatedSelector.field && translatedSelector.queryOpts)) {
-              _context.next = 15;
+              _context.next = 14;
               break;
             }
 
@@ -50,19 +50,17 @@ var find = /*#__PURE__*/function () {
 
           case 11:
             rows = _context.sent;
-            console.log("rows from index", rows);
-            _context.next = 19;
+            _context.next = 17;
             break;
 
-          case 15:
-            _context.next = 17;
+          case 14:
+            _context.next = 16;
             return db.getAll(collectionName);
 
-          case 17:
+          case 16:
             rows = _context.sent;
-            console.log("all rows", rows);
 
-          case 19:
+          case 17:
             if (translatedSelector.inMemoryFields.length) {
               rows = filterInMemoryFields(rows.map(function (row) {
                 // make data compatible with filterInMemoryFields
@@ -71,12 +69,11 @@ var find = /*#__PURE__*/function () {
                   doc: row
                 };
               }), query, translatedSelector.inMemoryFields);
-              console.log("filtered rows: ", rows);
             }
 
             return _context.abrupt("return", rows);
 
-          case 21:
+          case 19:
           case "end":
             return _context.stop();
         }

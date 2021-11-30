@@ -14,6 +14,7 @@ export interface BrowserStorageState {
     collectionName: string;
     indexes: Array<string | string[]>;
     primaryPath: string | string[];
+    version: number;
   }>;
   metaData: IMetaDB["dbMetaData"]["value"];
 }
@@ -23,7 +24,7 @@ export interface IMetaDB extends DBSchema {
     key: string;
     value: {
       version: number;
-      collections: string[];
+      collections: Array<{ name: string; version: number }>;
       dbName: string;
     };
     indexes: {

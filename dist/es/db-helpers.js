@@ -59,7 +59,6 @@ var genIndexName = function genIndexName(index) {
  *
  * TODO: "close" notifications ?
  * TODO: handle properly primaryPath.
- * TODO: put primaryKey in index ?
  */
 
 
@@ -68,7 +67,7 @@ var getDbPromise;
 
 var createIdbDatabase = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(databaseName, collectionName, primaryPath, schema) {
-    var metaDB, metaData, dbState, reqMetaData, updateNeeded, indexes, newCollections, changesCollectionName, newDbState;
+    var metaDB, metaData, dbState, reqMetaData, updateNeeded, foundCol, indexes, newCollections, changesCollectionName, newDbState;
     return _regenerator["default"].wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
@@ -102,7 +101,6 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
             if (reqMetaData) {
               metaData = reqMetaData;
-              console.log("reqMetaData:", reqMetaData);
             } else {
               metaData = {
                 version: 0,
@@ -112,7 +110,15 @@ var createIdbDatabase = /*#__PURE__*/function () {
             }
 
           case 14:
-            updateNeeded = metaData.collections.indexOf(collectionName) === -1;
+            updateNeeded = true;
+            foundCol = metaData.collections.find(function (col) {
+              return col.name === collectionName;
+            });
+
+            if (foundCol && (foundCol === null || foundCol === void 0 ? void 0 : foundCol.version) === schema.version) {
+              updateNeeded = false;
+            }
+
             indexes = [];
 
             if (schema.indexes) {
@@ -130,14 +136,15 @@ var createIdbDatabase = /*#__PURE__*/function () {
               newCollections.push({
                 collectionName: collectionName,
                 primaryPath: primaryPath,
-                indexes: indexes
+                indexes: indexes,
+                version: schema.version
               });
               newCollections.push({
                 collectionName: changesCollectionName,
                 primaryPath: "eventId",
-                indexes: ["sequence"]
+                indexes: ["sequence"],
+                version: 1
               });
-              console.log("NEW COLLECTIONS!!!: ", newCollections);
             }
 
             newDbState = _objectSpread(_objectSpread({}, dbState), {}, {
@@ -230,8 +237,6 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
                                           return upgrade;
                                         }(),
-                                        blocked: function blocked() {// alert("Please close all other tabs with this site open!");
-                                        },
                                         blocking: function blocking() {
                                           // Make sure to add a handler to be notified if another page requests a version
                                           // change. We must close the database. This allows the other page to upgrade the database.
@@ -244,15 +249,12 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
                                     case 10:
                                       db = _context2.sent;
-                                      db.addEventListener("versionchange", function () {
-                                        console.log("versionchange fired");
-                                      });
+
                                       /**
                                        * Store meta data about indexes
                                        * Use it later to understand what index to use to query data
                                        *
                                        */
-
                                       if (newCollections.length) {
                                         (function () {
                                           var indexedColsStore = metaDB.transaction("indexedCols", "readwrite").store;
@@ -261,7 +263,6 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                             var collData = _step2.value;
                                             var indexes = collData.indexes;
                                             indexes.forEach(function (index) {
-                                              console.log("INDEX: ", index);
                                               indexedColsStore.put({
                                                 dbName: databaseName,
                                                 collection: collData.collectionName,
@@ -284,18 +285,21 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                         newCollections: [],
                                         metaData: _objectSpread(_objectSpread({}, dataBaseState.metaData), {}, {
                                           collections: metaData.collections.concat(newCollections.map(function (coll) {
-                                            return coll.collectionName;
+                                            return {
+                                              name: coll.collectionName,
+                                              version: coll.version
+                                            };
                                           }))
                                         })
                                       });
-                                      _context2.next = 16;
+                                      _context2.next = 15;
                                       return metaDB.put("dbMetaData", newDbState.metaData);
 
-                                    case 16:
+                                    case 15:
                                       IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
                                       resolve(db);
 
-                                    case 18:
+                                    case 17:
                                     case "end":
                                       return _context2.stop();
                                   }
@@ -330,7 +334,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
             IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
             return _context4.abrupt("return", newDbState);
 
-          case 23:
+          case 25:
           case "end":
             return _context4.stop();
         }

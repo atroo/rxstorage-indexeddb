@@ -72,7 +72,13 @@ export const createIdbDatabase = async <RxDocType>(
     }
   }
 
-  let updateNeeded = metaData.collections.indexOf(collectionName) === -1;
+  let updateNeeded = true;
+  const foundCol = metaData.collections.find(
+    (col) => col.name === collectionName
+  );
+  if (foundCol && foundCol?.version === schema.version) {
+    updateNeeded = false;
+  }
 
   const indexes: string | string[] = [];
   if (schema.indexes) {
@@ -91,12 +97,14 @@ export const createIdbDatabase = async <RxDocType>(
       collectionName,
       primaryPath,
       indexes,
+      version: schema.version,
     });
 
     newCollections.push({
       collectionName: changesCollectionName,
       primaryPath: "eventId",
       indexes: ["sequence"],
+      version: 1,
     });
   }
 
@@ -186,7 +194,7 @@ export const createIdbDatabase = async <RxDocType>(
             ...dataBaseState.metaData,
             collections: metaData.collections.concat(
               newCollections.map((coll) => {
-                return coll.collectionName;
+                return { name: coll.collectionName, version: coll.version };
               })
             ),
           },

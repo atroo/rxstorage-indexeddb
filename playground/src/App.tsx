@@ -3,7 +3,6 @@ import "./App.css";
 import {
   // addPouchPlugin,
   createRxDatabase,
-  getRxStoragePouch,
   RxDatabase,
   // RxDocument,
 } from "rxdb";
@@ -22,17 +21,6 @@ function App() {
   const [database, setDatabase] = useState<RxDatabase | null>(null);
   const [docs, setDocs] = useState<any[]>();
 
-  // useEffect(() => {
-  //   const transformedQuerySelector = translateMangoQuerySelector({
-  //     selector: {
-  //       userName: { $gt: 1 },
-  //       hey: 23,
-  //     },
-  //   });
-
-  //   console.log("trasnformedQuery: ", transformedQuerySelector);
-  // }, []);
-
   useEffect(() => {
     (async () => {
       const database = await createRxDatabase({
@@ -44,6 +32,12 @@ function App() {
       await database.addCollections({
         heroes: {
           schema: heroSchema,
+          migrationStrategies: {
+            1: function (oldDoc) {
+              console.log("called!");
+              oldDoc.version = 1;
+            },
+          },
         },
       });
 
