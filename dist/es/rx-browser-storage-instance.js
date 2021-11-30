@@ -816,7 +816,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               nextFeedSequence = this.lastChangefeedSequence + 1;
               _context8.next = 15;
               return store.put({
-                id: id,
+                eventId: id,
                 sequence: nextFeedSequence
               });
 

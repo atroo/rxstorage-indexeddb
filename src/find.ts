@@ -33,7 +33,15 @@ export const find = async <RxDocType>(
   }
 
   if (translatedSelector.inMemoryFields.length) {
-    rows = filterInMemoryFields(rows, query, translatedSelector.inMemoryFields);
+    rows = filterInMemoryFields(
+      rows.map((row) => {
+        // make data compatible with filterInMemoryFields
+        // TODO: copy and change this util
+        return { doc: row };
+      }),
+      query,
+      translatedSelector.inMemoryFields
+    );
     console.log("filtered rows: ", rows);
   }
 

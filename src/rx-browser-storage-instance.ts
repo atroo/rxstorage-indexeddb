@@ -541,7 +541,7 @@ export class RxStorageBrowserInstance<RxDocType>
     const nextFeedSequence = this.lastChangefeedSequence + 1;
 
     await store.put({
-      id,
+      eventId: id,
       sequence: nextFeedSequence,
     });
 

@@ -64,7 +64,13 @@ var find = /*#__PURE__*/function () {
 
           case 19:
             if (translatedSelector.inMemoryFields.length) {
-              rows = filterInMemoryFields(rows, query, translatedSelector.inMemoryFields);
+              rows = filterInMemoryFields(rows.map(function (row) {
+                // make data compatible with filterInMemoryFields
+                // TODO: copy and change this util
+                return {
+                  doc: row
+                };
+              }), query, translatedSelector.inMemoryFields);
               console.log("filtered rows: ", rows);
             }
 
