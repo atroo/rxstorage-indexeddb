@@ -79,7 +79,7 @@ function App() {
           const q = coll.find({
             selector: {
               name: { $gt: "mario" },
-              birthyear: { $lt: 3000 },
+              birthyear: { $lt: 2020 },
               color: { $exists: true },
             },
           });

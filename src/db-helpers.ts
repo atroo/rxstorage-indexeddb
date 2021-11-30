@@ -103,6 +103,7 @@ export const createIdbDatabase = async <RxDocType>(
   }
 
   const newDbState: BrowserStorageState = {
+    ...dbState,
     getDb: async () => {
       getDbPromise = new Promise(async (resolve) => {
         const dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
@@ -121,7 +122,6 @@ export const createIdbDatabase = async <RxDocType>(
 
         const newCollections = dataBaseState.newCollections;
 
-        // TODO: manage version change.
         const db = await openDB(databaseName, metaData.version, {
           async upgrade(db) {
             if (!newCollections.length) {
@@ -189,6 +189,7 @@ export const createIdbDatabase = async <RxDocType>(
         // clear newCollections transaction went successfully
         const newDbState: BrowserStorageState = {
           ...dataBaseState,
+          updateNeeded: false,
           db,
           newCollections: [],
           metaData: {

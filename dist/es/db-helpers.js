@@ -23,15 +23,15 @@ var _rxError = require("./rx-error");
 
 var _dbMetaHelpers = require("./db-meta-helpers");
 
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { (0, _defineProperty2["default"])(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
-
 function _createForOfIteratorHelperLoose(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (it) return (it = it.call(o)).next.bind(it); if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; return function () { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { (0, _defineProperty2["default"])(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 var CHANGES_COLLECTION_SUFFIX = "-rxdb-changes";
 exports.CHANGES_COLLECTION_SUFFIX = CHANGES_COLLECTION_SUFFIX;
@@ -141,7 +141,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
               console.log("NEW COLLECTIONS!!!: ", newCollections);
             }
 
-            newDbState = {
+            newDbState = _objectSpread(_objectSpread({}, dbState), {}, {
               getDb: function () {
                 var _getDb = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3() {
                   return _regenerator["default"].wrap(function _callee3$(_context3) {
@@ -179,8 +179,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                         metaData.version += 1;
                                       }
 
-                                      newCollections = dataBaseState.newCollections; // TODO: manage version change.
-
+                                      newCollections = dataBaseState.newCollections;
                                       _context2.next = 10;
                                       return (0, _idb.openDB)(databaseName, metaData.version, {
                                         upgrade: function () {
@@ -281,6 +280,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
 
                                       newDbState = _objectSpread(_objectSpread({}, dataBaseState), {}, {
+                                        updateNeeded: false,
                                         db: db,
                                         newCollections: [],
                                         metaData: _objectSpread(_objectSpread({}, dataBaseState.metaData), {}, {
@@ -328,7 +328,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
               metaData: metaData,
               updateNeeded: updateNeeded,
               newCollections: [].concat(dbState ? dbState.newCollections : [], newCollections)
-            };
+            });
             IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
             return _context4.abrupt("return", newDbState);
 
