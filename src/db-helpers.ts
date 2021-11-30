@@ -35,7 +35,6 @@ export const genIndexName = (index: string | string[]) => {
  *
  * TODO: "close" notifications ?
  * TODO: handle properly primaryPath.
- * TODO: put primaryKey in index ?
  */
 
 let getDbPromise: Promise<IDBPDatabase<unknown>>;
@@ -46,6 +45,8 @@ export const createIdbDatabase = async <RxDocType>(
   primaryPath: string,
   schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">
 ) => {
+  // in order to avoid race conditions make user wait until
+  // connection is established if somebody request db before
   await getDbPromise;
 
   const metaDB = await getDbMeta();
@@ -54,6 +55,7 @@ export const createIdbDatabase = async <RxDocType>(
   if (dbState?.metaData) {
     metaData = dbState.metaData;
   } else {
+    // Store "version" data in seperate db to properly handle indexeddb version update.
     const reqMetaData = await metaDB.getFromIndex(
       "dbMetaData",
       "dbName",

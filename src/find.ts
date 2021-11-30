@@ -26,10 +26,8 @@ export const find = async <RxDocType>(
       translatedSelector.field,
       keyRange
     );
-    console.log("rows from index", rows);
   } else {
     rows = await db.getAll(collectionName);
-    console.log("all rows", rows);
   }
 
   if (translatedSelector.inMemoryFields.length) {
@@ -42,7 +40,6 @@ export const find = async <RxDocType>(
       query,
       translatedSelector.inMemoryFields
     );
-    console.log("filtered rows: ", rows);
   }
 
   return rows;

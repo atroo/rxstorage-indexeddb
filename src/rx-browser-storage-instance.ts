@@ -122,7 +122,6 @@ export class RxStorageBrowserInstance<RxDocType>
     const fun: QueryMatcher<RxDocumentWriteData<RxDocType>> = (
       doc: RxDocumentWriteData<RxDocType>
     ) => {
-      console.log("getQueryMatcher doc:", doc);
       const { _attachments, _deleted, _rev, ...json } = doc;
       const inMemoryFields = Object.keys(json);
       return filterInMemoryFields([json], query, inMemoryFields).length > 0;
@@ -162,7 +161,6 @@ export class RxStorageBrowserInstance<RxDocType>
     for (const writeRow of documentWrites) {
       const startTime = Date.now();
       const id: string = (writeRow.document as any)[this.internals.primaryPath];
-      // TODO: probably will have problems here.
       const documentInDbCursor = await store.openCursor(id);
       const documentInDb = documentInDbCursor?.value;
       if (!documentInDb) {
@@ -262,12 +260,10 @@ export class RxStorageBrowserInstance<RxDocType>
           const writeDoc: any = Object.assign({}, writeRow.document, {
             _rev: newRevision,
             _deleted: false,
-            _attachments: {}, // TODO: attachments
+            _attachments: {},
           });
           await documentInDbCursor.update(writeDoc);
           this.addChangeDocumentMeta(id);
-
-          // TODO: stripIdbKey(writeDoc) ?
           let change: ChangeEvent<RxDocumentData<RxDocType>> | null = null;
           if (
             writeRow.previous &&
@@ -326,12 +322,9 @@ export class RxStorageBrowserInstance<RxDocType>
     const db = await localState.getDb();
     const txn = db.transaction(this.collectionName, "readwrite");
     const store = txn.store;
-
-    // TODO: stripKey(documentInDb) ?
     for (const docData of documents) {
       const startTime = Date.now();
       const id: string = (docData as any)[this.internals.primaryPath];
-      // TODO: probably will have problems here.
       const documentInDbCursor = await store.openCursor(id);
       const documentInDb = documentInDbCursor?.value;
       if (!documentInDb) {
@@ -422,7 +415,6 @@ export class RxStorageBrowserInstance<RxDocType>
     for (const id of ids) {
       const documentInDb = await store.get(id);
       if (documentInDb && (!documentInDb._deleted || deleted)) {
-        // TODO: stripKey(documentInDb) ?
         ret.set(id, documentInDb);
       }
     }

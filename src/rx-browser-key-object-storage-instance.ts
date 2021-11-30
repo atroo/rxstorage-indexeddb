@@ -102,7 +102,6 @@ export class RxBrowserKeyValStorageInstance<RxDocType>
         await store.add(Object.assign({}, writeDoc));
       }
 
-      // TODO: strip?
       ret.success.set(id, writeDoc);
 
       const endTime = Date.now();
@@ -185,7 +184,6 @@ export class RxBrowserKeyValStorageInstance<RxDocType>
     for (const id of ids) {
       const documentInDb = await store.get(id);
       if (documentInDb && !documentInDb._deleted) {
-        // TODO: stripKey(documentInDb) ?
         ret.set(id, documentInDb);
       }
     }
