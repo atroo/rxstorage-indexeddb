@@ -20,7 +20,7 @@ var extend = require("pouchdb-extend");
 var combinationFields = ["$or", "$nor", "$not"];
 var logicalMatchers = ["$eq", "$gt", "$gte", "$lt", "$lte"];
 
-var translateMangoQuerySelector = function translateMangoQuerySelector(query) {
+var translateMangoQuerySelector = function translateMangoQuerySelector(query, indexes) {
   if (query.selector) {
     query.selector = massageSelector(query.selector);
   }
@@ -30,12 +30,7 @@ var translateMangoQuerySelector = function translateMangoQuerySelector(query) {
   }
 
   validateFindRequest(query);
-
-  if (Object.keys(query.selector).length <= 1) {
-    return getSingleFieldCoreQueryPlan(query.selector);
-  }
-
-  return getMultiFieldQueryOpts(query.selector);
+  return findFirstIndexRange(query.selector, indexes);
 };
 /**
  * Snippets from pouchdb-find that allow to translate Mango query
@@ -333,20 +328,42 @@ function getMultiFieldCoreQueryPlan(userOperator, userValue) {
       };
   }
 }
+/**
+ * @deprecated we can adopt it later for next storages
+ * @param selector
+ * @param indexes
+ * @returns
+ */
 
-function getSingleFieldCoreQueryPlan(selector) {
-  var fields = Object.keys(selector);
-  var field = fields[0]; //ignoring this because the test to exercise the branch is skipped at the moment
+
+function getSingleFieldCoreQueryPlan(selector, indexes) {
+  var rawFields = Object.keys(selector);
+  var field = rawFields[0];
+  var indexed = indexes.find(function (data) {
+    return data.value === field;
+  });
+
+  if (!indexed) {
+    return {
+      queryOpts: null,
+      inMemoryFields: [field],
+      fields: []
+    };
+  }
+
+  var fields = []; //ignoring this because the test to exercise the branch is skipped at the moment
 
   /* istanbul ignore next */
 
   var matcher = selector[field] || {};
   var inMemoryFields = [];
   var userOperators = Object.keys(matcher);
-  var combinedOpts;
+  var combinedOpts = null;
   userOperators.forEach(function (userOperator) {
     if (isNonLogicalMatcher(userOperator)) {
       inMemoryFields.push(field);
+    } else {
+      fields.push(field);
     }
 
     var userValue = matcher[userOperator];
@@ -365,7 +382,123 @@ function getSingleFieldCoreQueryPlan(selector) {
   };
 }
 
-function getMultiFieldQueryOpts(selector) {
+function findFirstIndexRange(selector, indexes) {
+  var cloneSelector = Object.assign({}, selector);
+
+  var _loop = function _loop(i) {
+    var _combinedOpts;
+
+    var index = indexes[i];
+    var compound = index.value.length > 1;
+    var memoMatcher = void 0;
+
+    if (!compound) {
+      memoMatcher = cloneSelector[index.name];
+
+      if (Object.keys(memoMatcher).some(isNonLogicalMatcher)) {
+        return "continue";
+      }
+    } else {
+      index.value.forEach(function (part) {
+        var matcher = cloneSelector[part];
+
+        if (!matcher || Object.keys(matcher).some(isNonLogicalMatcher)) {
+          return;
+        }
+
+        if (!memoMatcher) {
+          memoMatcher = part;
+          delete cloneSelector[part];
+        } else {
+          var usingGtlt = "$gt" in matcher || "$gte" in matcher || "$lt" in matcher || "$lte" in matcher;
+          var previousKeys = Object.keys(memoMatcher);
+          var previousWasEq = arrayEquals(previousKeys, ["$eq"]);
+          var previousWasSame = arrayEquals(previousKeys, Object.keys(matcher));
+          var gtltLostSpecificity = usingGtlt && !previousWasEq && !previousWasSame;
+
+          if (!gtltLostSpecificity) {
+            delete cloneSelector[part];
+          }
+        }
+      });
+
+      if (!memoMatcher) {
+        return "continue";
+      }
+    }
+
+    delete cloneSelector[index.name];
+    userOperators = Object.keys(memoMatcher);
+    var combinedOpts = null;
+
+    for (j = 0; j < userOperators.length; j++) {
+      userOperator = userOperators[j];
+      userValue = memoMatcher[userOperator];
+      newOpts = getMultiFieldCoreQueryPlan(userOperator, userValue);
+
+      if (combinedOpts) {
+        combinedOpts = mergeObjects([combinedOpts, newOpts]);
+      } else {
+        combinedOpts = newOpts;
+      }
+    }
+
+    var startkey = "startkey" in combinedOpts ? (_combinedOpts = combinedOpts) === null || _combinedOpts === void 0 ? void 0 : _combinedOpts.startkey : _variables.COLLATE_LO;
+    var endkey = "endkey" in combinedOpts ? combinedOpts.endkey : _variables.COLLATE_HI;
+    var inclusiveStart = void 0;
+
+    if ("inclusive_start" in combinedOpts) {
+      inclusiveStart = combinedOpts.inclusive_start;
+    }
+
+    var inclusiveEnd = void 0;
+
+    if ("inclusive_end" in combinedOpts) {
+      inclusiveEnd = combinedOpts.inclusive_end;
+    }
+
+    return {
+      v: {
+        queryOpts: {
+          startkey: startkey,
+          endkey: endkey,
+          inclusiveStart: inclusiveStart,
+          inclusiveEnd: inclusiveEnd
+        },
+        inMemoryFields: Object.keys(cloneSelector),
+        field: index.name
+      }
+    };
+  };
+
+  for (var i = 0; i < indexes.length; i += 1) {
+    var userOperators;
+    var j;
+    var userOperator;
+    var userValue;
+    var newOpts;
+
+    var _ret = _loop(i);
+
+    if (_ret === "continue") continue;
+    if (typeof _ret === "object") return _ret.v;
+  }
+
+  return {
+    queryOpts: null,
+    inMemoryFields: Object.keys(cloneSelector),
+    field: null
+  };
+}
+/**
+ * @deprecated we can adopt it later for next storages
+ * @param selector
+ * @param indexes
+ * @returns
+ */
+
+
+function getMultiFieldQueryOpts(selector, indexes) {
   var fields = Object.keys(selector);
   var inMemoryFields = [];
   var startkey = [];
@@ -388,7 +521,7 @@ function getMultiFieldQueryOpts(selector) {
   }
 
   for (var i = 0, len = fields.length; i < len; i++) {
-    var _combinedOpts;
+    var _combinedOpts2;
 
     var indexField = fields[i];
     var matcher = selector[indexField];
@@ -431,7 +564,7 @@ function getMultiFieldQueryOpts(selector) {
       }
     }
 
-    startkey.push("startkey" in combinedOpts ? (_combinedOpts = combinedOpts) === null || _combinedOpts === void 0 ? void 0 : _combinedOpts.startkey : _variables.COLLATE_LO);
+    startkey.push("startkey" in combinedOpts ? (_combinedOpts2 = combinedOpts) === null || _combinedOpts2 === void 0 ? void 0 : _combinedOpts2.startkey : _variables.COLLATE_LO);
     endkey.push("endkey" in combinedOpts ? combinedOpts.endkey : _variables.COLLATE_HI);
 
     if ("inclusive_start" in combinedOpts) {

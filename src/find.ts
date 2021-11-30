@@ -3,7 +3,6 @@ import { MangoQuery } from "rxdb/dist/types/types";
 import { translateMangoQuerySelector } from ".";
 import { getDbMeta } from "./db-meta-helpers";
 import { generateKeyRange } from "./idb-key-range";
-import { IIdbKeyRangeOptions } from "./types/translate-mango-query";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 export const find = async <RxDocType>(
@@ -19,40 +18,23 @@ export const find = async <RxDocType>(
   );
   const translatedSelector = translateMangoQuerySelector(query, indexedCols);
 
-  // TODO: use indexed field to generate opts
-  const firstIndexedField = translatedSelector.fields[0]; // TODO: can be undefined?
-  const opts: IIdbKeyRangeOptions = {
-    startkey: translatedSelector.queryOpts.startkey
-      ? translatedSelector.queryOpts.startkey[0]
-      : undefined,
-    endkey: translatedSelector.queryOpts.endkey
-      ? translatedSelector.queryOpts.endkey[0]
-      : undefined,
-    inclusive_start: translatedSelector.queryOpts.inclusive_start,
-    inclusive_end: translatedSelector.queryOpts.inclusive_end,
-  };
-
-  const keyRange = generateKeyRange(opts);
-
-  const store = db.transaction(collectionName, "readwrite").store;
-  const index = store.index(firstIndexedField);
-  let cursor = await index.openCursor(keyRange);
-
-  let rows = [];
-  while (cursor) {
-    const key = cursor.key;
-    const value = cursor.value;
-    console.log("FIND KEy: ", key);
-    console.log("FIND val: ");
-    rows.push(value);
-    cursor = await cursor.continue();
+  let rows;
+  if (translatedSelector.field && translatedSelector.queryOpts) {
+    const keyRange = generateKeyRange(translatedSelector.queryOpts);
+    rows = await db.getAllFromIndex(
+      collectionName,
+      translatedSelector.field,
+      keyRange
+    );
+    console.log("rows from index", rows);
+  } else {
+    rows = await db.getAll(collectionName);
+    console.log("all rows", rows);
   }
 
-  // TODO: currently that there should be single indexed key.
-  // And everything else should be in memory fields.
-  if (translatedSelector.fields.length > 1) {
-    const inMemoryFields = translatedSelector.fields.slice(1);
-    rows = filterInMemoryFields(rows, query, inMemoryFields);
+  if (translatedSelector.inMemoryFields.length) {
+    rows = filterInMemoryFields(rows, query, translatedSelector.inMemoryFields);
+    console.log("filtered rows: ", rows);
   }
 
   return rows;

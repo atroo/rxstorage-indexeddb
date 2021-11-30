@@ -139,7 +139,9 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 5:
               rows = _context.sent;
-              return _context.abrupt("return", rows);
+              return _context.abrupt("return", {
+                documents: rows
+              });
 
             case 7:
             case "end":

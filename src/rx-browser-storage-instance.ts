@@ -135,7 +135,7 @@ export class RxStorageBrowserInstance<RxDocType>
   ): Promise<RxStorageQueryResult<RxDocType>> {
     const db = await this.getLocalState().getDb();
     const rows = await find(db, this.collectionName, preparedQuery);
-    return rows;
+    return { documents: rows };
   }
 
   async bulkWrite(
