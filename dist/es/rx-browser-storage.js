@@ -35,10 +35,9 @@ var RxBrowserStorage = /*#__PURE__*/function () {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              console.log("PARAMS: ", params);
               return _context.abrupt("return", (0, _rxBrowserStorageInstance.createBrowserStorageInstance)(params));
 
-            case 2:
+            case 1:
             case "end":
               return _context.stop();
           }
@@ -60,10 +59,9 @@ var RxBrowserStorage = /*#__PURE__*/function () {
           switch (_context2.prev = _context2.next) {
             case 0:
               params.collectionName = params.collectionName + "-key-object";
-              console.log("PARAMS1", params);
               return _context2.abrupt("return", (0, _rxBrowserKeyObjectStorageInstance.createBrowserKeyObjectStorageInstance)(params));
 
-            case 3:
+            case 2:
             case "end":
               return _context2.stop();
           }

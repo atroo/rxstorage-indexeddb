@@ -625,7 +625,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               localState = this.getLocalState();
               desc = options.direction === "before";
               operator = options.direction === "after" ? "$gt" : "$lt";
-              changesCollectionName = localState.changesCollectionName;
+              changesCollectionName = this.getChangesCollectionName();
               _context5.next = 6;
               return localState.getDb();
 
@@ -770,6 +770,10 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
     }
 
     return localState;
+  };
+
+  _proto.getChangesCollectionName = function getChangesCollectionName() {
+    return this.internals.changesCollectionName;
   }
   /**
    * Adds an entry to the changes feed
@@ -788,7 +792,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
           switch (_context8.prev = _context8.next) {
             case 0:
               localState = this.getLocalState();
-              changesCollectionName = localState.changesCollectionName;
+              changesCollectionName = this.getChangesCollectionName();
               _context8.next = 4;
               return localState.getDb();
 
@@ -858,6 +862,7 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
             databaseState = _context9.sent;
             return _context9.abrupt("return", {
               databaseState: databaseState,
+              changesCollectionName: (0, _dbHelpers.getChangesCollName)(params.collectionName),
               primaryPath: primaryPath
             });
 

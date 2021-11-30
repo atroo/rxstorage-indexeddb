@@ -131,8 +131,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                 collectionName: collectionName,
                 primaryPath: primaryPath,
                 indexes: indexes
-              }); // TODO: create one changes collection per database ?
-
+              });
               newCollections.push({
                 collectionName: changesCollectionName,
                 primaryPath: "eventId",
@@ -324,7 +323,6 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
                 return getDb;
               }(),
-              changesCollectionName: changesCollectionName,
               metaData: metaData,
               updateNeeded: updateNeeded,
               newCollections: [].concat(dbState ? dbState.newCollections : [], newCollections)

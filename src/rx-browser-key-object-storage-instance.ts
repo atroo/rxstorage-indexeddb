@@ -3,7 +3,6 @@ import { deleteDB } from "idb";
 import { createRevision, parseRevision } from "rxdb";
 import {
   BulkWriteLocalRow,
-  RxDocumentData,
   RxKeyObjectStorageInstanceCreationParams,
   RxLocalDocumentData,
   RxLocalStorageBulkWriteResponse,
@@ -14,6 +13,7 @@ import {
 import { Observable, Subject } from "rxjs";
 import {
   createIdbDatabase,
+  getChangesCollName,
   IDB_DATABASE_STATE_BY_NAME,
   newRxError,
 } from "./db-helpers";
@@ -25,7 +25,7 @@ import { getEventKey } from "./utils";
 
 let instanceId = 1;
 
-export class RxStorageKeyObjectInstanceLoki<RxDocType>
+export class RxBrowserKeyValStorageInstance<RxDocType>
   implements
     RxStorageKeyObjectInstance<BrowserStorageInternals, BrowserStorageSettings>
 {
@@ -92,7 +92,7 @@ export class RxStorageKeyObjectInstanceLoki<RxDocType>
           continue;
         } else if (!writeRow.document._deleted) {
           const docCpy: any = Object.assign({}, writeDoc);
-          await documentInDbCursor.update(writeDoc);
+          await documentInDbCursor.update(docCpy);
         } else {
           // TODO: purge
           await documentInDbCursor.delete();
@@ -199,7 +199,6 @@ export class RxStorageKeyObjectInstanceLoki<RxDocType>
   }
 
   async close(): Promise<void> {
-    console.log("WILL close1");
     this.closed = true;
     this.changes$.complete();
     IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
@@ -242,17 +241,17 @@ export async function createBrowserKeyValueStorageLocalState(
 
   return {
     databaseState,
+    changesCollectionName: getChangesCollName(params.collectionName),
     primaryPath,
   };
 }
 
-export const createBrowserKeyObjectStorageInstance = async (
-  params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>
+export const createBrowserKeyObjectStorageInstance = async <RxDocType>(
+  params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageInternals>
 ) => {
-  const internals: BrowserStorageInternals =
-    await createBrowserKeyValueStorageLocalState(params);
+  const internals = await createBrowserKeyValueStorageLocalState(params);
 
-  const instance = new RxStorageKeyObjectInstanceLoki(
+  const instance = new RxBrowserKeyValStorageInstance<RxDocType>(
     params.databaseName,
     params.collectionName,
     {},

@@ -61,7 +61,6 @@ export const createIdbDatabase = async <RxDocType>(
     );
     if (reqMetaData) {
       metaData = reqMetaData;
-      console.log("reqMetaData:", reqMetaData);
     } else {
       metaData = {
         version: 0,
@@ -92,14 +91,11 @@ export const createIdbDatabase = async <RxDocType>(
       indexes,
     });
 
-    // TODO: create one changes collection per database ?
     newCollections.push({
       collectionName: changesCollectionName,
       primaryPath: "eventId",
       indexes: ["sequence"],
     });
-
-    console.log("NEW COLLECTIONS!!!: ", newCollections);
   }
 
   const newDbState: BrowserStorageState = {
@@ -144,9 +140,6 @@ export const createIdbDatabase = async <RxDocType>(
               });
             }
           },
-          blocked() {
-            // alert("Please close all other tabs with this site open!");
-          },
           blocking() {
             // Make sure to add a handler to be notified if another page requests a version
             // change. We must close the database. This allows the other page to upgrade the database.
@@ -155,10 +148,6 @@ export const createIdbDatabase = async <RxDocType>(
             db.close();
           },
           terminated() {},
-        });
-
-        db.addEventListener("versionchange", () => {
-          console.log("versionchange fired");
         });
 
         /**
@@ -175,7 +164,6 @@ export const createIdbDatabase = async <RxDocType>(
           for (const collData of newCollections) {
             const indexes = collData.indexes;
             indexes.forEach((index) => {
-              console.log("INDEX: ", index);
               indexedColsStore.put({
                 dbName: databaseName,
                 collection: collData.collectionName,
@@ -210,7 +198,6 @@ export const createIdbDatabase = async <RxDocType>(
 
       return getDbPromise;
     },
-    changesCollectionName,
     metaData,
     updateNeeded,
     newCollections: [

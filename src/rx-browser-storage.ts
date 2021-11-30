@@ -22,15 +22,13 @@ export class RxBrowserStorage
   async createStorageInstance<RxDocType>(
     params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
   ) {
-    console.log("PARAMS: ", params);
     return createBrowserStorageInstance(params);
   }
 
   public async createKeyObjectStorageInstance(
-    params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>
+    params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageInternals>
   ) {
     params.collectionName = params.collectionName + "-key-object";
-    console.log("PARAMS1", params);
     return createBrowserKeyObjectStorageInstance(params);
   }
 }

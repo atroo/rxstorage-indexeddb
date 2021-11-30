@@ -5,7 +5,7 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.createBrowserKeyObjectStorageInstance = exports.RxStorageKeyObjectInstanceLoki = void 0;
+exports.createBrowserKeyObjectStorageInstance = exports.RxBrowserKeyValStorageInstance = void 0;
 exports.createBrowserKeyValueStorageLocalState = createBrowserKeyValueStorageLocalState;
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
@@ -30,8 +30,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 var instanceId = 1;
 
-var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
-  function RxStorageKeyObjectInstanceLoki(databaseName, collectionName, options, internals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
+var RxBrowserKeyValStorageInstance = /*#__PURE__*/function () {
+  function RxBrowserKeyValStorageInstance(databaseName, collectionName, options, internals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
   ) {// this.primaryPath = getPrimaryFieldOfPrimaryKey(this.schema.primaryKey);
 
     this.changes$ = new _rxjs.Subject();
@@ -43,7 +43,7 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
     this.internals = internals;
   }
 
-  var _proto = RxStorageKeyObjectInstanceLoki.prototype;
+  var _proto = RxBrowserKeyValStorageInstance.prototype;
 
   _proto.bulkWrite = /*#__PURE__*/function () {
     var _bulkWrite = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(documentWrites) {
@@ -129,7 +129,7 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
 
               docCpy = Object.assign({}, writeDoc);
               _context.next = 35;
-              return documentInDbCursor.update(writeDoc);
+              return documentInDbCursor.update(docCpy);
 
             case 35:
               _context.next = 39;
@@ -304,21 +304,20 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
-              console.log("WILL close1");
               this.closed = true;
               this.changes$.complete();
 
               _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
 
               localState = this.getLocalState();
-              _context3.next = 7;
+              _context3.next = 6;
               return localState.getDb();
 
-            case 7:
+            case 6:
               db = _context3.sent;
               db.close();
 
-            case 9:
+            case 8:
             case "end":
               return _context3.stop();
           }
@@ -373,10 +372,10 @@ var RxStorageKeyObjectInstanceLoki = /*#__PURE__*/function () {
     return localState;
   };
 
-  return RxStorageKeyObjectInstanceLoki;
+  return RxBrowserKeyValStorageInstance;
 }();
 
-exports.RxStorageKeyObjectInstanceLoki = RxStorageKeyObjectInstanceLoki;
+exports.RxBrowserKeyValStorageInstance = RxBrowserKeyValStorageInstance;
 
 function createBrowserKeyValueStorageLocalState(_x3) {
   return _createBrowserKeyValueStorageLocalState.apply(this, arguments);
@@ -400,6 +399,7 @@ function _createBrowserKeyValueStorageLocalState() {
             databaseState = _context6.sent;
             return _context6.abrupt("return", {
               databaseState: databaseState,
+              changesCollectionName: (0, _dbHelpers.getChangesCollName)(params.collectionName),
               primaryPath: primaryPath
             });
 
@@ -425,7 +425,7 @@ var createBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
           case 2:
             internals = _context5.sent;
-            instance = new RxStorageKeyObjectInstanceLoki(params.databaseName, params.collectionName, {}, internals);
+            instance = new RxBrowserKeyValStorageInstance(params.databaseName, params.collectionName, {}, internals);
             /**
              * TODO: should we do extra steps to enable CORRECT multiinstance?
              */

@@ -9,7 +9,6 @@ import { DBSchema, IDBPDatabase } from "idb";
 export interface BrowserStorageState {
   getDb: () => Promise<IDBPDatabase<unknown>>;
   db?: IDBPDatabase<unknown>;
-  changesCollectionName: string;
   updateNeeded: boolean;
   newCollections: Array<{
     collectionName: string;

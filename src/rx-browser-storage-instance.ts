@@ -23,6 +23,7 @@ import {
 } from "./types/browser-storage";
 import {
   createIdbDatabase,
+  getChangesCollName,
   getPrimaryFieldOfPrimaryKey,
   IDB_DATABASE_STATE_BY_NAME,
   newRxError,
@@ -438,7 +439,7 @@ export class RxStorageBrowserInstance<RxDocType>
     const desc = options.direction === "before";
     const operator = options.direction === "after" ? "$gt" : "$lt";
 
-    const changesCollectionName = localState.changesCollectionName;
+    const changesCollectionName = this.getChangesCollectionName();
     const db = await localState.getDb();
     const store = db.transaction(changesCollectionName, "readwrite").store;
     let cursor = await store
@@ -519,6 +520,10 @@ export class RxStorageBrowserInstance<RxDocType>
     return localState;
   }
 
+  private getChangesCollectionName() {
+    return this.internals.changesCollectionName;
+  }
+
   /**
    * Adds an entry to the changes feed
    * that can be queried to check which documents have been
@@ -526,7 +531,7 @@ export class RxStorageBrowserInstance<RxDocType>
    */
   private async addChangeDocumentMeta(id: string) {
     const localState = this.getLocalState();
-    const changesCollectionName = localState.changesCollectionName;
+    const changesCollectionName = this.getChangesCollectionName();
     const db = await localState.getDb();
     const store = db.transaction(changesCollectionName, "readwrite").store;
 
@@ -564,6 +569,7 @@ export const createBrowserStorageLocalState = async <RxDocType>(
 
   return {
     databaseState,
+    changesCollectionName: getChangesCollName(params.collectionName),
     primaryPath,
   };
 };
