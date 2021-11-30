@@ -122,7 +122,7 @@ export const createIdbDatabase = async <RxDocType>(
         const newCollections = dataBaseState.newCollections;
 
         // TODO: manage version change.
-        const db = await openDB(`${databaseName}.db`, metaData.version, {
+        const db = await openDB(databaseName, metaData.version, {
           async upgrade(db) {
             if (!newCollections.length) {
               return;
@@ -175,6 +175,7 @@ export const createIdbDatabase = async <RxDocType>(
           for (const collData of newCollections) {
             const indexes = collData.indexes;
             indexes.forEach((index) => {
+              console.log("INDEX: ", index);
               indexedColsStore.put({
                 dbName: databaseName,
                 collection: collData.collectionName,

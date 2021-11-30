@@ -1,6 +1,7 @@
 import { IDBPDatabase } from "idb";
 import { MangoQuery } from "rxdb/dist/types/types";
 import { translateMangoQuerySelector } from ".";
+import { getDbMeta } from "./db-meta-helpers";
 import { generateKeyRange } from "./idb-key-range";
 import { IIdbKeyRangeOptions, IIndex } from "./types/translate-mango-query";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
@@ -10,21 +11,13 @@ export const find = async <RxDocType>(
   collectionName: string,
   query: MangoQuery<RxDocType>
 ) => {
-  const collName = getIndexesMetaCollName(collectionName);
-  console.log("COLL NAME: ", collName);
-  const indexesMetaStore = db.transaction(
-    getIndexesMetaCollName(collectionName)
-  ).store;
-
-  const indexNameIndex = indexesMetaStore.index(INDEXES_META_PRIMARY_KEY);
-  const indexesMeta: IIndex[] = [];
-  let indexesMetaCursor = await indexNameIndex.openCursor();
-  while (indexesMetaCursor) {
-    indexesMeta.push(indexesMetaCursor.value);
-    indexesMetaCursor = await indexesMetaCursor.continue();
-  }
-
-  console.log("indexesMeta:", indexesMeta);
+  const metaDB = await getDbMeta();
+  const indexedCols = await metaDB.getAllFromIndex(
+    "indexedCols",
+    "dbNameCollection",
+    IDBKeyRange.bound([db.name, collectionName], [db.name, collectionName])
+  );
+  console.log("indexesMeta:", indexedCols);
 
   const translatedSelector = translateMangoQuerySelector(query);
 
@@ -51,6 +44,8 @@ export const find = async <RxDocType>(
   while (cursor) {
     const key = cursor.key;
     const value = cursor.value;
+    console.log("FIND KEy: ", key);
+    console.log("FIND val: ");
     rows.push(value);
     cursor = await cursor.continue();
   }

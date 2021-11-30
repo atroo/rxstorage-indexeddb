@@ -18,7 +18,7 @@ export const getDbMeta = async () => {
       dbMetaDataStore.createIndex("dbName", "dbName");
 
       const indexedColsStore = db.createObjectStore("indexedCols", {
-        keyPath: ["dbName", "collection"],
+        keyPath: ["dbName", "collection", "name"],
       });
 
       indexedColsStore.createIndex("dbNameCollection", [

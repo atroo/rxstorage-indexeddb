@@ -13,7 +13,7 @@ var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/
 
 var _ = require(".");
 
-var _dbHelpers = require("./db-helpers");
+var _dbMetaHelpers = require("./db-meta-helpers");
 
 var _idbKeyRange = require("./idb-key-range");
 
@@ -22,39 +22,22 @@ var _require = require("pouchdb-selector-core"),
 
 var find = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db, collectionName, query) {
-    var collName, indexesMetaStore, indexNameIndex, indexesMeta, indexesMetaCursor, translatedSelector, firstIndexedField, opts, keyRange, store, index, cursor, rows, key, value, inMemoryFields;
+    var metaDB, indexedCols, translatedSelector, firstIndexedField, opts, keyRange, store, index, cursor, rows, key, value, inMemoryFields;
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            collName = (0, _dbHelpers.getIndexesMetaCollName)(collectionName);
-            console.log("COLL NAME: ", collName);
-            indexesMetaStore = db.transaction((0, _dbHelpers.getIndexesMetaCollName)(collectionName)).store;
-            indexNameIndex = indexesMetaStore.index(_dbHelpers.INDEXES_META_PRIMARY_KEY);
-            indexesMeta = [];
-            _context.next = 7;
-            return indexNameIndex.openCursor();
+            _context.next = 2;
+            return (0, _dbMetaHelpers.getDbMeta)();
 
-          case 7:
-            indexesMetaCursor = _context.sent;
+          case 2:
+            metaDB = _context.sent;
+            _context.next = 5;
+            return metaDB.getAllFromIndex("indexedCols", "dbNameCollection", IDBKeyRange.bound([db.name, collectionName], [db.name, collectionName]));
 
-          case 8:
-            if (!indexesMetaCursor) {
-              _context.next = 15;
-              break;
-            }
-
-            indexesMeta.push(indexesMetaCursor.value);
-            _context.next = 12;
-            return indexesMetaCursor["continue"]();
-
-          case 12:
-            indexesMetaCursor = _context.sent;
-            _context.next = 8;
-            break;
-
-          case 15:
-            console.log("indexesMeta:", indexesMeta);
+          case 5:
+            indexedCols = _context.sent;
+            console.log("indexesMeta:", indexedCols);
             translatedSelector = (0, _.translateMangoQuerySelector)(query); // TODO: use indexed field to generate opts
 
             firstIndexedField = translatedSelector.fields[0]; // TODO: can be undefined?
@@ -68,31 +51,33 @@ var find = /*#__PURE__*/function () {
             keyRange = (0, _idbKeyRange.generateKeyRange)(opts);
             store = db.transaction(collectionName, "readwrite").store;
             index = store.index(firstIndexedField);
-            _context.next = 24;
+            _context.next = 15;
             return index.openCursor(keyRange);
 
-          case 24:
+          case 15:
             cursor = _context.sent;
             rows = [];
 
-          case 26:
+          case 17:
             if (!cursor) {
-              _context.next = 35;
+              _context.next = 28;
               break;
             }
 
             key = cursor.key;
             value = cursor.value;
+            console.log("FIND KEy: ", key);
+            console.log("FIND val: ");
             rows.push(value);
-            _context.next = 32;
+            _context.next = 25;
             return cursor["continue"]();
 
-          case 32:
+          case 25:
             cursor = _context.sent;
-            _context.next = 26;
+            _context.next = 17;
             break;
 
-          case 35:
+          case 28:
             // TODO: currently that there should be single indexed key.
             // And everything else should be in memory fields.
             if (translatedSelector.fields.length > 1) {
@@ -102,7 +87,7 @@ var find = /*#__PURE__*/function () {
 
             return _context.abrupt("return", rows);
 
-          case 37:
+          case 30:
           case "end":
             return _context.stop();
         }
