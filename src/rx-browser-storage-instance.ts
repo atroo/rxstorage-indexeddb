@@ -173,7 +173,7 @@ export class RxStorageBrowserInstance<RxDocType>
          * this can happen on replication.
          */
         const insertedIsDeleted = writeRow.document._deleted ? true : false;
-        if (!insertedIsDeleted) {
+        if (insertedIsDeleted) {
           // TODO: purge documents
           continue;
         }

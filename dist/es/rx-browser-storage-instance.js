@@ -222,7 +222,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
               insertedIsDeleted = writeRow.document._deleted ? true : false;
 
-              if (insertedIsDeleted) {
+              if (!insertedIsDeleted) {
                 _context2.next = 22;
                 break;
               }
