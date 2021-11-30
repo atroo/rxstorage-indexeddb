@@ -1,4 +1,11 @@
-import { MangoQuery, MangoQuerySelector, MangoQuerySortPart } from "rxdb";
+import { match } from "core-js/fn/symbol";
+import {
+  clone,
+  MangoQuery,
+  MangoQuerySelector,
+  MangoQuerySortPart,
+} from "rxdb";
+import { Index } from "./types/browser-storeage-state";
 import { ITranslatedQuery } from "./types/translate-mango-query";
 import { COLLATE_HI, COLLATE_LO } from "./variables";
 const extend = require("pouchdb-extend");
@@ -14,7 +21,8 @@ const logicalMatchers: LogicalOperator[] = [
 ];
 
 export const translateMangoQuerySelector = <RxDocType>(
-  query: MangoQuery<RxDocType>
+  query: MangoQuery<RxDocType>,
+  indexes: Index[]
 ): ITranslatedQuery => {
   if (query.selector) {
     query.selector = massageSelector(query.selector);
@@ -25,11 +33,7 @@ export const translateMangoQuerySelector = <RxDocType>(
 
   validateFindRequest(query);
 
-  if (Object.keys(query.selector).length <= 1) {
-    return getSingleFieldCoreQueryPlan(query.selector);
-  }
-
-  return getMultiFieldQueryOpts(query.selector);
+  return findFirstIndexRange(query.selector, indexes);
 };
 
 /**
@@ -309,12 +313,31 @@ function getMultiFieldCoreQueryPlan(userOperator: string, userValue: any) {
       };
   }
 }
-
+/**
+ * @deprecated we can adopt it later for next storages
+ * @param selector
+ * @param indexes
+ * @returns
+ */
 function getSingleFieldCoreQueryPlan<RxDocType>(
-  selector: MangoQuerySelector<RxDocType>
+  selector: MangoQuerySelector<RxDocType>,
+  indexes: Index[]
 ) {
-  const fields = Object.keys(selector);
-  const field = fields[0];
+  const rawFields = Object.keys(selector);
+  const field = rawFields[0];
+  const indexed = indexes.find((data) => {
+    return data.value === field;
+  });
+
+  if (!indexed) {
+    return {
+      queryOpts: null,
+      inMemoryFields: [field],
+      fields: [],
+    };
+  }
+
+  const fields: string[] = [];
   //ignoring this because the test to exercise the branch is skipped at the moment
   /* istanbul ignore next */
   var matcher = selector[field] || {};
@@ -322,11 +345,13 @@ function getSingleFieldCoreQueryPlan<RxDocType>(
 
   var userOperators = Object.keys(matcher) as LogicalOperator[];
 
-  var combinedOpts: Record<any, any>;
+  var combinedOpts: Record<any, any> | null = null;
 
   userOperators.forEach(function (userOperator) {
     if (isNonLogicalMatcher(userOperator)) {
       inMemoryFields.push(field);
+    } else {
+      fields.push(field);
     }
 
     var userValue = matcher[userOperator];
@@ -341,14 +366,124 @@ function getSingleFieldCoreQueryPlan<RxDocType>(
   });
 
   return {
-    queryOpts: combinedOpts!,
+    queryOpts: combinedOpts,
     inMemoryFields: inMemoryFields,
     fields,
   };
 }
 
+function findFirstIndexRange<RxDocType>(
+  selector: MangoQuerySelector<RxDocType>,
+  indexes: Index[]
+) {
+  const cloneSelector = Object.assign({}, selector);
+  for (let i = 0; i < indexes.length; i += 1) {
+    const index = indexes[i];
+    const compound = index.value.length > 1;
+    let memoMatcher: any;
+    if (!compound) {
+      memoMatcher = cloneSelector[index.name];
+      if (
+        (Object.keys(memoMatcher) as LogicalOperator[]).some(
+          isNonLogicalMatcher
+        )
+      ) {
+        continue;
+      }
+    } else {
+      (index.value as string[]).forEach((part) => {
+        const matcher = cloneSelector[part];
+        if (
+          !matcher ||
+          (Object.keys(matcher) as LogicalOperator[]).some(isNonLogicalMatcher)
+        ) {
+          return;
+        }
+
+        if (!memoMatcher) {
+          memoMatcher = part;
+          delete cloneSelector[part];
+        } else {
+          var usingGtlt =
+            "$gt" in matcher ||
+            "$gte" in matcher ||
+            "$lt" in matcher ||
+            "$lte" in matcher;
+          var previousKeys = Object.keys(memoMatcher);
+          var previousWasEq = arrayEquals(previousKeys, ["$eq"]);
+          var previousWasSame = arrayEquals(previousKeys, Object.keys(matcher));
+          var gtltLostSpecificity =
+            usingGtlt && !previousWasEq && !previousWasSame;
+          if (!gtltLostSpecificity) {
+            delete cloneSelector[part];
+          }
+        }
+      });
+      if (!memoMatcher) {
+        continue;
+      }
+    }
+
+    delete cloneSelector[index.name];
+
+    var userOperators = Object.keys(memoMatcher);
+
+    let combinedOpts: Record<any, any> | null = null;
+
+    for (var j = 0; j < userOperators.length; j++) {
+      var userOperator = userOperators[j];
+      var userValue = memoMatcher[userOperator];
+
+      var newOpts = getMultiFieldCoreQueryPlan(userOperator, userValue);
+
+      if (combinedOpts) {
+        combinedOpts = mergeObjects([combinedOpts, newOpts]);
+      } else {
+        combinedOpts = newOpts as any;
+      }
+    }
+
+    const startkey =
+      "startkey" in combinedOpts! ? combinedOpts?.startkey : COLLATE_LO;
+    const endkey = "endkey" in combinedOpts! ? combinedOpts.endkey : COLLATE_HI;
+
+    let inclusiveStart;
+    if ("inclusive_start" in combinedOpts!) {
+      inclusiveStart = combinedOpts.inclusive_start;
+    }
+    let inclusiveEnd;
+    if ("inclusive_end" in combinedOpts!) {
+      inclusiveEnd = combinedOpts.inclusive_end;
+    }
+
+    return {
+      queryOpts: {
+        startkey: startkey,
+        endkey: endkey,
+        inclusiveStart,
+        inclusiveEnd,
+      },
+      inMemoryFields: Object.keys(cloneSelector),
+      field: index.name,
+    };
+  }
+
+  return {
+    queryOpts: null,
+    inMemoryFields: Object.keys(cloneSelector),
+    field: null,
+  };
+}
+
+/**
+ * @deprecated we can adopt it later for next storages
+ * @param selector
+ * @param indexes
+ * @returns
+ */
 function getMultiFieldQueryOpts<RxDocType>(
-  selector: MangoQuerySelector<RxDocType>
+  selector: MangoQuerySelector<RxDocType>,
+  indexes: Index[]
 ) {
   const fields = Object.keys(selector);
 
@@ -371,7 +506,7 @@ function getMultiFieldQueryOpts<RxDocType>(
   }
 
   for (var i = 0, len = fields.length; i < len; i++) {
-    var indexField = fields[i];
+    const indexField = fields[i];
 
     var matcher = selector[indexField];
 

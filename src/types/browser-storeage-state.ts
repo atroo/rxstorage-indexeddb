@@ -44,3 +44,5 @@ export interface IMetaDB extends DBSchema {
     };
   };
 }
+
+export type Index = IMetaDB["indexedCols"]["value"];

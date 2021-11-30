@@ -2,14 +2,14 @@ export type StartKey = number | null | undefined;
 export type EndKey = number | Record<string, {}> | undefined;
 
 export interface ITranslatedQuery {
-  fields: string[]; // TODO: compound fields
+  field: string | null; // TODO: compound fields
   inMemoryFields: string[]; // TODO: fields with non logical operators that should filtered manually
-  queryOpts: {
+  queryOpts?: {
     startkey?: Array<StartKey | EndKey>;
     endkey?: Array<EndKey | StartKey>;
     inclusive_start?: boolean;
     inclusive_end?: boolean;
-  };
+  } | null;
 }
 
 export interface IIdbKeyRangeOptions {
@@ -19,9 +19,4 @@ export interface IIdbKeyRangeOptions {
   inclusive_end?: boolean;
   descending?: boolean;
   key?: string;
-}
-
-export interface IIndex {
-  indexName: string;
-  keyPath: string | string[];
 }

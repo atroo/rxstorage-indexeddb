@@ -3,7 +3,7 @@ import { MangoQuery } from "rxdb/dist/types/types";
 import { translateMangoQuerySelector } from ".";
 import { getDbMeta } from "./db-meta-helpers";
 import { generateKeyRange } from "./idb-key-range";
-import { IIdbKeyRangeOptions, IIndex } from "./types/translate-mango-query";
+import { IIdbKeyRangeOptions } from "./types/translate-mango-query";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 export const find = async <RxDocType>(
@@ -17,9 +17,7 @@ export const find = async <RxDocType>(
     "dbNameCollection",
     IDBKeyRange.bound([db.name, collectionName], [db.name, collectionName])
   );
-  console.log("indexesMeta:", indexedCols);
-
-  const translatedSelector = translateMangoQuerySelector(query);
+  const translatedSelector = translateMangoQuerySelector(query, indexedCols);
 
   // TODO: use indexed field to generate opts
   const firstIndexedField = translatedSelector.fields[0]; // TODO: can be undefined?
