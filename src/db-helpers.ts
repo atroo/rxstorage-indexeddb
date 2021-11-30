@@ -6,14 +6,11 @@ import {
   RxErrorKey,
   RxErrorParameters,
 } from "rxdb/dist/types/types";
-import { BrowserStorageState, IMetaDB } from "./types/browser-storeage-state";
+import { BrowserStorageState } from "./types/browser-storeage-state";
 import { RxError } from "./rx-error";
 import { getDbMeta } from "./db-meta-helpers";
-import { metadata } from "core-js/fn/reflect";
 
 export const CHANGES_COLLECTION_SUFFIX = "-rxdb-changes";
-export const INDEXES_META_COLLECTION_SUFFIX = "-idb-meta";
-export const INDEXES_META_PRIMARY_KEY = "indexNameIdbMeta";
 
 export const IDB_DATABASE_STATE_BY_NAME: Map<string, BrowserStorageState> =
   new Map();
@@ -22,8 +19,12 @@ export const getChangesCollName = (collName: string) => {
   return collName + CHANGES_COLLECTION_SUFFIX;
 };
 
-export const getIndexesMetaCollName = (collName: string) => {
-  return collName + INDEXES_META_COLLECTION_SUFFIX;
+export const genIndexName = (index: string | string[]) => {
+  if (Array.isArray(index)) {
+    return index.join(".");
+  }
+
+  return index;
 };
 
 /**
@@ -33,6 +34,8 @@ export const getIndexesMetaCollName = (collName: string) => {
  * 3) Put old data to new store.
  *
  * TODO: "close" notifications ?
+ * TODO: handle properly primaryPath.
+ * TODO: put primaryKey in index ?
  */
 
 let getDbPromise: Promise<IDBPDatabase<unknown>>;
@@ -44,7 +47,6 @@ export const createIdbDatabase = async <RxDocType>(
   schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">
 ) => {
   await getDbPromise;
-  console.log("DB NAME");
 
   const metaDB = await getDbMeta();
   let metaData: BrowserStorageState["metaData"];
@@ -73,7 +75,6 @@ export const createIdbDatabase = async <RxDocType>(
 
   const indexes: string | string[] = [];
   if (schema.indexes) {
-    // TODO: compund indexes;
     schema.indexes.forEach((idx) => {
       if (!Array.isArray(idx)) {
         indexes.push(idx);
@@ -99,33 +100,18 @@ export const createIdbDatabase = async <RxDocType>(
     });
 
     console.log("NEW COLLECTIONS!!!: ", newCollections);
-
-    metaData = {
-      ...metaData,
-      collections: metaData.collections.concat(
-        newCollections.map((coll) => {
-          return coll.collectionName;
-        })
-      ),
-    };
   }
 
   const newDbState: BrowserStorageState = {
     getDb: async () => {
       getDbPromise = new Promise(async (resolve) => {
         const dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
-        console.log("REQ DATBASE: ", [
-          ...(dataBaseState?.newCollections as any),
-        ]);
         if (!dataBaseState) {
           throw new Error("dataBase state is undefined");
         }
 
         if (!dataBaseState.updateNeeded && dataBaseState.db) {
-          console.log("ALREADY EXISTS: ", [
-            ...(dataBaseState?.newCollections as any),
-          ]);
-          resolve(dataBaseState.db);
+          return resolve(dataBaseState.db);
         }
 
         const metaData = dataBaseState.metaData;
@@ -133,11 +119,11 @@ export const createIdbDatabase = async <RxDocType>(
           metaData.version += 1;
         }
 
+        const newCollections = dataBaseState.newCollections;
+
         // TODO: manage version change.
         const db = await openDB(`${databaseName}.db`, metaData.version, {
           async upgrade(db) {
-            const newCollections = dataBaseState.newCollections;
-            console.log("NEW COLLECTIONS:", newCollections);
             if (!newCollections.length) {
               return;
             }
@@ -153,9 +139,8 @@ export const createIdbDatabase = async <RxDocType>(
                 }
               );
 
-              collectionData.indexes.forEach((idxName) => {
-                // FIXME
-                store.createIndex(idxName as string, idxName);
+              collectionData.indexes.forEach((index) => {
+                store.createIndex(genIndexName(index), index);
               });
             }
           },
@@ -168,9 +153,6 @@ export const createIdbDatabase = async <RxDocType>(
             // If you don't do this then the upgrade won't happen until the user closes the tab.
             //
             db.close();
-            // alert(
-            //   "A new version of this page is ready. Please reload or close this tab!"
-            // );
           },
           terminated() {},
         });
@@ -179,51 +161,47 @@ export const createIdbDatabase = async <RxDocType>(
           console.log("versionchange fired");
         });
 
-        // const indexesStore = db.transaction(
-        //   getIndexesMetaCollName(collectionName),
-        //   "readwrite"
-        // ).store;
-
         /**
-         * Store meta data about index
+         * Store meta data about indexes
          * Use it later to understand what index to use to query data
          *
          */
+        if (newCollections.length) {
+          const indexedColsStore = metaDB.transaction(
+            "indexedCols",
+            "readwrite"
+          ).store;
 
-        // const dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
-        // const meta = dbState?.meta;
-        // if (!meta) {
-        //   return db;
-        // }
+          for (const collData of newCollections) {
+            const indexes = collData.indexes;
+            indexes.forEach((index) => {
+              indexedColsStore.put({
+                dbName: databaseName,
+                collection: collData.collectionName,
+                name: genIndexName(index),
+                value: index,
+              });
+            });
+          }
+        }
 
-        // for (const storeData of meta) {
-        //   if (storeData.primaryPath === INDEXES_META_PRIMARY_KEY) {
-        //     continue;
-        //   }
-
-        //   await indexesStore.put({
-        //     [INDEXES_META_PRIMARY_KEY]: storeData.primaryPath,
-        //     keyPath: storeData.primaryPath,
-        //   });
-
-        //   const indexes = storeData.indexes;
-        //   for (const index of indexes) {
-        //     await indexesStore.put({
-        //       [INDEXES_META_PRIMARY_KEY]: index,
-        //       keyPath: index,
-        //     });
-        //   }
-        // }
-
-        // clear meta after transaction went successfully
-        IDB_DATABASE_STATE_BY_NAME.set(databaseName, {
+        // clear newCollections transaction went successfully
+        const newDbState: BrowserStorageState = {
           ...dataBaseState,
           db,
           newCollections: [],
-          metaData,
-        });
+          metaData: {
+            ...dataBaseState.metaData,
+            collections: metaData.collections.concat(
+              newCollections.map((coll) => {
+                return coll.collectionName;
+              })
+            ),
+          },
+        };
 
-        await metaDB.put("dbMetaData", metaData);
+        await metaDB.put("dbMetaData", newDbState.metaData);
+        IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
 
         resolve(db);
       });

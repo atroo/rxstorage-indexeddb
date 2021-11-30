@@ -34,12 +34,13 @@ export interface IMetaDB extends DBSchema {
   indexedCols: {
     key: string[];
     value: {
+      dbName: string;
       name: string;
-      value: string;
+      value: string | string[];
       collection: string;
     };
     indexes: {
-      collection: string;
+      dbNameCollection: string;
     };
   };
 }

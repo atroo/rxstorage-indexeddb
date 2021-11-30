@@ -1,7 +1,6 @@
 import { IDBPDatabase } from "idb";
 import { MangoQuery } from "rxdb/dist/types/types";
 import { translateMangoQuerySelector } from ".";
-import { getIndexesMetaCollName, INDEXES_META_PRIMARY_KEY } from "./db-helpers";
 import { generateKeyRange } from "./idb-key-range";
 import { IIdbKeyRangeOptions, IIndex } from "./types/translate-mango-query";
 const { filterInMemoryFields } = require("pouchdb-selector-core");

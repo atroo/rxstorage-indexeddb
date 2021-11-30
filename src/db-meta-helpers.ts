@@ -18,10 +18,13 @@ export const getDbMeta = async () => {
       dbMetaDataStore.createIndex("dbName", "dbName");
 
       const indexedColsStore = db.createObjectStore("indexedCols", {
-        keyPath: "collection",
+        keyPath: ["dbName", "collection"],
       });
 
-      indexedColsStore.createIndex("collection", "collection");
+      indexedColsStore.createIndex("dbNameCollection", [
+        "dbName",
+        "collection",
+      ]);
     },
     blocking: () => {
       db.close();
