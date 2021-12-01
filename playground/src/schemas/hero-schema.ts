@@ -5,7 +5,7 @@ export const heroSchema = {
   primaryKey: "name",
   type: "object",
   properties: {
-    version: {
+    myVersion: {
       type: "number",
     },
     name: {

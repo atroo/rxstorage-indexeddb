@@ -206,6 +206,8 @@ export class RxBrowserKeyValStorageInstance<RxDocType>
   }
 
   async close(): Promise<void> {
+    console.trace("key-object storage instance closed");
+
     this.closed = true;
 
     if (!IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
@@ -221,6 +223,8 @@ export class RxBrowserKeyValStorageInstance<RxDocType>
     IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
   }
   async remove(): Promise<void> {
+    console.trace("storage -key-oject instance is removed");
+
     if (!this.closed) {
       this.close();
     }
@@ -262,8 +266,13 @@ export async function createBrowserKeyValueStorageLocalState(
 }
 
 export const createBrowserKeyObjectStorageInstance = async <RxDocType>(
-  params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageInternals>
+  _params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageInternals>
 ) => {
+  const params: typeof _params = {
+    ..._params,
+    databaseName: _params.databaseName + "-key-object",
+  };
+
   const internals = await createBrowserKeyValueStorageLocalState(params);
 
   const instance = new RxBrowserKeyValStorageInstance<RxDocType>(

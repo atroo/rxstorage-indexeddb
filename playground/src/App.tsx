@@ -3,6 +3,7 @@ import "./App.css";
 import {
   // addPouchPlugin,
   createRxDatabase,
+  // getRxStoragePouch,
   RxDatabase,
   // RxDocument,
 } from "rxdb";
@@ -27,6 +28,7 @@ function App() {
         name: "mydatabase",
         // storage: getRxStorageLoki(),
         storage: getRxSBrowserIdbStorage(),
+        // storage: getRxStoragePouch("indexeddb"),
       });
 
       await database.addCollections({
@@ -34,8 +36,9 @@ function App() {
           schema: heroSchema,
           migrationStrategies: {
             1: function (oldDoc) {
-              console.log("called!");
-              oldDoc.version = 1;
+              console.log("oldDoc", oldDoc);
+              oldDoc.myVersion = 1;
+              return oldDoc;
             },
           },
         },

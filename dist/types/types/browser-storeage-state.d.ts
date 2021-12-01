@@ -1,4 +1,4 @@
-import { IDBPDatabase } from "idb";
+import { DBSchema, IDBPDatabase } from "idb";
 /**
  * @param {number} upgradeVersion Will increment every time new collection are added.
  *  Reason: new collections can be added only via "upgrade" callback.
@@ -6,9 +6,43 @@ import { IDBPDatabase } from "idb";
  *  Can be used to detect migrations.
  */
 export interface BrowserStorageState {
-    db: IDBPDatabase<unknown>;
-    collections: string[];
-    upgradeVersion: number;
-    version: number;
-    changesCollectionName: string;
+    getDb: () => Promise<IDBPDatabase<unknown>>;
+    db?: IDBPDatabase<unknown>;
+    updateNeeded: boolean;
+    newCollections: Array<{
+        collectionName: string;
+        indexes: Array<string | string[]>;
+        primaryPath: string | string[];
+        version: number;
+    }>;
+    metaData: IMetaDB["dbMetaData"]["value"];
 }
+export interface IMetaDB extends DBSchema {
+    dbMetaData: {
+        key: string;
+        value: {
+            version: number;
+            collections: Array<{
+                name: string;
+                version: number;
+            }>;
+            dbName: string;
+        };
+        indexes: {
+            dbName: string;
+        };
+    };
+    indexedCols: {
+        key: string[];
+        value: {
+            dbName: string;
+            name: string;
+            value: string | string[];
+            collection: string;
+        };
+        indexes: {
+            dbNameCollection: string;
+        };
+    };
+}
+export declare type Index = IMetaDB["indexedCols"]["value"];

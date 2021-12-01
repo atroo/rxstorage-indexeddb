@@ -29,6 +29,7 @@ export declare class RxStorageBrowserInstance<RxDocType> implements RxStorageIns
     close(): Promise<void>;
     remove(): Promise<void>;
     private getLocalState;
+    private getChangesCollectionName;
     /**
      * Adds an entry to the changes feed
      * that can be queried to check which documents have been
@@ -36,8 +37,5 @@ export declare class RxStorageBrowserInstance<RxDocType> implements RxStorageIns
      */
     private addChangeDocumentMeta;
 }
-export declare const createBrowserStorageLocalState: <RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>) => Promise<{
-    databaseState: import("./types/browser-storeage-state").BrowserStorageState;
-    primaryPath: string;
-}>;
+export declare const createBrowserStorageLocalState: <RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>) => Promise<BrowserStorageInternals>;
 export declare const createBrowserStorageInstance: <RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>) => Promise<RxStorageBrowserInstance<RxDocType>>;

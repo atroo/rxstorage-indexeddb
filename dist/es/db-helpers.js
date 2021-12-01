@@ -164,21 +164,22 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                       dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
 
                                       if (dataBaseState) {
-                                        _context2.next = 3;
+                                        _context2.next = 4;
                                         break;
                                       }
 
+                                      console.trace("no db state");
                                       throw new Error("dataBase state is undefined");
 
-                                    case 3:
+                                    case 4:
                                       if (!(!dataBaseState.updateNeeded && dataBaseState.db)) {
-                                        _context2.next = 5;
+                                        _context2.next = 6;
                                         break;
                                       }
 
                                       return _context2.abrupt("return", resolve(dataBaseState.db));
 
-                                    case 5:
+                                    case 6:
                                       metaData = dataBaseState.metaData;
 
                                       if (dataBaseState.updateNeeded) {
@@ -186,11 +187,11 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                       }
 
                                       newCollections = dataBaseState.newCollections;
-                                      _context2.next = 10;
+                                      _context2.next = 11;
                                       return (0, _idb.openDB)(databaseName, metaData.version, {
                                         upgrade: function () {
                                           var _upgrade = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db) {
-                                            var _loop, _iterator, _step;
+                                            var _iterator, _step, collectionData;
 
                                             return _regenerator["default"].wrap(function _callee$(_context) {
                                               while (1) {
@@ -204,26 +205,25 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                                     return _context.abrupt("return");
 
                                                   case 2:
-                                                    _loop = function _loop() {
-                                                      var collectionData = _step.value;
-
-                                                      /**
-                                                       * Construct loki indexes from RxJsonSchema indexes.
-                                                       * TODO what about compound indexes?
-                                                       */
-                                                      var store = db.createObjectStore(collectionData.collectionName, {
-                                                        keyPath: collectionData.primaryPath
-                                                      });
-                                                      collectionData.indexes.forEach(function (index) {
-                                                        store.createIndex(genIndexName(index), index);
-                                                      });
-                                                    };
-
                                                     for (_iterator = _createForOfIteratorHelperLoose(newCollections); !(_step = _iterator()).done;) {
-                                                      _loop();
+                                                      collectionData = _step.value;
+
+                                                      try {
+                                                        (function () {
+                                                          var store = db.createObjectStore(collectionData.collectionName, {
+                                                            keyPath: collectionData.primaryPath
+                                                          });
+                                                          collectionData.indexes.forEach(function (index) {
+                                                            store.createIndex(genIndexName(index), index);
+                                                          });
+                                                        })();
+                                                      } catch (error) {
+                                                        console.log(error);
+                                                        console.log("STORE EXISTS: ", collectionData.collectionName);
+                                                      }
                                                     }
 
-                                                  case 4:
+                                                  case 3:
                                                   case "end":
                                                     return _context.stop();
                                                 }
@@ -247,7 +247,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                         terminated: function terminated() {}
                                       });
 
-                                    case 10:
+                                    case 11:
                                       db = _context2.sent;
 
                                       /**
@@ -259,7 +259,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                         (function () {
                                           var indexedColsStore = metaDB.transaction("indexedCols", "readwrite").store;
 
-                                          var _loop2 = function _loop2() {
+                                          var _loop = function _loop() {
                                             var collData = _step2.value;
                                             var indexes = collData.indexes;
                                             indexes.forEach(function (index) {
@@ -273,7 +273,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                           };
 
                                           for (var _iterator2 = _createForOfIteratorHelperLoose(newCollections), _step2; !(_step2 = _iterator2()).done;) {
-                                            _loop2();
+                                            _loop();
                                           }
                                         })();
                                       } // clear newCollections transaction went successfully
@@ -292,14 +292,14 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                           }))
                                         })
                                       });
-                                      _context2.next = 15;
+                                      _context2.next = 16;
                                       return metaDB.put("dbMetaData", newDbState.metaData);
 
-                                    case 15:
+                                    case 16:
                                       IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
                                       resolve(db);
 
-                                    case 17:
+                                    case 18:
                                     case "end":
                                       return _context2.stop();
                                   }

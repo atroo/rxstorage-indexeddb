@@ -114,6 +114,7 @@ export const createIdbDatabase = async <RxDocType>(
       getDbPromise = new Promise(async (resolve) => {
         const dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
         if (!dataBaseState) {
+          console.trace("no db state");
           throw new Error("dataBase state is undefined");
         }
 
@@ -134,20 +135,21 @@ export const createIdbDatabase = async <RxDocType>(
               return;
             }
             for (const collectionData of newCollections) {
-              /**
-               * Construct loki indexes from RxJsonSchema indexes.
-               * TODO what about compound indexes?
-               */
-              const store = db.createObjectStore(
-                collectionData.collectionName,
-                {
-                  keyPath: collectionData.primaryPath,
-                }
-              );
+              try {
+                const store = db.createObjectStore(
+                  collectionData.collectionName,
+                  {
+                    keyPath: collectionData.primaryPath,
+                  }
+                );
 
-              collectionData.indexes.forEach((index) => {
-                store.createIndex(genIndexName(index), index);
-              });
+                collectionData.indexes.forEach((index) => {
+                  store.createIndex(genIndexName(index), index);
+                });
+              } catch (error) {
+                console.log(error);
+                console.log("STORE EXISTS: ", collectionData.collectionName);
+              }
             }
           },
           blocking() {
@@ -208,6 +210,9 @@ export const createIdbDatabase = async <RxDocType>(
 
       return getDbPromise;
     },
+    deleteDb: async () => {
+      // awai
+    }
     metaData,
     updateNeeded,
     newCollections: [

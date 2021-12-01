@@ -7,6 +7,6 @@ export declare class RxBrowserStorage implements RxStorage<BrowserStorageInterna
     name: string;
     hash(data: Buffer | Blob | string): Promise<string>;
     createStorageInstance<RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>): Promise<import("./rx-browser-storage-instance").RxStorageBrowserInstance<RxDocType>>;
-    createKeyObjectStorageInstance(params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>): Promise<import("./rx-browser-key-object-storage-instance").RxStorageKeyObjectInstanceLoki<unknown>>;
+    createKeyObjectStorageInstance(params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageInternals>): Promise<import("./rx-browser-key-object-storage-instance").RxBrowserKeyValStorageInstance<unknown>>;
 }
 export declare function getRxSBrowserIdbStorage(databaseSettings?: BrowserStorageSettings): RxBrowserStorage;

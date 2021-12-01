@@ -1,7 +1,7 @@
 import { BulkWriteLocalRow, RxKeyObjectStorageInstanceCreationParams, RxLocalDocumentData, RxLocalStorageBulkWriteResponse, RxStorageChangeEvent, RxStorageKeyObjectInstance } from "rxdb/dist/types/types";
 import { Observable } from "rxjs";
 import { BrowserStorageInternals, BrowserStorageSettings } from "./types/browser-storage";
-export declare class RxStorageKeyObjectInstanceLoki<RxDocType> implements RxStorageKeyObjectInstance<BrowserStorageInternals, BrowserStorageSettings> {
+export declare class RxBrowserKeyValStorageInstance<RxDocType> implements RxStorageKeyObjectInstance<BrowserStorageInternals, BrowserStorageSettings> {
     readonly databaseName: string;
     readonly collectionName: string;
     readonly options: Readonly<BrowserStorageSettings>;
@@ -19,8 +19,5 @@ export declare class RxStorageKeyObjectInstanceLoki<RxDocType> implements RxStor
     remove(): Promise<void>;
     private getLocalState;
 }
-export declare function createBrowserKeyValueStorageLocalState(params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>): Promise<{
-    databaseState: import("./types/browser-storeage-state").BrowserStorageState;
-    primaryPath: string;
-}>;
-export declare const createBrowserKeyObjectStorageInstance: (params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>) => Promise<RxStorageKeyObjectInstanceLoki<unknown>>;
+export declare function createBrowserKeyValueStorageLocalState(params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>): Promise<BrowserStorageInternals>;
+export declare const createBrowserKeyObjectStorageInstance: <RxDocType>(params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageInternals>) => Promise<RxBrowserKeyValStorageInstance<RxDocType>>;

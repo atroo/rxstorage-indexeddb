@@ -10,6 +10,8 @@ exports.createBrowserKeyValueStorageLocalState = createBrowserKeyValueStorageLoc
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
+
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
 var _idb = require("idb");
@@ -21,6 +23,10 @@ var _rxjs = require("rxjs");
 var _dbHelpers = require("./db-helpers");
 
 var _utils = require("./utils");
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { (0, _defineProperty2["default"])(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _createForOfIteratorHelperLoose(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (it) return (it = it.call(o)).next.bind(it); if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; return function () { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
@@ -320,28 +326,29 @@ var RxBrowserKeyValStorageInstance = /*#__PURE__*/function () {
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
+              console.trace("key-object storage instance closed");
               this.closed = true;
 
               if (_dbHelpers.IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
-                _context3.next = 3;
+                _context3.next = 4;
                 break;
               }
 
               return _context3.abrupt("return");
 
-            case 3:
+            case 4:
               this.changes$.complete();
               localState = this.getLocalState();
-              _context3.next = 7;
+              _context3.next = 8;
               return localState.getDb();
 
-            case 7:
+            case 8:
               db = _context3.sent;
               db.close();
 
               _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
 
-            case 10:
+            case 11:
             case "end":
               return _context3.stop();
           }
@@ -441,16 +448,19 @@ function _createBrowserKeyValueStorageLocalState() {
 }
 
 var createBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
-  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(params) {
-    var internals, instance;
+  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(_params) {
+    var params, internals, instance;
     return _regenerator["default"].wrap(function _callee5$(_context5) {
       while (1) {
         switch (_context5.prev = _context5.next) {
           case 0:
-            _context5.next = 2;
+            params = _objectSpread(_objectSpread({}, _params), {}, {
+              databaseName: _params.databaseName + "KeyObject"
+            });
+            _context5.next = 3;
             return createBrowserKeyValueStorageLocalState(params);
 
-          case 2:
+          case 3:
             internals = _context5.sent;
             instance = new RxBrowserKeyValStorageInstance(params.databaseName, params.collectionName, {}, internals);
             /**
@@ -459,7 +469,7 @@ var createBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
             return _context5.abrupt("return", instance);
 
-          case 5:
+          case 6:
           case "end":
             return _context5.stop();
         }
