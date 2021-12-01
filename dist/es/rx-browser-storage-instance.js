@@ -9,6 +9,8 @@ exports.createBrowserStorageLocalState = exports.createBrowserStorageInstance = 
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
+
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
 var _objectWithoutPropertiesLoose2 = _interopRequireDefault(require("@babel/runtime/helpers/objectWithoutPropertiesLoose"));
@@ -24,6 +26,10 @@ var _rxdb = require("rxdb");
 var _utils = require("./utils");
 
 var _excluded = ["_attachments", "_deleted", "_rev"];
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { (0, _defineProperty2["default"])(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _createForOfIteratorHelperLoose(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (it) return (it = it.call(o)).next.bind(it); if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; return function () { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
@@ -790,7 +796,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               console.trace("storage instance is removed");
               localState = this.getLocalState();
               _context7.next = 4;
-              return localState.deleteDb();
+              return localState.removeCollection();
 
             case 4:
               this.closed = true;
@@ -930,16 +936,19 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
 exports.createBrowserStorageLocalState = createBrowserStorageLocalState;
 
 var createBrowserStorageInstance = /*#__PURE__*/function () {
-  var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(params) {
-    var internals, instance;
+  var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(_params) {
+    var params, internals, instance;
     return _regenerator["default"].wrap(function _callee10$(_context10) {
       while (1) {
         switch (_context10.prev = _context10.next) {
           case 0:
-            _context10.next = 2;
+            params = _objectSpread(_objectSpread({}, _params), {}, {
+              collectionName: _params.collectionName + "-" + _params.schema.version
+            });
+            _context10.next = 3;
             return createBrowserStorageLocalState(params);
 
-          case 2:
+          case 3:
             internals = _context10.sent;
             instance = new RxStorageBrowserInstance(params.databaseName, params.collectionName, {}, params.schema, internals);
             /**
@@ -948,7 +957,7 @@ var createBrowserStorageInstance = /*#__PURE__*/function () {
 
             return _context10.abrupt("return", instance);
 
-          case 5:
+          case 6:
           case "end":
             return _context10.stop();
         }

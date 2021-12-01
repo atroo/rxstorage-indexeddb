@@ -371,7 +371,7 @@ var RxBrowserKeyValStorageInstance = /*#__PURE__*/function () {
               console.trace("storage -key-oject instance is removed");
               localState = this.getLocalState();
               _context4.next = 4;
-              return localState.deleteDb();
+              return localState.removeCollection();
 
             case 4:
               this.closed = true;
@@ -421,7 +421,7 @@ function _createBrowserKeyValueStorageLocalState() {
             _context6.next = 3;
             return (0, _dbHelpers.createIdbDatabase)(params.databaseName, params.collectionName, "_id", {
               indexes: [],
-              version: 1
+              version: 0
             });
 
           case 3:

@@ -250,7 +250,7 @@ export async function createBrowserKeyValueStorageLocalState(
     params.databaseName,
     params.collectionName,
     "_id",
-    { indexes: [], version: 1 }
+    { indexes: [], version: 0 }
   );
 
   return {

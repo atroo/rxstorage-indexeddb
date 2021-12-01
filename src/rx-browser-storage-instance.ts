@@ -597,8 +597,13 @@ export const createBrowserStorageLocalState = async <RxDocType>(
 };
 
 export const createBrowserStorageInstance = async <RxDocType>(
-  params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
+  _params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
 ) => {
+  const params: typeof _params = {
+    ..._params,
+    collectionName: `${_params.collectionName}-${_params.schema.version}`,
+  };
+
   const internals: BrowserStorageInternals =
     await createBrowserStorageLocalState(params);
 

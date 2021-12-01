@@ -76,7 +76,7 @@ export const createIdbDatabase = async <RxDocType>(
   const foundCol = metaData.collections.find(
     (col) => col.name === collectionName
   );
-  if (foundCol && foundCol?.version === schema.version) {
+  if (foundCol) {
     updateNeeded = false;
   }
 
