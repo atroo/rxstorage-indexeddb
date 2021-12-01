@@ -1,4 +1,4 @@
-import { IDBPDatabase, openDB } from "idb";
+import { deleteDB, IDBPDatabase, openDB } from "idb";
 import { overwritable, RxJsonSchema } from "rxdb";
 import {
   CompositePrimaryKey,
@@ -80,6 +80,13 @@ export const createIdbDatabase = async <RxDocType>(
     updateNeeded = false;
   }
 
+  if (foundCol) {
+    console.log(
+      "Tries to add same collection",
+      `${collectionName}: ${schema.version}`
+    );
+  }
+
   const indexes: string | string[] = [];
   if (schema.indexes) {
     schema.indexes.forEach((idx) => {
@@ -110,7 +117,8 @@ export const createIdbDatabase = async <RxDocType>(
 
   const newDbState: BrowserStorageState = {
     ...dbState,
-    getDb: async () => {
+    getDb: async (deleteCollections?: string[]) => {
+      await getDbPromise;
       getDbPromise = new Promise(async (resolve) => {
         const dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
         if (!dataBaseState) {
@@ -135,6 +143,13 @@ export const createIdbDatabase = async <RxDocType>(
               return;
             }
             for (const collectionData of newCollections) {
+              if (
+                deleteCollections &&
+                deleteCollections.indexOf(collectionData.collectionName) >= 0
+              ) {
+                continue;
+              }
+
               try {
                 const store = db.createObjectStore(
                   collectionData.collectionName,
@@ -149,6 +164,12 @@ export const createIdbDatabase = async <RxDocType>(
               } catch (error) {
                 console.log(error);
                 console.log("STORE EXISTS: ", collectionData.collectionName);
+              }
+
+              if (deleteCollections) {
+                for (const colName of deleteCollections) {
+                  db.deleteObjectStore(colName);
+                }
               }
             }
           },
@@ -210,9 +231,25 @@ export const createIdbDatabase = async <RxDocType>(
 
       return getDbPromise;
     },
-    deleteDb: async () => {
-      // awai
-    }
+    removeCollection: async () => {
+      console.log("WILL remove store: ", databaseName);
+      await getDbPromise;
+      const dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
+      if (!dataBaseState) {
+        // TODO: less descriptive error in prod.
+        throw new Error("deleteDb: dataBase state is undefined");
+      }
+
+      IDB_DATABASE_STATE_BY_NAME.set(databaseName, {
+        ...dataBaseState,
+        updateNeeded: true,
+      });
+
+      return dataBaseState.getDb([
+        collectionName,
+        getChangesCollName(collectionName),
+      ]);
+    },
     metaData,
     updateNeeded,
     newCollections: [

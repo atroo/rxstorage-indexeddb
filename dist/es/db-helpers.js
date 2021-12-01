@@ -66,38 +66,38 @@ exports.genIndexName = genIndexName;
 var getDbPromise;
 
 var createIdbDatabase = /*#__PURE__*/function () {
-  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(databaseName, collectionName, primaryPath, schema) {
+  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(databaseName, collectionName, primaryPath, schema) {
     var metaDB, metaData, dbState, reqMetaData, updateNeeded, foundCol, indexes, newCollections, changesCollectionName, newDbState;
-    return _regenerator["default"].wrap(function _callee4$(_context4) {
+    return _regenerator["default"].wrap(function _callee5$(_context5) {
       while (1) {
-        switch (_context4.prev = _context4.next) {
+        switch (_context5.prev = _context5.next) {
           case 0:
-            _context4.next = 2;
+            _context5.next = 2;
             return getDbPromise;
 
           case 2:
-            _context4.next = 4;
+            _context5.next = 4;
             return (0, _dbMetaHelpers.getDbMeta)();
 
           case 4:
-            metaDB = _context4.sent;
+            metaDB = _context5.sent;
             dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
 
             if (!(dbState !== null && dbState !== void 0 && dbState.metaData)) {
-              _context4.next = 10;
+              _context5.next = 10;
               break;
             }
 
             metaData = dbState.metaData;
-            _context4.next = 14;
+            _context5.next = 14;
             break;
 
           case 10:
-            _context4.next = 12;
+            _context5.next = 12;
             return metaDB.getFromIndex("dbMetaData", "dbName", databaseName);
 
           case 12:
-            reqMetaData = _context4.sent;
+            reqMetaData = _context5.sent;
 
             if (reqMetaData) {
               metaData = reqMetaData;
@@ -117,6 +117,10 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
             if (foundCol && (foundCol === null || foundCol === void 0 ? void 0 : foundCol.version) === schema.version) {
               updateNeeded = false;
+            }
+
+            if (foundCol) {
+              console.log("Tries to add same collection", collectionName + ": " + schema.version);
             }
 
             indexes = [];
@@ -154,6 +158,10 @@ var createIdbDatabase = /*#__PURE__*/function () {
                     while (1) {
                       switch (_context3.prev = _context3.next) {
                         case 0:
+                          _context3.next = 2;
+                          return getDbPromise;
+
+                        case 2:
                           getDbPromise = new Promise( /*#__PURE__*/function () {
                             var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(resolve) {
                               var dataBaseState, metaData, newCollections, db, newDbState;
@@ -313,7 +321,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                           }());
                           return _context3.abrupt("return", getDbPromise);
 
-                        case 2:
+                        case 4:
                         case "end":
                           return _context3.stop();
                       }
@@ -327,19 +335,67 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
                 return getDb;
               }(),
+              deleteDb: function () {
+                var _deleteDb = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4() {
+                  var dataBaseState;
+                  return _regenerator["default"].wrap(function _callee4$(_context4) {
+                    while (1) {
+                      switch (_context4.prev = _context4.next) {
+                        case 0:
+                          console.log("WILL delete db: ", databaseName);
+                          _context4.next = 3;
+                          return getDbPromise;
+
+                        case 3:
+                          dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
+
+                          if (dataBaseState) {
+                            _context4.next = 6;
+                            break;
+                          }
+
+                          throw new Error("deleteDb: dataBase state is undefined");
+
+                        case 6:
+                          if (dataBaseState.db) {
+                            dataBaseState.db.close();
+                          }
+
+                          _context4.next = 9;
+                          return (0, _idb.deleteDB)(databaseName);
+
+                        case 9:
+                          IDB_DATABASE_STATE_BY_NAME.set(databaseName, _objectSpread(_objectSpread({}, dataBaseState), {}, {
+                            db: undefined
+                          }));
+
+                        case 10:
+                        case "end":
+                          return _context4.stop();
+                      }
+                    }
+                  }, _callee4);
+                }));
+
+                function deleteDb() {
+                  return _deleteDb.apply(this, arguments);
+                }
+
+                return deleteDb;
+              }(),
               metaData: metaData,
               updateNeeded: updateNeeded,
               newCollections: [].concat(dbState ? dbState.newCollections : [], newCollections)
             });
             IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
-            return _context4.abrupt("return", newDbState);
+            return _context5.abrupt("return", newDbState);
 
-          case 25:
+          case 26:
           case "end":
-            return _context4.stop();
+            return _context5.stop();
         }
       }
-    }, _callee4);
+    }, _callee5);
   }));
 
   return function createIdbDatabase(_x, _x2, _x3, _x4) {

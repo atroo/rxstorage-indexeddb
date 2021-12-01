@@ -14,8 +14,6 @@ var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/de
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
-var _idb = require("idb");
-
 var _rxdb = require("rxdb");
 
 var _rxjs = require("rxjs");
@@ -365,23 +363,20 @@ var RxBrowserKeyValStorageInstance = /*#__PURE__*/function () {
 
   _proto.remove = /*#__PURE__*/function () {
     var _remove = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4() {
+      var localState;
       return _regenerator["default"].wrap(function _callee4$(_context4) {
         while (1) {
           switch (_context4.prev = _context4.next) {
             case 0:
-              if (!this.closed) {
-                this.close();
-              } // TODO: it can be a problem actually.
-              // The connection is not actually closed until all transactions created using this connection are complete.
-
-
-              _context4.next = 3;
-              return (0, _idb.deleteDB)(this.databaseName);
-
-            case 3:
-              this.closed = true;
+              console.trace("storage -key-oject instance is removed");
+              localState = this.getLocalState();
+              _context4.next = 4;
+              return localState.deleteDb();
 
             case 4:
+              this.closed = true;
+
+            case 5:
             case "end":
               return _context4.stop();
           }
@@ -455,7 +450,7 @@ var createBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
         switch (_context5.prev = _context5.next) {
           case 0:
             params = _objectSpread(_objectSpread({}, _params), {}, {
-              databaseName: _params.databaseName + "KeyObject"
+              databaseName: _params.databaseName + "-key-object"
             });
             _context5.next = 3;
             return createBrowserKeyValueStorageLocalState(params);

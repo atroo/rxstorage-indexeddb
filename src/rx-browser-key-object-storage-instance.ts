@@ -224,13 +224,8 @@ export class RxBrowserKeyValStorageInstance<RxDocType>
   }
   async remove(): Promise<void> {
     console.trace("storage -key-oject instance is removed");
-
-    if (!this.closed) {
-      this.close();
-    }
-    // TODO: it can be a problem actually.
-    // The connection is not actually closed until all transactions created using this connection are complete.
-    await deleteDB(this.databaseName);
+    const localState = this.getLocalState();
+    await localState.removeCollection();
     this.closed = true;
   }
 
