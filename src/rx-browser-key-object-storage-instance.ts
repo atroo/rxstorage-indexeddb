@@ -1,5 +1,4 @@
 import { ChangeEvent } from "event-reduce-js/dist/lib/types";
-import { deleteDB } from "idb";
 import { createRevision, parseRevision } from "rxdb";
 import {
   BulkWriteLocalRow,
@@ -25,7 +24,7 @@ import { getEventKey } from "./utils";
 
 let instanceId = 1;
 
-export class RxBrowserKeyValStorageInstance<RxDocType>
+export class RxBrowserKeyObjectStorageInstance<RxDocType>
   implements
     RxStorageKeyObjectInstance<BrowserStorageInternals, BrowserStorageSettings>
 {
@@ -267,7 +266,7 @@ export const createBrowserKeyObjectStorageInstance = async <RxDocType>(
 
   const internals = await createBrowserKeyValueStorageLocalState(params);
 
-  const instance = new RxBrowserKeyValStorageInstance<RxDocType>(
+  const instance = new RxBrowserKeyObjectStorageInstance<RxDocType>(
     params.databaseName,
     params.collectionName,
     {},

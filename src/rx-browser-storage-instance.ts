@@ -38,7 +38,6 @@ import {
 import { find } from "./find";
 import { createRevision, getHeightOfRevision, parseRevision } from "rxdb";
 import { getEventKey } from "./utils";
-import { deleteDB } from "idb";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 let instanceId = 1;

@@ -5,7 +5,7 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.createBrowserKeyObjectStorageInstance = exports.RxBrowserKeyValStorageInstance = void 0;
+exports.createBrowserKeyObjectStorageInstance = exports.RxBrowserKeyObjectStorageInstance = void 0;
 exports.createBrowserKeyValueStorageLocalState = createBrowserKeyValueStorageLocalState;
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
@@ -34,8 +34,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 var instanceId = 1;
 
-var RxBrowserKeyValStorageInstance = /*#__PURE__*/function () {
-  function RxBrowserKeyValStorageInstance(databaseName, collectionName, options, internals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
+var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
+  function RxBrowserKeyObjectStorageInstance(databaseName, collectionName, options, internals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
   ) {// this.primaryPath = getPrimaryFieldOfPrimaryKey(this.schema.primaryKey);
 
     this.changes$ = new _rxjs.Subject();
@@ -47,7 +47,7 @@ var RxBrowserKeyValStorageInstance = /*#__PURE__*/function () {
     this.internals = internals;
   }
 
-  var _proto = RxBrowserKeyValStorageInstance.prototype;
+  var _proto = RxBrowserKeyObjectStorageInstance.prototype;
 
   _proto.bulkWrite = /*#__PURE__*/function () {
     var _bulkWrite = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(documentWrites) {
@@ -399,10 +399,10 @@ var RxBrowserKeyValStorageInstance = /*#__PURE__*/function () {
     return localState;
   };
 
-  return RxBrowserKeyValStorageInstance;
+  return RxBrowserKeyObjectStorageInstance;
 }();
 
-exports.RxBrowserKeyValStorageInstance = RxBrowserKeyValStorageInstance;
+exports.RxBrowserKeyObjectStorageInstance = RxBrowserKeyObjectStorageInstance;
 
 function createBrowserKeyValueStorageLocalState(_x3) {
   return _createBrowserKeyValueStorageLocalState.apply(this, arguments);
@@ -455,7 +455,7 @@ var createBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
           case 3:
             internals = _context5.sent;
-            instance = new RxBrowserKeyValStorageInstance(params.databaseName, params.collectionName, {}, internals);
+            instance = new RxBrowserKeyObjectStorageInstance(params.databaseName, params.collectionName, {}, internals);
             /**
              * TODO: should we do extra steps to enable CORRECT multiinstance?
              */
