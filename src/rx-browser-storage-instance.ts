@@ -599,6 +599,12 @@ export const createBrowserStorageLocalState = async <RxDocType>(
 export const createBrowserStorageInstance = async <RxDocType>(
   _params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
 ) => {
+  /**
+   * every collection name must have suffix: ${collName}-${coll.version}.
+   * Otherwise migration will break.
+   * Reason: when collection version changes rxdb copies data from collection
+   * and creates new one and old one is deleted.
+   */
   const params: typeof _params = {
     ..._params,
     collectionName: `${_params.collectionName}-${_params.schema.version}`,
