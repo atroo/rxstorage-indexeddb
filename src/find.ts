@@ -1,4 +1,4 @@
-import { IDBPDatabase } from "idb";
+import { IDBPCursorWithValue, IDBPDatabase } from "idb";
 import { MangoQuery } from "rxdb/dist/types/types";
 import { translateMangoQuerySelector } from ".";
 import { getDbMeta } from "./db-meta-helpers";
@@ -18,16 +18,16 @@ export const find = async <RxDocType>(
   );
   const translatedSelector = translateMangoQuerySelector(query, indexedCols);
 
-  let rows;
+  let rows = [];
+  const store = db.transaction(collectionName).store;
   if (translatedSelector.field && translatedSelector.queryOpts) {
     const keyRange = generateKeyRange(translatedSelector.queryOpts);
-    rows = await db.getAllFromIndex(
-      collectionName,
-      translatedSelector.field,
-      keyRange
-    );
+    const index = store.index(translatedSelector.field);
+    const cursor = await index.openCursor(keyRange); // sort
+    rows = await getRows(cursor, query.limit);
   } else {
-    rows = await db.getAll(collectionName);
+    const cursor = await store.openCursor();
+    rows = await getRows(cursor, query.limit);
   }
 
   if (translatedSelector.inMemoryFields.length) {
@@ -40,6 +40,21 @@ export const find = async <RxDocType>(
       query,
       translatedSelector.inMemoryFields
     );
+  }
+
+  return rows;
+};
+
+const getRows = async (
+  cursor: IDBPCursorWithValue | null,
+  limit = Infinity
+) => {
+  const rows = [];
+  let i = 0;
+  while (cursor && i < limit) {
+    rows.push(cursor.value);
+    i += 1;
+    cursor = await cursor.continue();
   }
 
   return rows;

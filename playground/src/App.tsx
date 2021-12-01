@@ -60,7 +60,7 @@ function App() {
     console.log("heroes collection:", coll);
 
     console.log("find is dispatched");
-    coll.find().$.subscribe((docs) => {
+    coll.find({ limit: 5, selector: {} }).$.subscribe((docs) => {
       setDocs(() => {
         return docs;
       });
