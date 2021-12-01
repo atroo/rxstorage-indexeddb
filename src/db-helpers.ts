@@ -194,7 +194,18 @@ export const createIdbDatabase = async <RxDocType>(
           }
         }
 
-        // clear newCollections transaction went successfully
+        let metaDataCollections = metaData.collections.concat(
+          newCollections.map((coll) => {
+            return { name: coll.collectionName, version: coll.version };
+          })
+        );
+        if (deleteCollections) {
+          metaDataCollections = metaDataCollections.filter((coll) => {
+            return deleteCollections.indexOf(coll.name) === -1;
+          });
+        }
+
+        // transaction went successfully. clear "newCollections"
         const newDbState: BrowserStorageState = {
           ...dataBaseState,
           updateNeeded: false,
@@ -202,11 +213,7 @@ export const createIdbDatabase = async <RxDocType>(
           newCollections: [],
           metaData: {
             ...dataBaseState.metaData,
-            collections: metaData.collections.concat(
-              newCollections.map((coll) => {
-                return { name: coll.collectionName, version: coll.version };
-              })
-            ),
+            collections: metaDataCollections,
           },
         };
 

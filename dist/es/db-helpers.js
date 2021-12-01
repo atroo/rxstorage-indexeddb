@@ -160,7 +160,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                         case 2:
                           getDbPromise = new Promise( /*#__PURE__*/function () {
                             var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(resolve) {
-                              var dataBaseState, metaData, newCollections, db, newDbState;
+                              var dataBaseState, metaData, newCollections, db, metaDataCollections, newDbState;
                               return _regenerator["default"].wrap(function _callee2$(_context2) {
                                 while (1) {
                                   switch (_context2.prev = _context2.next) {
@@ -168,22 +168,21 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                       dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
 
                                       if (dataBaseState) {
-                                        _context2.next = 4;
+                                        _context2.next = 3;
                                         break;
                                       }
 
-                                      console.trace("no db state");
                                       throw new Error("dataBase state is undefined");
 
-                                    case 4:
+                                    case 3:
                                       if (!(!dataBaseState.updateNeeded && dataBaseState.db)) {
-                                        _context2.next = 6;
+                                        _context2.next = 5;
                                         break;
                                       }
 
                                       return _context2.abrupt("return", resolve(dataBaseState.db));
 
-                                    case 6:
+                                    case 5:
                                       metaData = dataBaseState.metaData;
 
                                       if (dataBaseState.updateNeeded) {
@@ -191,7 +190,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                       }
 
                                       newCollections = dataBaseState.newCollections;
-                                      _context2.next = 11;
+                                      _context2.next = 10;
                                       return (0, _idb.openDB)(databaseName, metaData.version, {
                                         upgrade: function () {
                                           var _upgrade = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db) {
@@ -216,7 +215,6 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                                         return "continue";
                                                       }
 
-                                                      console.log("will add collection: ", collectionData.collectionName);
                                                       var store = db.createObjectStore(collectionData.collectionName, {
                                                         keyPath: collectionData.primaryPath
                                                       });
@@ -248,8 +246,6 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
                                                   case 10:
                                                     if (deleteCollections) {
-                                                      console.log("Will delete collections: ", deleteCollections);
-
                                                       for (_iterator2 = _createForOfIteratorHelperLoose(deleteCollections); !(_step2 = _iterator2()).done;) {
                                                         colName = _step2.value;
                                                         db.deleteObjectStore(colName);
@@ -280,7 +276,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                         terminated: function terminated() {}
                                       });
 
-                                    case 11:
+                                    case 10:
                                       db = _context2.sent;
 
                                       /**
@@ -309,7 +305,20 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                             _loop2();
                                           }
                                         })();
-                                      } // clear newCollections transaction went successfully
+                                      }
+
+                                      metaDataCollections = metaData.collections.concat(newCollections.map(function (coll) {
+                                        return {
+                                          name: coll.collectionName,
+                                          version: coll.version
+                                        };
+                                      }));
+
+                                      if (deleteCollections) {
+                                        metaDataCollections = metaDataCollections.filter(function (coll) {
+                                          return deleteCollections.indexOf(coll.name) === -1;
+                                        });
+                                      } // transaction went successfully. clear "newCollections"
 
 
                                       newDbState = _objectSpread(_objectSpread({}, dataBaseState), {}, {
@@ -317,22 +326,17 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                         db: db,
                                         newCollections: [],
                                         metaData: _objectSpread(_objectSpread({}, dataBaseState.metaData), {}, {
-                                          collections: metaData.collections.concat(newCollections.map(function (coll) {
-                                            return {
-                                              name: coll.collectionName,
-                                              version: coll.version
-                                            };
-                                          }))
+                                          collections: metaDataCollections
                                         })
                                       });
-                                      _context2.next = 16;
+                                      _context2.next = 17;
                                       return metaDB.put("dbMetaData", newDbState.metaData);
 
-                                    case 16:
+                                    case 17:
                                       IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
                                       resolve(db);
 
-                                    case 18:
+                                    case 19:
                                     case "end":
                                       return _context2.stop();
                                   }
@@ -384,10 +388,9 @@ var createIdbDatabase = /*#__PURE__*/function () {
                           IDB_DATABASE_STATE_BY_NAME.set(databaseName, _objectSpread(_objectSpread({}, dataBaseState), {}, {
                             updateNeeded: true
                           }));
-                          console.log("WILL REMOVE COLLS: ", collectionName);
                           return _context4.abrupt("return", dataBaseState.getDb([collectionName, getChangesCollName(collectionName)]));
 
-                        case 8:
+                        case 7:
                         case "end":
                           return _context4.stop();
                       }
