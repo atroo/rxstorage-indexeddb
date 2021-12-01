@@ -130,7 +130,7 @@ export const createIdbDatabase = async <RxDocType>(
         const newCollections = dataBaseState.newCollections;
 
         const db = await openDB(databaseName, metaData.version, {
-          async upgrade(db) {
+          upgrade(db) {
             if (!newCollections.length && !deleteCollections?.length) {
               return;
             }
@@ -199,10 +199,23 @@ export const createIdbDatabase = async <RxDocType>(
             return { name: coll.collectionName, version: coll.version };
           })
         );
+
+        /**
+         * exclude deleted collections from meta.
+         */
         if (deleteCollections) {
           metaDataCollections = metaDataCollections.filter((coll) => {
             return deleteCollections.indexOf(coll.name) === -1;
           });
+
+          for (const colName of deleteCollections) {
+            /**
+             * also delete indexes meta along with store. they're not needed anymore
+             * DO NOT do this via "upgrade" callback as upgrade transaction can be finish while
+             * indexes meta being removed
+             */
+            await metaDB.delete("indexedCols", [databaseName, colName]);
+          }
         }
 
         // transaction went successfully. clear "newCollections"
