@@ -254,8 +254,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               writeDoc = Object.assign({}, writeRow.document, {
                 _rev: newRevision,
                 _deleted: insertedIsDeleted,
-                // TODO attachments are currently not working with lokijs
-                _attachments: {}
+                _attachments: writeRow.document._attachments
               });
               _context2.next = 27;
               return store.add(writeDoc);
@@ -350,8 +349,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
             case 51:
               _writeDoc = Object.assign({}, writeRow.document, {
                 _rev: _newRevision,
-                _deleted: false,
-                _attachments: {}
+                _deleted: false
               });
               _context2.next = 54;
               return documentInDbCursor.update(_writeDoc);
@@ -737,45 +735,86 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
     return this.changes$.asObservable();
   };
 
-  _proto.getAttachmentData = function getAttachmentData(_documentId, _attachmentId) {
-    // TODO: attacments
-    throw new Error("Attachments are not implemented in the lokijs RxStorage. Make a pull request.");
-  };
-
-  _proto.close = /*#__PURE__*/function () {
-    var _close = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6() {
-      var localState, db;
+  _proto.getAttachmentData = /*#__PURE__*/function () {
+    var _getAttachmentData = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6(_documentId, _attachmentId) {
+      var localState, db, doc, attachment;
       return _regenerator["default"].wrap(function _callee6$(_context6) {
         while (1) {
           switch (_context6.prev = _context6.next) {
             case 0:
-              this.closed = true;
+              console.log("getAttachmentData:", [_documentId, _attachmentId]);
+              localState = this.getLocalState();
+              _context6.next = 4;
+              return localState.getDb();
 
-              if (_dbHelpers.IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
-                _context6.next = 3;
+            case 4:
+              db = _context6.sent;
+              _context6.next = 7;
+              return db.get(this.collectionName, _documentId);
+
+            case 7:
+              doc = _context6.sent;
+
+              if (doc) {
+                _context6.next = 10;
                 break;
               }
 
-              return _context6.abrupt("return");
+              throw new Error("doc does not exist");
+
+            case 10:
+              attachment = doc._attachments[_attachmentId];
+              return _context6.abrupt("return", attachment.data);
+
+            case 13:
+            case "end":
+              return _context6.stop();
+          }
+        }
+      }, _callee6, this);
+    }));
+
+    function getAttachmentData(_x7, _x8) {
+      return _getAttachmentData.apply(this, arguments);
+    }
+
+    return getAttachmentData;
+  }();
+
+  _proto.close = /*#__PURE__*/function () {
+    var _close = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee7() {
+      var localState, db;
+      return _regenerator["default"].wrap(function _callee7$(_context7) {
+        while (1) {
+          switch (_context7.prev = _context7.next) {
+            case 0:
+              this.closed = true;
+
+              if (_dbHelpers.IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
+                _context7.next = 3;
+                break;
+              }
+
+              return _context7.abrupt("return");
 
             case 3:
               this.changes$.complete();
               localState = this.getLocalState();
-              _context6.next = 7;
+              _context7.next = 7;
               return localState.getDb();
 
             case 7:
-              db = _context6.sent;
+              db = _context7.sent;
               db.close();
 
               _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
 
             case 10:
             case "end":
-              return _context6.stop();
+              return _context7.stop();
           }
         }
-      }, _callee6, this);
+      }, _callee7, this);
     }));
 
     function close() {
@@ -786,14 +825,14 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
   }();
 
   _proto.remove = /*#__PURE__*/function () {
-    var _remove = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee7() {
+    var _remove = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee8() {
       var localState;
-      return _regenerator["default"].wrap(function _callee7$(_context7) {
+      return _regenerator["default"].wrap(function _callee8$(_context8) {
         while (1) {
-          switch (_context7.prev = _context7.next) {
+          switch (_context8.prev = _context8.next) {
             case 0:
               localState = this.getLocalState();
-              _context7.next = 3;
+              _context8.next = 3;
               return localState.removeCollection();
 
             case 3:
@@ -801,10 +840,10 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 4:
             case "end":
-              return _context7.stop();
+              return _context8.stop();
           }
         }
-      }, _callee7, this);
+      }, _callee8, this);
     }));
 
     function remove() {
@@ -837,31 +876,31 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
   _proto.addChangeDocumentMeta =
   /*#__PURE__*/
   function () {
-    var _addChangeDocumentMeta = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee8(id) {
+    var _addChangeDocumentMeta = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee9(id) {
       var localState, changesCollectionName, db, store, cursor, lastDoc, nextFeedSequence;
-      return _regenerator["default"].wrap(function _callee8$(_context8) {
+      return _regenerator["default"].wrap(function _callee9$(_context9) {
         while (1) {
-          switch (_context8.prev = _context8.next) {
+          switch (_context9.prev = _context9.next) {
             case 0:
               localState = this.getLocalState();
               changesCollectionName = this.getChangesCollectionName();
-              _context8.next = 4;
+              _context9.next = 4;
               return localState.getDb();
 
             case 4:
-              db = _context8.sent;
+              db = _context9.sent;
               store = db.transaction(changesCollectionName, "readwrite").store;
 
               if (this.lastChangefeedSequence) {
-                _context8.next = 12;
+                _context9.next = 12;
                 break;
               }
 
-              _context8.next = 9;
+              _context9.next = 9;
               return store.index("sequence").openCursor(null, "prev");
 
             case 9:
-              cursor = _context8.sent;
+              cursor = _context9.sent;
               lastDoc = cursor === null || cursor === void 0 ? void 0 : cursor.value;
 
               if (lastDoc) {
@@ -870,7 +909,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 12:
               nextFeedSequence = this.lastChangefeedSequence + 1;
-              _context8.next = 15;
+              _context9.next = 15;
               return store.put({
                 eventId: id,
                 sequence: nextFeedSequence
@@ -881,13 +920,13 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 16:
             case "end":
-              return _context8.stop();
+              return _context9.stop();
           }
         }
-      }, _callee8, this);
+      }, _callee9, this);
     }));
 
-    function addChangeDocumentMeta(_x7) {
+    function addChangeDocumentMeta(_x9) {
       return _addChangeDocumentMeta.apply(this, arguments);
     }
 
@@ -900,19 +939,19 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 exports.RxStorageBrowserInstance = RxStorageBrowserInstance;
 
 var createBrowserStorageLocalState = /*#__PURE__*/function () {
-  var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee9(params) {
+  var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(params) {
     var primaryPath, databaseState;
-    return _regenerator["default"].wrap(function _callee9$(_context9) {
+    return _regenerator["default"].wrap(function _callee10$(_context10) {
       while (1) {
-        switch (_context9.prev = _context9.next) {
+        switch (_context10.prev = _context10.next) {
           case 0:
             primaryPath = (0, _dbHelpers.getPrimaryFieldOfPrimaryKey)(params.schema.primaryKey).toString();
-            _context9.next = 3;
+            _context10.next = 3;
             return (0, _dbHelpers.createIdbDatabase)(params.databaseName, params.collectionName, primaryPath, params.schema);
 
           case 3:
-            databaseState = _context9.sent;
-            return _context9.abrupt("return", {
+            databaseState = _context10.sent;
+            return _context10.abrupt("return", {
               databaseState: databaseState,
               changesCollectionName: (0, _dbHelpers.getChangesCollName)(params.collectionName),
               primaryPath: primaryPath
@@ -920,13 +959,13 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
 
           case 5:
           case "end":
-            return _context9.stop();
+            return _context10.stop();
         }
       }
-    }, _callee9);
+    }, _callee10);
   }));
 
-  return function createBrowserStorageLocalState(_x8) {
+  return function createBrowserStorageLocalState(_x10) {
     return _ref2.apply(this, arguments);
   };
 }();
@@ -934,11 +973,11 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
 exports.createBrowserStorageLocalState = createBrowserStorageLocalState;
 
 var createBrowserStorageInstance = /*#__PURE__*/function () {
-  var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(_params) {
+  var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee11(_params) {
     var params, internals, instance;
-    return _regenerator["default"].wrap(function _callee10$(_context10) {
+    return _regenerator["default"].wrap(function _callee11$(_context11) {
       while (1) {
-        switch (_context10.prev = _context10.next) {
+        switch (_context11.prev = _context11.next) {
           case 0:
             /**
              * every collection name must have suffix: ${collName}-${coll.version}.
@@ -949,27 +988,27 @@ var createBrowserStorageInstance = /*#__PURE__*/function () {
             params = _objectSpread(_objectSpread({}, _params), {}, {
               collectionName: _params.collectionName + "-" + _params.schema.version
             });
-            _context10.next = 3;
+            _context11.next = 3;
             return createBrowserStorageLocalState(params);
 
           case 3:
-            internals = _context10.sent;
+            internals = _context11.sent;
             instance = new RxStorageBrowserInstance(params.databaseName, params.collectionName, {}, params.schema, internals);
             /**
              * TODO: should we do extra steps to enable CORRECT multiinstance?
              */
 
-            return _context10.abrupt("return", instance);
+            return _context11.abrupt("return", instance);
 
           case 6:
           case "end":
-            return _context10.stop();
+            return _context11.stop();
         }
       }
-    }, _callee10);
+    }, _callee11);
   }));
 
-  return function createBrowserStorageInstance(_x9) {
+  return function createBrowserStorageInstance(_x11) {
     return _ref3.apply(this, arguments);
   };
 }();

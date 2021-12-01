@@ -45,5 +45,8 @@ export const heroSchema = {
       },
     },
   },
+  attachments: {
+    encrypted: false,
+  },
   required: ["name", "color"],
 };

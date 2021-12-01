@@ -5,6 +5,7 @@ import {
   createRxDatabase,
   // getRxStoragePouch,
   RxDatabase,
+  RxDocument,
   // RxDocument,
 } from "rxdb";
 // import { getRxStorageLoki } from "rxdb/plugins/lokijs";
@@ -17,6 +18,8 @@ const {
   animals,
 } = require("unique-names-generator");
 // addPouchPlugin(require("pouchdb-adapter-indexeddb"));
+
+let locked = false;
 
 function App() {
   const [database, setDatabase] = useState<RxDatabase | null>(null);
@@ -44,7 +47,6 @@ function App() {
         },
       });
 
-      console.dir(database.heroes.name);
       setDatabase(database);
     })();
   }, []);
@@ -64,6 +66,28 @@ function App() {
       });
     });
   }, [database]);
+
+  useEffect(() => {
+    (async () => {
+      if (docs?.length && !locked) {
+        locked = true;
+        const doc: RxDocument = docs[0];
+        await doc.putAttachment({
+          id: "cat.jpg",
+          data: new Blob(["cat"]),
+          type: "hey",
+        });
+        doc.allAttachments$.subscribe((attachments) =>
+          console.log("All attachments", attachments)
+        );
+
+        const catAttachment = await doc.getAttachment("cat.jpg");
+        console.log("catATtachment:", catAttachment);
+        const attachmentData = await catAttachment?.getStringData();
+        console.log("Attachment data: ", attachmentData);
+      }
+    })();
+  }, [docs]);
 
   return (
     <div className="App">

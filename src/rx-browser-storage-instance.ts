@@ -5,6 +5,8 @@ import {
   MangoQuery,
   MangoQuerySortDirection,
   MangoQuerySortPart,
+  RxAttachmentData,
+  RxAttachmentWriteData,
   RxDocumentData,
   RxDocumentWriteData,
   RxJsonSchema,
@@ -188,8 +190,9 @@ export class RxStorageBrowserInstance<RxDocType>
         const writeDoc = Object.assign({}, writeRow.document, {
           _rev: newRevision,
           _deleted: insertedIsDeleted,
-          // TODO attachments are currently not working with lokijs
-          _attachments: {} as any,
+          _attachments: writeRow.document._attachments as {
+            [key: string]: RxAttachmentData;
+          },
         });
 
         await store.add(writeDoc);
@@ -268,7 +271,6 @@ export class RxStorageBrowserInstance<RxDocType>
           const writeDoc: any = Object.assign({}, writeRow.document, {
             _rev: newRevision,
             _deleted: false,
-            _attachments: {},
           });
           await documentInDbCursor.update(writeDoc);
           this.addChangeDocumentMeta(id);
@@ -499,14 +501,19 @@ export class RxStorageBrowserInstance<RxDocType>
     return this.changes$.asObservable();
   }
 
-  getAttachmentData(
+  async getAttachmentData(
     _documentId: string,
     _attachmentId: string
   ): Promise<BlobBuffer> {
-    // TODO: attacments
-    throw new Error(
-      "Attachments are not implemented in the lokijs RxStorage. Make a pull request."
-    );
+    const localState = this.getLocalState();
+    const db = await localState.getDb();
+    const doc = await db.get(this.collectionName, _documentId);
+    if (!doc) {
+      throw new Error("doc does not exist");
+    }
+
+    const attachment: RxAttachmentWriteData = doc._attachments[_attachmentId];
+    return attachment.data;
   }
 
   async close(): Promise<void> {
