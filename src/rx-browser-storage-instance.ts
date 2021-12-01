@@ -43,6 +43,8 @@ const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 let instanceId = 1;
 
+// TODO: attachments: should we add "digest" and "length" to attachment ourself?
+
 export class RxStorageBrowserInstance<RxDocType>
   implements
     RxStorageInstance<
@@ -174,18 +176,17 @@ export class RxStorageBrowserInstance<RxDocType>
       const documentInDbCursor = await store.openCursor(id);
       const documentInDb = documentInDbCursor?.value;
       if (!documentInDb) {
-        // insert new document
-        const newRevision = "1-" + createRevision(writeRow.document);
-
         /**
          * It is possible to insert already deleted documents,
          * this can happen on replication.
          */
         const insertedIsDeleted = writeRow.document._deleted ? true : false;
         if (insertedIsDeleted) {
-          // TODO: purge documents
           continue;
         }
+
+        // insert new document
+        const newRevision = "1-" + createRevision(writeRow.document);
 
         const writeDoc = Object.assign({}, writeRow.document, {
           _rev: newRevision,
@@ -213,14 +214,6 @@ export class RxStorageBrowserInstance<RxDocType>
       } else {
         // update existing document
         const revInDb: string = documentInDb._rev;
-
-        // inserting a deleted document is possible
-        // without sending the previous data.
-        // TODO: purge document
-        // if (!writeRow.previous && documentInDb._deleted) {
-        //   writeRow.previous = documentInDb;
-        // }
-
         if (
           (!writeRow.previous && !documentInDb._deleted) ||
           (!!writeRow.previous && revInDb !== writeRow.previous._rev)
@@ -243,7 +236,6 @@ export class RxStorageBrowserInstance<RxDocType>
             !writeRow.previous._deleted &&
             writeRow.document._deleted
           ) {
-            // TODO: purge
             await documentInDbCursor.delete();
             this.addChangeDocumentMeta(id); // TODO: do I need this here.
             const previous = Object.assign({}, writeRow.previous);
@@ -454,14 +446,17 @@ export class RxStorageBrowserInstance<RxDocType>
     const localState = this.getLocalState();
 
     const desc = options.direction === "before";
-    const operator = options.direction === "after" ? "$gt" : "$lt"; // TODO: ?
+    const keyRange =
+      options.direction === "after"
+        ? IDBKeyRange.lowerBound(options.sinceSequence, true)
+        : IDBKeyRange.upperBound(options.sinceSequence, true);
 
     const changesCollectionName = this.getChangesCollectionName();
     const db = await localState.getDb();
     const store = db.transaction(changesCollectionName, "readwrite").store;
     let cursor = await store
       .index("sequence")
-      .openCursor(null, desc ? "prev" : "next");
+      .openCursor(keyRange, desc ? "prev" : "next");
     let changedDocuments = [];
     while (cursor) {
       const value = cursor.value;

@@ -40,7 +40,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 var _require = require("pouchdb-selector-core"),
     filterInMemoryFields = _require.filterInMemoryFields;
 
-var instanceId = 1;
+var instanceId = 1; // TODO: attachments: should we add "digest" and "length" to attachment ourself?
 
 var RxStorageBrowserInstance = /*#__PURE__*/function () {
   //   public readonly primaryPath: keyof RxDocType;
@@ -173,7 +173,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
   _proto.bulkWrite = /*#__PURE__*/function () {
     var _bulkWrite = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(documentWrites) {
-      var ret, db, txn, store, _iterator, _step, writeRow, startTime, id, documentInDbCursor, documentInDb, newRevision, insertedIsDeleted, writeDoc, revInDb, err, newRevHeight, _newRevision, previous, _change, _writeDoc, change;
+      var ret, db, txn, store, _iterator, _step, writeRow, startTime, id, documentInDbCursor, documentInDb, insertedIsDeleted, newRevision, writeDoc, revInDb, err, newRevHeight, _newRevision, previous, _change, _writeDoc, change;
 
       return _regenerator["default"].wrap(function _callee2$(_context2) {
         while (1) {
@@ -234,23 +234,22 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 break;
               }
 
-              // insert new document
-              newRevision = "1-" + (0, _rxdb.createRevision)(writeRow.document);
               /**
                * It is possible to insert already deleted documents,
                * this can happen on replication.
                */
-
               insertedIsDeleted = writeRow.document._deleted ? true : false;
 
               if (!insertedIsDeleted) {
-                _context2.next = 24;
+                _context2.next = 23;
                 break;
               }
 
               return _context2.abrupt("continue", 61);
 
-            case 24:
+            case 23:
+              // insert new document
+              newRevision = "1-" + (0, _rxdb.createRevision)(writeRow.document);
               writeDoc = Object.assign({}, writeRow.document, {
                 _rev: newRevision,
                 _deleted: insertedIsDeleted,
@@ -279,12 +278,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 32:
               // update existing document
-              revInDb = documentInDb._rev; // inserting a deleted document is possible
-              // without sending the previous data.
-              // TODO: purge document
-              // if (!writeRow.previous && documentInDb._deleted) {
-              //   writeRow.previous = documentInDb;
-              // }
+              revInDb = documentInDb._rev;
 
               if (!(!writeRow.previous && !documentInDb._deleted || !!writeRow.previous && revInDb !== writeRow.previous._rev)) {
                 _context2.next = 38;
@@ -648,7 +642,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
   _proto.getChangedDocuments = /*#__PURE__*/function () {
     var _getChangedDocuments = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(options) {
-      var localState, desc, operator, changesCollectionName, db, store, cursor, changedDocuments, value, useForLastSequence, ret;
+      var localState, desc, keyRange, changesCollectionName, db, store, cursor, changedDocuments, value, useForLastSequence, ret;
       return _regenerator["default"].wrap(function _callee5$(_context5) {
         while (1) {
           switch (_context5.prev = _context5.next) {
@@ -666,8 +660,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
             case 2:
               localState = this.getLocalState();
               desc = options.direction === "before";
-              operator = options.direction === "after" ? "$gt" : "$lt"; // TODO: ?
-
+              keyRange = options.direction === "after" ? IDBKeyRange.lowerBound(options.sinceSequence, true) : IDBKeyRange.upperBound(options.sinceSequence, true);
               changesCollectionName = this.getChangesCollectionName();
               _context5.next = 8;
               return localState.getDb();
@@ -676,7 +669,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               db = _context5.sent;
               store = db.transaction(changesCollectionName, "readwrite").store;
               _context5.next = 12;
-              return store.index("sequence").openCursor(null, desc ? "prev" : "next");
+              return store.index("sequence").openCursor(keyRange, desc ? "prev" : "next");
 
             case 12:
               cursor = _context5.sent;
@@ -742,31 +735,30 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
         while (1) {
           switch (_context6.prev = _context6.next) {
             case 0:
-              console.log("getAttachmentData:", [_documentId, _attachmentId]);
               localState = this.getLocalState();
-              _context6.next = 4;
+              _context6.next = 3;
               return localState.getDb();
 
-            case 4:
+            case 3:
               db = _context6.sent;
-              _context6.next = 7;
+              _context6.next = 6;
               return db.get(this.collectionName, _documentId);
 
-            case 7:
+            case 6:
               doc = _context6.sent;
 
               if (doc) {
-                _context6.next = 10;
+                _context6.next = 9;
                 break;
               }
 
               throw new Error("doc does not exist");
 
-            case 10:
+            case 9:
               attachment = doc._attachments[_attachmentId];
               return _context6.abrupt("return", attachment.data);
 
-            case 13:
+            case 11:
             case "end":
               return _context6.stop();
           }
