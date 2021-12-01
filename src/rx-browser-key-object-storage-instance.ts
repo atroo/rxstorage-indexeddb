@@ -206,8 +206,6 @@ export class RxBrowserKeyValStorageInstance<RxDocType>
   }
 
   async close(): Promise<void> {
-    console.trace("key-object storage instance closed");
-
     this.closed = true;
 
     if (!IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
@@ -223,7 +221,6 @@ export class RxBrowserKeyValStorageInstance<RxDocType>
     IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
   }
   async remove(): Promise<void> {
-    console.trace("storage -key-oject instance is removed");
     const localState = this.getLocalState();
     await localState.removeCollection();
     this.closed = true;

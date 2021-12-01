@@ -749,29 +749,28 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
         while (1) {
           switch (_context6.prev = _context6.next) {
             case 0:
-              console.trace("instance db closed");
               this.closed = true;
 
               if (_dbHelpers.IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
-                _context6.next = 4;
+                _context6.next = 3;
                 break;
               }
 
               return _context6.abrupt("return");
 
-            case 4:
+            case 3:
               this.changes$.complete();
               localState = this.getLocalState();
-              _context6.next = 8;
+              _context6.next = 7;
               return localState.getDb();
 
-            case 8:
+            case 7:
               db = _context6.sent;
               db.close();
 
               _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
 
-            case 11:
+            case 10:
             case "end":
               return _context6.stop();
           }
@@ -793,15 +792,14 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
         while (1) {
           switch (_context7.prev = _context7.next) {
             case 0:
-              console.trace("storage instance is removed");
               localState = this.getLocalState();
-              _context7.next = 4;
+              _context7.next = 3;
               return localState.removeCollection();
 
-            case 4:
+            case 3:
               this.closed = true;
 
-            case 5:
+            case 4:
             case "end":
               return _context7.stop();
           }
@@ -942,6 +940,12 @@ var createBrowserStorageInstance = /*#__PURE__*/function () {
       while (1) {
         switch (_context10.prev = _context10.next) {
           case 0:
+            /**
+             * every collection name must have suffix: ${collName}-${coll.version}.
+             * Otherwise migration will break.
+             * Reason: when collection version changes rxdb copies data from collection
+             * and creates new one and old one is deleted.
+             */
             params = _objectSpread(_objectSpread({}, _params), {}, {
               collectionName: _params.collectionName + "-" + _params.schema.version
             });

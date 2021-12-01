@@ -324,29 +324,28 @@ var RxBrowserKeyValStorageInstance = /*#__PURE__*/function () {
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
-              console.trace("key-object storage instance closed");
               this.closed = true;
 
               if (_dbHelpers.IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
-                _context3.next = 4;
+                _context3.next = 3;
                 break;
               }
 
               return _context3.abrupt("return");
 
-            case 4:
+            case 3:
               this.changes$.complete();
               localState = this.getLocalState();
-              _context3.next = 8;
+              _context3.next = 7;
               return localState.getDb();
 
-            case 8:
+            case 7:
               db = _context3.sent;
               db.close();
 
               _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
 
-            case 11:
+            case 10:
             case "end":
               return _context3.stop();
           }
@@ -368,15 +367,14 @@ var RxBrowserKeyValStorageInstance = /*#__PURE__*/function () {
         while (1) {
           switch (_context4.prev = _context4.next) {
             case 0:
-              console.trace("storage -key-oject instance is removed");
               localState = this.getLocalState();
-              _context4.next = 4;
+              _context4.next = 3;
               return localState.removeCollection();
 
-            case 4:
+            case 3:
               this.closed = true;
 
-            case 5:
+            case 4:
             case "end":
               return _context4.stop();
           }

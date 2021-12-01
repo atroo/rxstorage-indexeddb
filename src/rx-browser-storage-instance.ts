@@ -510,8 +510,6 @@ export class RxStorageBrowserInstance<RxDocType>
   }
 
   async close(): Promise<void> {
-    console.trace("instance db closed");
-
     this.closed = true;
 
     if (!IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
@@ -527,7 +525,6 @@ export class RxStorageBrowserInstance<RxDocType>
     IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
   }
   async remove(): Promise<void> {
-    console.trace("storage instance is removed");
     const localState = this.getLocalState();
     await localState.removeCollection();
     this.closed = true;

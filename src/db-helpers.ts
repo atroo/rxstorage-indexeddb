@@ -80,13 +80,6 @@ export const createIdbDatabase = async <RxDocType>(
     updateNeeded = false;
   }
 
-  if (foundCol) {
-    console.log(
-      "Tries to add same collection",
-      `${collectionName}: ${schema.version}`
-    );
-  }
-
   const indexes: string | string[] = [];
   if (schema.indexes) {
     schema.indexes.forEach((idx) => {
@@ -122,7 +115,6 @@ export const createIdbDatabase = async <RxDocType>(
       getDbPromise = new Promise(async (resolve) => {
         const dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
         if (!dataBaseState) {
-          console.trace("no db state");
           throw new Error("dataBase state is undefined");
         }
 
@@ -139,7 +131,7 @@ export const createIdbDatabase = async <RxDocType>(
 
         const db = await openDB(databaseName, metaData.version, {
           async upgrade(db) {
-            if (!newCollections.length) {
+            if (!newCollections.length && !deleteCollections?.length) {
               return;
             }
             for (const collectionData of newCollections) {
@@ -150,26 +142,21 @@ export const createIdbDatabase = async <RxDocType>(
                 continue;
               }
 
-              try {
-                const store = db.createObjectStore(
-                  collectionData.collectionName,
-                  {
-                    keyPath: collectionData.primaryPath,
-                  }
-                );
-
-                collectionData.indexes.forEach((index) => {
-                  store.createIndex(genIndexName(index), index);
-                });
-              } catch (error) {
-                console.log(error);
-                console.log("STORE EXISTS: ", collectionData.collectionName);
-              }
-
-              if (deleteCollections) {
-                for (const colName of deleteCollections) {
-                  db.deleteObjectStore(colName);
+              const store = db.createObjectStore(
+                collectionData.collectionName,
+                {
+                  keyPath: collectionData.primaryPath,
                 }
+              );
+
+              collectionData.indexes.forEach((index) => {
+                store.createIndex(genIndexName(index), index);
+              });
+            }
+
+            if (deleteCollections) {
+              for (const colName of deleteCollections) {
+                db.deleteObjectStore(colName);
               }
             }
           },
@@ -232,7 +219,6 @@ export const createIdbDatabase = async <RxDocType>(
       return getDbPromise;
     },
     removeCollection: async () => {
-      console.log("WILL remove store: ", databaseName);
       await getDbPromise;
       const dataBaseState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
       if (!dataBaseState) {
