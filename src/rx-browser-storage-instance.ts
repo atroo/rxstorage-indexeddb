@@ -577,17 +577,18 @@ export class RxStorageBrowserInstance<RxDocType>
 export const createBrowserStorageLocalState = async <RxDocType>(
   params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
 ): Promise<BrowserStorageInternals> => {
+  const primaryPath = getPrimaryFieldOfPrimaryKey(params.schema.primaryKey);
   const databaseState = await createIdbDatabase(
     params.databaseName,
     params.collectionName,
-    params.schema.primaryKey,
+    primaryPath,
     params.schema
   );
 
   return {
     databaseState,
     changesCollectionName: getChangesCollName(params.collectionName),
-    primaryPath: getPrimaryFieldOfPrimaryKey(params.schema.primaryKey),
+    primaryPath,
   };
 };
 

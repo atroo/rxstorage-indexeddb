@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getDatabaseState = exports.getChangesCollName = exports.genIndexName = exports.createIdbDatabase = exports.IDB_DATABASE_STATE_BY_NAME = exports.CHANGES_COLLECTION_SUFFIX = void 0;
 exports.getPrimaryFieldOfPrimaryKey = getPrimaryFieldOfPrimaryKey;
+exports.getPrimaryKeyValue = getPrimaryKeyValue;
 exports.newRxError = newRxError;
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
@@ -172,7 +173,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                               var _loop = function _loop() {
                                 var collectionData = _step.value;
                                 var store = db.createObjectStore(collectionData.collectionName, {
-                                  keyPath: collectionData.primaryPath
+                                  keyPath: getPrimaryKeyValue(collectionData.primaryPath)
                                 });
                                 collectionData.indexes.forEach(function (index) {
                                   store.createIndex(genIndexName(index), index);
@@ -222,6 +223,15 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                     name: genIndexName(index),
                                     value: index
                                   });
+                                });
+                                indexedColsStore.put({
+                                  dbName: databaseName,
+                                  collection: collData.collectionName,
+                                  name: getPrimaryFieldOfPrimaryKey(collData.primaryPath),
+                                  value: getPrimaryKeyValue(collData.primaryPath),
+                                  primary: collData.primaryPath === "string" ? true : {
+                                    seperator: collData.primaryPath.separator
+                                  }
                                 });
                               };
 
@@ -345,9 +355,15 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
 exports.createIdbDatabase = createIdbDatabase;
 
-function getPrimaryFieldOfPrimaryKey(primaryKey) {
-  console.log("Primary Key", primaryKey);
+function getPrimaryKeyValue(primaryKey) {
+  if (typeof primaryKey === "string") {
+    return primaryKey;
+  } else {
+    return primaryKey.fields;
+  }
+}
 
+function getPrimaryFieldOfPrimaryKey(primaryKey) {
   if (typeof primaryKey === "string") {
     return primaryKey;
   } else {

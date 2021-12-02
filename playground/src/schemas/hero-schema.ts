@@ -9,6 +9,9 @@ export const heroSchema = {
   },
   type: "object",
   properties: {
+    id: {
+      type: "string",
+    },
     myVersion: {
       type: "number",
     },

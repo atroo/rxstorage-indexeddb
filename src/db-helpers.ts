@@ -34,7 +34,7 @@ export const genIndexName = (index: string | string[]) => {
 export const createIdbDatabase = async <RxDocType>(
   databaseName: string,
   collectionName: string,
-  primaryPath: PrimaryKey<RxDocType>,
+  primaryPath: string,
   schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">
 ) => {
   const metaDB = await getDbMeta();
@@ -115,7 +115,7 @@ export const createIdbDatabase = async <RxDocType>(
           }
           for (const collectionData of newCollections) {
             const store = db.createObjectStore(collectionData.collectionName, {
-              keyPath: getPrimaryKeyValue(collectionData.primaryPath),
+              keyPath: collectionData.primaryPath,
             });
 
             collectionData.indexes.forEach((index) => {
@@ -163,16 +163,9 @@ export const createIdbDatabase = async <RxDocType>(
           indexedColsStore.put({
             dbName: databaseName,
             collection: collData.collectionName,
-            name: getPrimaryFieldOfPrimaryKey(collData.primaryPath),
-            value: getPrimaryKeyValue(collData.primaryPath),
-            primary:
-              collData.primaryPath === "string"
-                ? true
-                : {
-                    seperator: (
-                      collData.primaryPath as CompositePrimaryKey<RxDocType>
-                    ).separator,
-                  },
+            name: collData.primaryPath,
+            value: collData.primaryPath,
+            primary: true,
           });
         }
       }
@@ -243,16 +236,6 @@ export const createIdbDatabase = async <RxDocType>(
 
   return newDbState;
 };
-
-export function getPrimaryKeyValue<RxDocType>(
-  primaryKey: PrimaryKey<RxDocType>
-): string | string[] {
-  if (typeof primaryKey === "string") {
-    return primaryKey;
-  } else {
-    return (primaryKey as CompositePrimaryKey<RxDocType>).fields as string[];
-  }
-}
 
 export function getPrimaryFieldOfPrimaryKey<RxDocType>(
   primaryKey: PrimaryKey<RxDocType>

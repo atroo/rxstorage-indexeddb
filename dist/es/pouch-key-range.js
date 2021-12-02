@@ -47,6 +47,7 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
 
       var index = indexes[i];
       var compound = index.value.length > 1;
+      var primary = index.primary;
       var memoMatcher = void 0;
 
       if (!compound) {
@@ -123,7 +124,8 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
             inclusiveEnd: inclusiveEnd
           },
           inMemoryFields: Object.keys(cloneSelector),
-          field: index.name
+          field: index.name,
+          primary: Boolean(primary)
         }
       };
     };

@@ -19,7 +19,7 @@ export const find = async <RxDocType>(
   );
 
   console.log("indexedCols", indexedCols);
-  const translatedSelector = generatePouchKeyRange(query, indexedCols);
+  const pouchKeyRangeData = generatePouchKeyRange(query, indexedCols);
 
   const store = db.transaction(collectionName).store;
   let cursor: IDBPCursorWithValue<
@@ -29,9 +29,11 @@ export const find = async <RxDocType>(
     unknown,
     "readonly"
   > | null;
-  if (translatedSelector.field && translatedSelector.queryOpts) {
-    const keyRange = generateKeyRange(translatedSelector.queryOpts);
-    const index = store.index(translatedSelector.field);
+  if (pouchKeyRangeData.field && pouchKeyRangeData.queryOpts) {
+    const keyRange = generateKeyRange(pouchKeyRangeData.queryOpts);
+    const index = pouchKeyRangeData.primary
+      ? store
+      : store.index(pouchKeyRangeData.field);
     cursor = await index.openCursor(keyRange);
   } else {
     cursor = await store.openCursor();
@@ -51,7 +53,7 @@ export const find = async <RxDocType>(
       return { doc: row };
     }),
     query,
-    translatedSelector.inMemoryFields
+    pouchKeyRangeData.inMemoryFields
   );
   return rows.map((row) => {
     return row.doc;

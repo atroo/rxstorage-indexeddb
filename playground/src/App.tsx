@@ -57,9 +57,14 @@ function App() {
     }
 
     const coll = database.heroes;
-    console.log("heroes collection:", coll);
 
-    console.log("find is dispatched");
+    const id = coll.schema.getPrimaryOfDocumentData({
+      name: "hello",
+      color: "blue",
+    });
+
+    console.log("ID", id);
+
     coll
       .find({ limit: 100, selector: {}, sort: [{ name: "desc" }] })
       .$.subscribe((docs) => {

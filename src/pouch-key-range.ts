@@ -120,6 +120,7 @@ export const generatePouchKeyRange = <RxDocType>(
         },
         inMemoryFields: Object.keys(cloneSelector),
         field: index.name,
+        primary: index.primary,
       };
     }
 
