@@ -60,11 +60,13 @@ function App() {
     console.log("heroes collection:", coll);
 
     console.log("find is dispatched");
-    coll.find({ limit: 5, selector: {} }).$.subscribe((docs) => {
-      setDocs(() => {
-        return docs;
+    coll
+      .find({ limit: 100, skip: 10, selector: {}, sort: [{ name: "desc" }] })
+      .$.subscribe((docs) => {
+        setDocs(() => {
+          return docs;
+        });
       });
-    });
   }, [database]);
 
   useEffect(() => {

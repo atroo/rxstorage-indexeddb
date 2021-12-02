@@ -1,7 +1,7 @@
 import { BulkWriteLocalRow, RxKeyObjectStorageInstanceCreationParams, RxLocalDocumentData, RxLocalStorageBulkWriteResponse, RxStorageChangeEvent, RxStorageKeyObjectInstance } from "rxdb/dist/types/types";
 import { Observable } from "rxjs";
 import { BrowserStorageInternals, BrowserStorageSettings } from "./types/browser-storage";
-export declare class RxBrowserKeyValStorageInstance<RxDocType> implements RxStorageKeyObjectInstance<BrowserStorageInternals, BrowserStorageSettings> {
+export declare class RxBrowserKeyObjectStorageInstance<RxDocType> implements RxStorageKeyObjectInstance<BrowserStorageInternals, BrowserStorageSettings> {
     readonly databaseName: string;
     readonly collectionName: string;
     readonly options: Readonly<BrowserStorageSettings>;
@@ -20,4 +20,4 @@ export declare class RxBrowserKeyValStorageInstance<RxDocType> implements RxStor
     private getLocalState;
 }
 export declare function createBrowserKeyValueStorageLocalState(params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>): Promise<BrowserStorageInternals>;
-export declare const createBrowserKeyObjectStorageInstance: <RxDocType>(params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageInternals>) => Promise<RxBrowserKeyValStorageInstance<RxDocType>>;
+export declare const createBrowserKeyObjectStorageInstance: <RxDocType>(_params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageInternals>) => Promise<RxBrowserKeyObjectStorageInstance<RxDocType>>;

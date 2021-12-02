@@ -22,8 +22,7 @@ var _require = require("pouchdb-selector-core"),
 
 var find = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db, collectionName, query) {
-    var metaDB, indexedCols, translatedSelector, rows, store, keyRange, index, cursor, _cursor;
-
+    var metaDB, indexedCols, translatedSelector, store, cursor, keyRange, index, rows;
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -39,55 +38,53 @@ var find = /*#__PURE__*/function () {
           case 5:
             indexedCols = _context.sent;
             translatedSelector = (0, _.translateMangoQuerySelector)(query, indexedCols);
-            rows = [];
             store = db.transaction(collectionName).store;
 
             if (!(translatedSelector.field && translatedSelector.queryOpts)) {
-              _context.next = 20;
+              _context.next = 16;
               break;
             }
 
             keyRange = (0, _idbKeyRange.generateKeyRange)(translatedSelector.queryOpts);
             index = store.index(translatedSelector.field);
-            _context.next = 14;
+            _context.next = 13;
             return index.openCursor(keyRange);
 
-          case 14:
+          case 13:
             cursor = _context.sent;
-            _context.next = 17;
-            return getRows(cursor, query.limit);
-
-          case 17:
-            rows = _context.sent;
-            _context.next = 26;
+            _context.next = 19;
             break;
 
-          case 20:
-            _context.next = 22;
+          case 16:
+            _context.next = 18;
             return store.openCursor();
 
-          case 22:
-            _cursor = _context.sent;
-            _context.next = 25;
-            return getRows(_cursor, query.limit);
+          case 18:
+            cursor = _context.sent;
 
-          case 25:
+          case 19:
+            _context.next = 21;
+            return getRows(cursor);
+
+          case 21:
             rows = _context.sent;
 
-          case 26:
-            if (translatedSelector.inMemoryFields.length) {
-              rows = filterInMemoryFields(rows.map(function (row) {
-                // make data compatible with filterInMemoryFields
-                // TODO: copy and change this util
-                return {
-                  doc: row
-                };
-              }), query, translatedSelector.inMemoryFields);
-            }
+            /**
+             * Filter in Memory Fields will take care of sort, limit and skip.
+             * TODO: if there's indexed field, then use IDBKeyRange to sort data.
+             */
+            rows = filterInMemoryFields(rows.map(function (row) {
+              // make data compatible with filterInMemoryFields
+              // TODO: fork "pouchdb-selector-core" and adapt lib for our uses case.
+              return {
+                doc: row
+              };
+            }), query, translatedSelector.inMemoryFields);
+            return _context.abrupt("return", rows.map(function (row) {
+              return row.doc;
+            }));
 
-            return _context.abrupt("return", rows);
-
-          case 28:
+          case 24:
           case "end":
             return _context.stop();
         }

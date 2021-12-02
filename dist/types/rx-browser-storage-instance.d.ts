@@ -38,4 +38,4 @@ export declare class RxStorageBrowserInstance<RxDocType> implements RxStorageIns
     private addChangeDocumentMeta;
 }
 export declare const createBrowserStorageLocalState: <RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>) => Promise<BrowserStorageInternals>;
-export declare const createBrowserStorageInstance: <RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>) => Promise<RxStorageBrowserInstance<RxDocType>>;
+export declare const createBrowserStorageInstance: <RxDocType>(_params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>) => Promise<RxStorageBrowserInstance<RxDocType>>;

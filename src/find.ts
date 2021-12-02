@@ -18,31 +18,41 @@ export const find = async <RxDocType>(
   );
   const translatedSelector = translateMangoQuerySelector(query, indexedCols);
 
-  let rows = [];
   const store = db.transaction(collectionName).store;
+  let cursor: IDBPCursorWithValue<
+    unknown,
+    ArrayLike<any>,
+    string,
+    unknown,
+    "readonly"
+  > | null;
   if (translatedSelector.field && translatedSelector.queryOpts) {
     const keyRange = generateKeyRange(translatedSelector.queryOpts);
     const index = store.index(translatedSelector.field);
-    const cursor = await index.openCursor(keyRange); // sort
-    rows = await getRows(cursor, query.limit);
+    cursor = await index.openCursor(keyRange);
   } else {
-    const cursor = await store.openCursor();
-    rows = await getRows(cursor, query.limit);
+    cursor = await store.openCursor();
   }
 
-  if (translatedSelector.inMemoryFields.length) {
-    rows = filterInMemoryFields(
-      rows.map((row) => {
-        // make data compatible with filterInMemoryFields
-        // TODO: copy and change this util
-        return { doc: row };
-      }),
-      query,
-      translatedSelector.inMemoryFields
-    );
-  }
+  let rows = await getRows(cursor);
 
-  return rows;
+  /**
+   * Filter in Memory Fields will take care of sort, limit and skip.
+   * TODO: if there's indexed field, then use IDBKeyRange to sort data.
+   */
+
+  rows = filterInMemoryFields(
+    rows.map((row) => {
+      // make data compatible with filterInMemoryFields
+      // TODO: fork "pouchdb-selector-core" and adapt lib for our uses case.
+      return { doc: row };
+    }),
+    query,
+    translatedSelector.inMemoryFields
+  );
+  return rows.map((row) => {
+    return row.doc;
+  });
 };
 
 const getRows = async (
