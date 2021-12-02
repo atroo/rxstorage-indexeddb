@@ -9,7 +9,8 @@ var _variables = require("./variables");
 
 var IDB_NULL = Number.MIN_SAFE_INTEGER;
 var IDB_FALSE = Number.MIN_SAFE_INTEGER + 1;
-var IDB_TRUE = Number.MIN_SAFE_INTEGER + 2; // Adapted from: https://www.w3.org/TR/IndexedDB/#compare-two-keys
+var IDB_TRUE = Number.MIN_SAFE_INTEGER + 2; // From pouch indexeddb adapter
+// Adapted from: https://www.w3.org/TR/IndexedDB/#compare-two-keys
 // Importantly, *there is no upper bound possible* in idb. The ideal data
 // structure an infintely deep array:
 //   var IDB_COLLATE_HI = []; IDB_COLLATE_HI.push(IDB_COLLATE_HI)

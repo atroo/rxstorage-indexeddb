@@ -11,14 +11,15 @@ var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"))
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
-var _ = require(".");
-
 var _dbMetaHelpers = require("./db-meta-helpers");
 
 var _idbKeyRange = require("./idb-key-range");
 
+var _pouchKeyRange = require("./pouch-key-range");
+
 var _require = require("pouchdb-selector-core"),
-    filterInMemoryFields = _require.filterInMemoryFields;
+    filterInMemoryFields = _require.filterInMemoryFields; // TODO: types
+
 
 var find = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db, collectionName, query) {
@@ -37,7 +38,7 @@ var find = /*#__PURE__*/function () {
 
           case 5:
             indexedCols = _context.sent;
-            translatedSelector = (0, _.translateMangoQuerySelector)(query, indexedCols);
+            translatedSelector = (0, _pouchKeyRange.generatePouchKeyRange)(query, indexedCols);
             store = db.transaction(collectionName).store;
 
             if (!(translatedSelector.field && translatedSelector.queryOpts)) {

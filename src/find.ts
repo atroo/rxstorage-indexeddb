@@ -1,9 +1,11 @@
 import { IDBPCursorWithValue, IDBPDatabase } from "idb";
 import { MangoQuery } from "rxdb/dist/types/types";
-import { translateMangoQuerySelector } from ".";
 import { getDbMeta } from "./db-meta-helpers";
 import { generateKeyRange } from "./idb-key-range";
+import { generatePouchKeyRange } from "./pouch-key-range";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
+
+// TODO: types
 
 export const find = async <RxDocType>(
   db: IDBPDatabase<unknown>,
@@ -16,7 +18,7 @@ export const find = async <RxDocType>(
     "dbNameCollection",
     IDBKeyRange.bound([db.name, collectionName], [db.name, collectionName])
   );
-  const translatedSelector = translateMangoQuerySelector(query, indexedCols);
+  const translatedSelector = generatePouchKeyRange(query, indexedCols);
 
   const store = db.transaction(collectionName).store;
   let cursor: IDBPCursorWithValue<

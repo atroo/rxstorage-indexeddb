@@ -1,7 +1,7 @@
 export type StartKey = number | null | undefined;
 export type EndKey = number | Record<string, {}> | undefined;
 
-export interface ITranslatedQuery {
+export interface IPouchKeyRangeData {
   field: string | null; // TODO: compound fields
   inMemoryFields: string[]; // TODO: fields with non logical operators that should filtered manually
   queryOpts?: {

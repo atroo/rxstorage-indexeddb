@@ -5,7 +5,7 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.translateMangoQuerySelector = void 0;
+exports.generatePouchKeyRange = void 0;
 
 var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
 
@@ -18,9 +18,10 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 var extend = require("pouchdb-extend");
 
 var combinationFields = ["$or", "$nor", "$not"];
-var logicalMatchers = ["$eq", "$gt", "$gte", "$lt", "$lte"];
+var logicalMatchers = ["$eq", "$gt", "$gte", "$lt", "$lte"]; // TODO: types
 
-var translateMangoQuerySelector = function translateMangoQuerySelector(query, indexes) {
+var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
+  // TODO: don't mutate query
   if (query.selector) {
     query.selector = massageSelector(query.selector);
   }
@@ -30,14 +31,129 @@ var translateMangoQuerySelector = function translateMangoQuerySelector(query, in
   }
 
   validateFindRequest(query);
-  return findFirstIndexRange(query.selector, indexes);
+  return transformMangoIntoPouchKeyRange(query.selector, indexes);
+  /**
+   * Based on "getMultiFieldQueryOpts" and "getSingleFieldCoreQueryPlan" pouch functions (pouch-find lib)
+   * @param selector
+   * @param indexes
+   * @returns
+   */
+
+  function transformMangoIntoPouchKeyRange(selector, indexes) {
+    var cloneSelector = Object.assign({}, selector);
+
+    var _loop = function _loop(i) {
+      var _combinedOpts;
+
+      var index = indexes[i];
+      var compound = index.value.length > 1;
+      var memoMatcher = void 0;
+
+      if (!compound) {
+        memoMatcher = cloneSelector[index.name];
+
+        if (Object.keys(memoMatcher).some(isNonLogicalMatcher)) {
+          return "continue";
+        }
+      } else {
+        index.value.forEach(function (part) {
+          var matcher = cloneSelector[part];
+
+          if (!matcher || Object.keys(matcher).some(isNonLogicalMatcher)) {
+            return;
+          }
+
+          if (!memoMatcher) {
+            memoMatcher = part;
+            delete cloneSelector[part];
+          } else {
+            var usingGtlt = "$gt" in matcher || "$gte" in matcher || "$lt" in matcher || "$lte" in matcher;
+            var previousKeys = Object.keys(memoMatcher);
+            var previousWasEq = arrayEquals(previousKeys, ["$eq"]);
+            var previousWasSame = arrayEquals(previousKeys, Object.keys(matcher));
+            var gtltLostSpecificity = usingGtlt && !previousWasEq && !previousWasSame;
+
+            if (!gtltLostSpecificity) {
+              delete cloneSelector[part];
+            }
+          }
+        });
+
+        if (!memoMatcher) {
+          return "continue";
+        }
+      }
+
+      delete cloneSelector[index.name];
+      userOperators = Object.keys(memoMatcher);
+      var combinedOpts = null;
+
+      for (j = 0; j < userOperators.length; j++) {
+        userOperator = userOperators[j];
+        userValue = memoMatcher[userOperator];
+        newOpts = getMultiFieldCoreQueryPlan(userOperator, userValue);
+
+        if (combinedOpts) {
+          combinedOpts = mergeObjects([combinedOpts, newOpts]);
+        } else {
+          combinedOpts = newOpts;
+        }
+      }
+
+      var startkey = "startkey" in combinedOpts ? (_combinedOpts = combinedOpts) === null || _combinedOpts === void 0 ? void 0 : _combinedOpts.startkey : _variables.COLLATE_LO;
+      var endkey = "endkey" in combinedOpts ? combinedOpts.endkey : _variables.COLLATE_HI;
+      var inclusiveStart = void 0;
+
+      if ("inclusive_start" in combinedOpts) {
+        inclusiveStart = combinedOpts.inclusive_start;
+      }
+
+      var inclusiveEnd = void 0;
+
+      if ("inclusive_end" in combinedOpts) {
+        inclusiveEnd = combinedOpts.inclusive_end;
+      }
+
+      return {
+        v: {
+          queryOpts: {
+            startkey: startkey,
+            endkey: endkey,
+            inclusiveStart: inclusiveStart,
+            inclusiveEnd: inclusiveEnd
+          },
+          inMemoryFields: Object.keys(cloneSelector),
+          field: index.name
+        }
+      };
+    };
+
+    for (var i = 0; i < indexes.length; i += 1) {
+      var userOperators;
+      var j;
+      var userOperator;
+      var userValue;
+      var newOpts;
+
+      var _ret = _loop(i);
+
+      if (_ret === "continue") continue;
+      if (typeof _ret === "object") return _ret.v;
+    }
+
+    return {
+      queryOpts: null,
+      inMemoryFields: Object.keys(cloneSelector),
+      field: null
+    };
+  }
 };
 /**
- * Snippets from pouchdb-find that allow to translate Mango query
+ * Snippets from pouchdb-find that allow to transform Mango query
  */
 
 
-exports.translateMangoQuerySelector = translateMangoQuerySelector;
+exports.generatePouchKeyRange = generatePouchKeyRange;
 
 function massageSelector(input) {
   var result = _objectSpread({}, input);
@@ -328,273 +444,6 @@ function getMultiFieldCoreQueryPlan(userOperator, userValue) {
       };
   }
 }
-/**
- * @deprecated we can adopt it later for next storages
- * @param selector
- * @param indexes
- * @returns
- */
-
-
-function getSingleFieldCoreQueryPlan(selector, indexes) {
-  var rawFields = Object.keys(selector);
-  var field = rawFields[0];
-  var indexed = indexes.find(function (data) {
-    return data.value === field;
-  });
-
-  if (!indexed) {
-    return {
-      queryOpts: null,
-      inMemoryFields: [field],
-      fields: []
-    };
-  }
-
-  var fields = []; //ignoring this because the test to exercise the branch is skipped at the moment
-
-  /* istanbul ignore next */
-
-  var matcher = selector[field] || {};
-  var inMemoryFields = [];
-  var userOperators = Object.keys(matcher);
-  var combinedOpts = null;
-  userOperators.forEach(function (userOperator) {
-    if (isNonLogicalMatcher(userOperator)) {
-      inMemoryFields.push(field);
-    } else {
-      fields.push(field);
-    }
-
-    var userValue = matcher[userOperator];
-    var newQueryOpts = getSingleFieldQueryOptsFor(userOperator, userValue);
-
-    if (combinedOpts) {
-      combinedOpts = mergeObjects([combinedOpts, newQueryOpts]);
-    } else {
-      combinedOpts = newQueryOpts;
-    }
-  });
-  return {
-    queryOpts: combinedOpts,
-    inMemoryFields: inMemoryFields,
-    fields: fields
-  };
-}
-
-function findFirstIndexRange(selector, indexes) {
-  var cloneSelector = Object.assign({}, selector);
-
-  var _loop = function _loop(i) {
-    var _combinedOpts;
-
-    var index = indexes[i];
-    var compound = index.value.length > 1;
-    var memoMatcher = void 0;
-
-    if (!compound) {
-      memoMatcher = cloneSelector[index.name];
-
-      if (Object.keys(memoMatcher).some(isNonLogicalMatcher)) {
-        return "continue";
-      }
-    } else {
-      index.value.forEach(function (part) {
-        var matcher = cloneSelector[part];
-
-        if (!matcher || Object.keys(matcher).some(isNonLogicalMatcher)) {
-          return;
-        }
-
-        if (!memoMatcher) {
-          memoMatcher = part;
-          delete cloneSelector[part];
-        } else {
-          var usingGtlt = "$gt" in matcher || "$gte" in matcher || "$lt" in matcher || "$lte" in matcher;
-          var previousKeys = Object.keys(memoMatcher);
-          var previousWasEq = arrayEquals(previousKeys, ["$eq"]);
-          var previousWasSame = arrayEquals(previousKeys, Object.keys(matcher));
-          var gtltLostSpecificity = usingGtlt && !previousWasEq && !previousWasSame;
-
-          if (!gtltLostSpecificity) {
-            delete cloneSelector[part];
-          }
-        }
-      });
-
-      if (!memoMatcher) {
-        return "continue";
-      }
-    }
-
-    delete cloneSelector[index.name];
-    userOperators = Object.keys(memoMatcher);
-    var combinedOpts = null;
-
-    for (j = 0; j < userOperators.length; j++) {
-      userOperator = userOperators[j];
-      userValue = memoMatcher[userOperator];
-      newOpts = getMultiFieldCoreQueryPlan(userOperator, userValue);
-
-      if (combinedOpts) {
-        combinedOpts = mergeObjects([combinedOpts, newOpts]);
-      } else {
-        combinedOpts = newOpts;
-      }
-    }
-
-    var startkey = "startkey" in combinedOpts ? (_combinedOpts = combinedOpts) === null || _combinedOpts === void 0 ? void 0 : _combinedOpts.startkey : _variables.COLLATE_LO;
-    var endkey = "endkey" in combinedOpts ? combinedOpts.endkey : _variables.COLLATE_HI;
-    var inclusiveStart = void 0;
-
-    if ("inclusive_start" in combinedOpts) {
-      inclusiveStart = combinedOpts.inclusive_start;
-    }
-
-    var inclusiveEnd = void 0;
-
-    if ("inclusive_end" in combinedOpts) {
-      inclusiveEnd = combinedOpts.inclusive_end;
-    }
-
-    return {
-      v: {
-        queryOpts: {
-          startkey: startkey,
-          endkey: endkey,
-          inclusiveStart: inclusiveStart,
-          inclusiveEnd: inclusiveEnd
-        },
-        inMemoryFields: Object.keys(cloneSelector),
-        field: index.name
-      }
-    };
-  };
-
-  for (var i = 0; i < indexes.length; i += 1) {
-    var userOperators;
-    var j;
-    var userOperator;
-    var userValue;
-    var newOpts;
-
-    var _ret = _loop(i);
-
-    if (_ret === "continue") continue;
-    if (typeof _ret === "object") return _ret.v;
-  }
-
-  return {
-    queryOpts: null,
-    inMemoryFields: Object.keys(cloneSelector),
-    field: null
-  };
-}
-/**
- * @deprecated we can adopt it later for next storages
- * @param selector
- * @param indexes
- * @returns
- */
-
-
-function getMultiFieldQueryOpts(selector, indexes) {
-  var fields = Object.keys(selector);
-  var inMemoryFields = [];
-  var startkey = [];
-  var endkey = [];
-  var inclusiveStart = undefined;
-  var inclusiveEnd = undefined;
-
-  function finish(i) {
-    if (inclusiveStart !== false) {
-      startkey.push(_variables.COLLATE_LO);
-    }
-
-    if (inclusiveEnd !== false) {
-      endkey.push(_variables.COLLATE_HI);
-    } // keep track of the fields where we lost specificity,
-    // and therefore need to filter in-memory
-
-
-    inMemoryFields = fields.slice(i);
-  }
-
-  for (var i = 0, len = fields.length; i < len; i++) {
-    var _combinedOpts2;
-
-    var indexField = fields[i];
-    var matcher = selector[indexField];
-
-    if (!matcher) {
-      // fewer fields in user query than in index
-      finish(i);
-      break;
-    } else if (i > 0) {
-      if (Object.keys(matcher).some(isNonLogicalMatcher)) {
-        // non-logical are ignored
-        finish(i);
-        break;
-      }
-
-      var usingGtlt = "$gt" in matcher || "$gte" in matcher || "$lt" in matcher || "$lte" in matcher;
-      var previousKeys = Object.keys(selector[fields[i - 1]]);
-      var previousWasEq = arrayEquals(previousKeys, ["$eq"]);
-      var previousWasSame = arrayEquals(previousKeys, Object.keys(matcher));
-      var gtltLostSpecificity = usingGtlt && !previousWasEq && !previousWasSame;
-
-      if (gtltLostSpecificity) {
-        finish(i);
-        break;
-      }
-    }
-
-    var userOperators = Object.keys(matcher);
-    var combinedOpts = null;
-
-    for (var j = 0; j < userOperators.length; j++) {
-      var userOperator = userOperators[j];
-      var userValue = matcher[userOperator];
-      var newOpts = getMultiFieldCoreQueryPlan(userOperator, userValue);
-
-      if (combinedOpts) {
-        combinedOpts = mergeObjects([combinedOpts, newOpts]);
-      } else {
-        combinedOpts = newOpts;
-      }
-    }
-
-    startkey.push("startkey" in combinedOpts ? (_combinedOpts2 = combinedOpts) === null || _combinedOpts2 === void 0 ? void 0 : _combinedOpts2.startkey : _variables.COLLATE_LO);
-    endkey.push("endkey" in combinedOpts ? combinedOpts.endkey : _variables.COLLATE_HI);
-
-    if ("inclusive_start" in combinedOpts) {
-      inclusiveStart = combinedOpts.inclusive_start;
-    }
-
-    if ("inclusive_end" in combinedOpts) {
-      inclusiveEnd = combinedOpts.inclusive_end;
-    }
-  }
-
-  var res = {
-    startkey: startkey,
-    endkey: endkey
-  };
-
-  if (typeof inclusiveStart !== "undefined") {
-    res.inclusive_start = inclusiveStart;
-  }
-
-  if (typeof inclusiveEnd !== "undefined") {
-    res.inclusive_end = inclusiveEnd;
-  }
-
-  return {
-    queryOpts: res,
-    inMemoryFields: inMemoryFields,
-    fields: fields
-  };
-}
 
 function isNonLogicalMatcher(matcher) {
   return logicalMatchers.indexOf(matcher) === -1;
@@ -623,4 +472,4 @@ function mergeObjects(arr) {
 
   return res;
 }
-//# sourceMappingURL=translate-mango-query.js.map
+//# sourceMappingURL=pouch-key-range.js.map

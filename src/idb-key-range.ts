@@ -1,8 +1,4 @@
-import {
-  EndKey,
-  IIdbKeyRangeOptions,
-  StartKey,
-} from "./types/translate-mango-query";
+import { EndKey, IIdbKeyRangeOptions, StartKey } from "./types/pouch-key-range";
 import {
   COLLATE_LO as COUCH_COLLATE_LO,
   COLLATE_HI as COUCH_COLLATE_HI,
@@ -11,6 +7,8 @@ import {
 var IDB_NULL = Number.MIN_SAFE_INTEGER;
 var IDB_FALSE = Number.MIN_SAFE_INTEGER + 1;
 var IDB_TRUE = Number.MIN_SAFE_INTEGER + 2;
+
+// From pouch indexeddb adapter
 
 // Adapted from: https://www.w3.org/TR/IndexedDB/#compare-two-keys
 // Importantly, *there is no upper bound possible* in idb. The ideal data
