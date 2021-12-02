@@ -34,40 +34,41 @@ var find = /*#__PURE__*/function () {
           case 2:
             metaDB = _context.sent;
             _context.next = 5;
-            return metaDB.getAllFromIndex("indexedCols", "dbNameCollection", IDBKeyRange.bound([db.name, collectionName], [db.name, collectionName]));
+            return metaDB.getAll("indexedCols", IDBKeyRange.bound([db.name, collectionName], [db.name, collectionName]));
 
           case 5:
             indexedCols = _context.sent;
+            console.log("indexedCols", indexedCols);
             translatedSelector = (0, _pouchKeyRange.generatePouchKeyRange)(query, indexedCols);
             store = db.transaction(collectionName).store;
 
             if (!(translatedSelector.field && translatedSelector.queryOpts)) {
-              _context.next = 16;
+              _context.next = 17;
               break;
             }
 
             keyRange = (0, _idbKeyRange.generateKeyRange)(translatedSelector.queryOpts);
             index = store.index(translatedSelector.field);
-            _context.next = 13;
+            _context.next = 14;
             return index.openCursor(keyRange);
 
-          case 13:
+          case 14:
             cursor = _context.sent;
-            _context.next = 19;
+            _context.next = 20;
             break;
 
-          case 16:
-            _context.next = 18;
+          case 17:
+            _context.next = 19;
             return store.openCursor();
 
-          case 18:
+          case 19:
             cursor = _context.sent;
 
-          case 19:
-            _context.next = 21;
+          case 20:
+            _context.next = 22;
             return getRows(cursor);
 
-          case 21:
+          case 22:
             rows = _context.sent;
 
             /**
@@ -85,7 +86,7 @@ var find = /*#__PURE__*/function () {
               return row.doc;
             }));
 
-          case 24:
+          case 25:
           case "end":
             return _context.stop();
         }

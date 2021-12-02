@@ -36,12 +36,15 @@ var getDbMeta = /*#__PURE__*/function () {
                 // store version, collections
                 var dbMetaDataStore = db.createObjectStore("dbMetaData", {
                   keyPath: "dbName"
-                });
-                dbMetaDataStore.createIndex("dbName", "dbName");
+                }); // dbMetaDataStore.createIndex("dbName", "dbName");
+
+                // dbMetaDataStore.createIndex("dbName", "dbName");
                 var indexedColsStore = db.createObjectStore("indexedCols", {
                   keyPath: ["dbName", "collection", "name"]
-                });
-                indexedColsStore.createIndex("dbNameCollection", ["dbName", "collection"]);
+                }); // indexedColsStore.createIndex("dbNameCollection", [
+                //   "dbName",
+                //   "collection",
+                // ]);
               },
               blocking: function blocking() {
                 db.close();

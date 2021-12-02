@@ -83,7 +83,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
           case 8:
             _context3.next = 10;
-            return metaDB.getFromIndex("dbMetaData", "dbName", databaseName);
+            return metaDB.get("dbMetaData", databaseName);
 
           case 10:
             reqMetaData = _context3.sent;

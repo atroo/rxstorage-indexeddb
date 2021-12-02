@@ -44,11 +44,7 @@ export const createIdbDatabase = async <RxDocType>(
     metaData = dbState.metaData;
   } else {
     // Store "version" data in seperate db to properly handle indexeddb version update.
-    const reqMetaData = await metaDB.getFromIndex(
-      "dbMetaData",
-      "dbName",
-      databaseName
-    );
+    const reqMetaData = await metaDB.get("dbMetaData", databaseName);
     if (reqMetaData) {
       metaData = reqMetaData;
     } else {
