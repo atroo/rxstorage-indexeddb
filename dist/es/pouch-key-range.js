@@ -46,8 +46,7 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
       var _combinedOpts;
 
       var index = indexes[i];
-      var compound = index.value.length > 1;
-      var primary = index.primary;
+      var compound = Array.isArray(index.value);
       var memoMatcher = void 0;
 
       if (!compound) {
@@ -125,7 +124,7 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
           },
           inMemoryFields: Object.keys(cloneSelector),
           field: index.name,
-          primary: Boolean(primary)
+          primary: index.primary
         }
       };
     };
@@ -382,37 +381,6 @@ function mergeEq(value, fieldMatchers) {
   delete fieldMatchers.$lte;
   delete fieldMatchers.$ne;
   fieldMatchers.$eq = value;
-}
-
-function getSingleFieldQueryOptsFor(userOperator, userValue) {
-  switch (userOperator) {
-    case "$eq":
-      return {
-        key: [userValue]
-      };
-
-    case "$lte":
-      return {
-        endkey: [userValue]
-      };
-
-    case "$gte":
-      return {
-        startkey: [userValue]
-      };
-
-    case "$lt":
-      return {
-        endkey: [userValue],
-        inclusive_end: false
-      };
-
-    case "$gt":
-      return {
-        startkey: [userValue],
-        inclusive_start: false
-      };
-  }
 }
 
 function getMultiFieldCoreQueryPlan(userOperator, userValue) {

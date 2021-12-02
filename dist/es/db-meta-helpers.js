@@ -38,7 +38,7 @@ var getDbMeta = /*#__PURE__*/function () {
                   keyPath: "dbName"
                 });
                 db.createObjectStore("indexedCols", {
-                  keyPath: ["dbName", "collection", "name"]
+                  keyPath: ["dbName", "collection"]
                 });
               },
               blocking: function blocking() {

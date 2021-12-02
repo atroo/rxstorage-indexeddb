@@ -13,11 +13,12 @@ export const find = async <RxDocType>(
   query: MangoQuery<RxDocType>
 ) => {
   const metaDB = await getDbMeta();
-  const indexedCols = await metaDB.getAll(
-    "indexedCols",
-    IDBKeyRange.bound([db.name, collectionName], [db.name, collectionName])
-  );
+  const indexesMeta = await metaDB.get("indexedCols", [
+    db.name,
+    collectionName,
+  ]);
 
+  const indexedCols = indexesMeta ? indexesMeta.indexes : [];
   console.log("indexedCols", indexedCols);
   const pouchKeyRangeData = generatePouchKeyRange(query, indexedCols);
 

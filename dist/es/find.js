@@ -23,7 +23,7 @@ var _require = require("pouchdb-selector-core"),
 
 var find = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db, collectionName, query) {
-    var metaDB, indexedCols, translatedSelector, store, cursor, keyRange, index, rows;
+    var metaDB, indexesMeta, indexedCols, pouchKeyRangeData, store, cursor, keyRange, index, rows;
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -34,41 +34,42 @@ var find = /*#__PURE__*/function () {
           case 2:
             metaDB = _context.sent;
             _context.next = 5;
-            return metaDB.getAll("indexedCols", IDBKeyRange.bound([db.name, collectionName], [db.name, collectionName]));
+            return metaDB.get("indexedCols", [db.name, collectionName]);
 
           case 5:
-            indexedCols = _context.sent;
+            indexesMeta = _context.sent;
+            indexedCols = indexesMeta ? indexesMeta.indexes : [];
             console.log("indexedCols", indexedCols);
-            translatedSelector = (0, _pouchKeyRange.generatePouchKeyRange)(query, indexedCols);
+            pouchKeyRangeData = (0, _pouchKeyRange.generatePouchKeyRange)(query, indexedCols);
             store = db.transaction(collectionName).store;
 
-            if (!(translatedSelector.field && translatedSelector.queryOpts)) {
-              _context.next = 17;
+            if (!(pouchKeyRangeData.field && pouchKeyRangeData.queryOpts)) {
+              _context.next = 18;
               break;
             }
 
-            keyRange = (0, _idbKeyRange.generateKeyRange)(translatedSelector.queryOpts);
-            index = store.index(translatedSelector.field);
-            _context.next = 14;
+            keyRange = (0, _idbKeyRange.generateKeyRange)(pouchKeyRangeData.queryOpts);
+            index = pouchKeyRangeData.primary ? store : store.index(pouchKeyRangeData.field);
+            _context.next = 15;
             return index.openCursor(keyRange);
 
-          case 14:
+          case 15:
             cursor = _context.sent;
-            _context.next = 20;
+            _context.next = 21;
             break;
 
-          case 17:
-            _context.next = 19;
+          case 18:
+            _context.next = 20;
             return store.openCursor();
 
-          case 19:
+          case 20:
             cursor = _context.sent;
 
-          case 20:
-            _context.next = 22;
+          case 21:
+            _context.next = 23;
             return getRows(cursor);
 
-          case 22:
+          case 23:
             rows = _context.sent;
 
             /**
@@ -81,12 +82,12 @@ var find = /*#__PURE__*/function () {
               return {
                 doc: row
               };
-            }), query, translatedSelector.inMemoryFields);
+            }), query, pouchKeyRangeData.inMemoryFields);
             return _context.abrupt("return", rows.map(function (row) {
               return row.doc;
             }));
 
-          case 25:
+          case 26:
           case "end":
             return _context.stop();
         }

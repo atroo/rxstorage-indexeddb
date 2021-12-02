@@ -37,7 +37,7 @@ export const generatePouchKeyRange = <RxDocType>(
     const cloneSelector = Object.assign({}, selector);
     for (let i = 0; i < indexes.length; i += 1) {
       const index = indexes[i];
-      const compound = index.value.length > 1;
+      const compound = Array.isArray(index.value);
       let memoMatcher: any;
       if (!compound) {
         memoMatcher = cloneSelector[index.name];
@@ -359,27 +359,6 @@ function mergeEq(value: string | number, fieldMatchers: any) {
   delete fieldMatchers.$lte;
   delete fieldMatchers.$ne;
   fieldMatchers.$eq = value;
-}
-
-function getSingleFieldQueryOptsFor(userOperator: string, userValue: any) {
-  switch (userOperator) {
-    case "$eq":
-      return { key: [userValue] };
-    case "$lte":
-      return { endkey: [userValue] };
-    case "$gte":
-      return { startkey: [userValue] };
-    case "$lt":
-      return {
-        endkey: [userValue],
-        inclusive_end: false,
-      };
-    case "$gt":
-      return {
-        startkey: [userValue],
-        inclusive_start: false,
-      };
-  }
 }
 
 function getMultiFieldCoreQueryPlan(userOperator: string, userValue: any) {

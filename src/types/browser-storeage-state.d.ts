@@ -28,23 +28,19 @@ export interface IMetaDB extends DBSchema {
       collections: Array<{ name: string; version: number }>;
       dbName: string;
     };
-    indexes: {
-      dbName: string;
-    };
   };
   indexedCols: {
     key: string[];
     value: {
       dbName: string;
-      name: string;
-      value: string | string[];
       collection: string;
-      primary?: boolean;
-    };
-    indexes: {
-      dbNameCollection: string;
+      indexes: Array<{
+        name: string;
+        value: string | string[];
+        primary?: boolean;
+      }>;
     };
   };
 }
 
-export type Index = IMetaDB["indexedCols"]["value"];
+export type Index = IMetaDB["indexedCols"]["value"]["indexes"][0];

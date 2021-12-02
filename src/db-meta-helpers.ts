@@ -16,7 +16,7 @@ export const getDbMeta = async () => {
       });
 
       db.createObjectStore("indexedCols", {
-        keyPath: ["dbName", "collection", "name"],
+        keyPath: ["dbName", "collection"],
       });
     },
     blocking: () => {

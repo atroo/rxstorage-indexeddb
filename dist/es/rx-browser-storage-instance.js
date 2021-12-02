@@ -932,23 +932,24 @@ exports.RxStorageBrowserInstance = RxStorageBrowserInstance;
 
 var createBrowserStorageLocalState = /*#__PURE__*/function () {
   var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(params) {
-    var databaseState;
+    var primaryPath, databaseState;
     return _regenerator["default"].wrap(function _callee10$(_context10) {
       while (1) {
         switch (_context10.prev = _context10.next) {
           case 0:
-            _context10.next = 2;
-            return (0, _dbHelpers.createIdbDatabase)(params.databaseName, params.collectionName, params.schema.primaryKey, params.schema);
+            primaryPath = (0, _dbHelpers.getPrimaryFieldOfPrimaryKey)(params.schema.primaryKey);
+            _context10.next = 3;
+            return (0, _dbHelpers.createIdbDatabase)(params.databaseName, params.collectionName, primaryPath, params.schema);
 
-          case 2:
+          case 3:
             databaseState = _context10.sent;
             return _context10.abrupt("return", {
               databaseState: databaseState,
               changesCollectionName: (0, _dbHelpers.getChangesCollName)(params.collectionName),
-              primaryPath: (0, _dbHelpers.getPrimaryFieldOfPrimaryKey)(params.schema.primaryKey)
+              primaryPath: primaryPath
             });
 
-          case 4:
+          case 5:
           case "end":
             return _context10.stop();
         }

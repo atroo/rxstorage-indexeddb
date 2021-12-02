@@ -59,19 +59,23 @@ function App() {
     const coll = database.heroes;
 
     const id = coll.schema.getPrimaryOfDocumentData({
-      name: "hello",
-      color: "blue",
+      name: "fat_puma",
+      color: "harlequin",
     });
 
     console.log("ID", id);
 
-    coll
-      .find({ limit: 100, selector: {}, sort: [{ name: "desc" }] })
-      .$.subscribe((docs) => {
-        setDocs(() => {
-          return docs;
-        });
-      });
+    // coll
+    //   .find({ limit: 100, selector: {}, sort: [{ name: "desc" }] })
+    //   .$.subscribe((docs) => {
+    //     setDocs(() => {
+    //       return docs;
+    //     });
+    //   });
+
+    coll.findOne(id).$.subscribe((data) => {
+      console.log("Found by id: ", data.toJSON());
+    });
   }, [database]);
 
   useEffect(() => {

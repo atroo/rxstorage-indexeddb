@@ -32,7 +32,7 @@ export const generateKeyRange = (opts: IIdbKeyRangeOptions) => {
     // "foo" -> [0, "foo"]
     // var filterDeleted = [0].concat(key);
 
-    const filterDeleted = key;
+    const filterDeleted = Array.isArray(key) ? key : [key];
 
     return filterDeleted.map(function (k: any) {
       // null, true and false are not indexable by indexeddb. When we write
@@ -91,15 +91,19 @@ export const generateKeyRange = (opts: IIdbKeyRangeOptions) => {
     if (defined(opts, "startkey") && !defined(opts, "endkey")) {
       return IDBKeyRange.lowerBound(
         convert(opts.startkey),
-        !opts.inclusive_start
+        opts.inclusive_start
       );
     }
 
     if (!defined(opts, "startkey") && defined(opts, "endkey")) {
-      return IDBKeyRange.upperBound(convert(opts.endkey), !opts.inclusive_end);
+      return IDBKeyRange.upperBound(convert(opts.endkey), opts.inclusive_end);
     }
 
     if (defined(opts, "startkey") && defined(opts, "endkey")) {
+      if (opts.startkey === opts.endkey) {
+        return IDBKeyRange.only(convert(opts.startkey, true));
+      }
+
       return IDBKeyRange.bound(
         convert(opts.startkey),
         convert(opts.endkey),

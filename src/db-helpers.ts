@@ -6,7 +6,11 @@ import {
   RxErrorKey,
   RxErrorParameters,
 } from "rxdb/dist/types/types";
-import { BrowserStorageState } from "./types/browser-storeage-state";
+import {
+  BrowserStorageState,
+  IMetaDB,
+  Index,
+} from "./types/browser-storeage-state";
 import { RxError } from "./rx-error";
 import { getDbMeta } from "./db-meta-helpers";
 
@@ -151,22 +155,34 @@ export const createIdbDatabase = async <RxDocType>(
         ).store;
 
         for (const collData of newCollections) {
+          const reqIndexesMeta = await indexedColsStore.get([
+            databaseName,
+            collData.collectionName,
+          ]);
+          const indexesMeta: IMetaDB["indexedCols"]["value"] = reqIndexesMeta
+            ? reqIndexesMeta
+            : {
+                dbName: databaseName,
+                collection: collData.collectionName,
+                indexes: [],
+              };
+
           const indexes = collData.indexes;
           indexes.forEach((index) => {
-            indexedColsStore.put({
-              dbName: databaseName,
-              collection: collData.collectionName,
+            indexesMeta.indexes.push({
               name: genIndexName(index),
               value: index,
             });
           });
-          indexedColsStore.put({
-            dbName: databaseName,
-            collection: collData.collectionName,
+          // primary also can be counted as indexedData, but it should be handled differently.
+          // use "primary to dect that it is actually "primary" field.
+          indexesMeta.indexes.push({
             name: collData.primaryPath,
             value: collData.primaryPath,
             primary: true,
           });
+
+          indexedColsStore.put(indexesMeta);
         }
       }
 
