@@ -2,7 +2,11 @@ export const heroSchema = {
   title: "hero schema",
   version: 1,
   description: "describes a simple hero",
-  primaryKey: "name",
+  primaryKey: {
+    key: "id",
+    fields: ["name", "color"],
+    separator: "|",
+  },
   type: "object",
   properties: {
     myVersion: {

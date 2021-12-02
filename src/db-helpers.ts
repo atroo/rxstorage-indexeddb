@@ -34,7 +34,7 @@ export const genIndexName = (index: string | string[]) => {
 export const createIdbDatabase = async <RxDocType>(
   databaseName: string,
   collectionName: string,
-  primaryPath: string,
+  primaryPath: PrimaryKey<RxDocType>,
   schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">
 ) => {
   const metaDB = await getDbMeta();
@@ -115,7 +115,7 @@ export const createIdbDatabase = async <RxDocType>(
           }
           for (const collectionData of newCollections) {
             const store = db.createObjectStore(collectionData.collectionName, {
-              keyPath: collectionData.primaryPath,
+              keyPath: getPrimaryKeyValue(collectionData.primaryPath),
             });
 
             collectionData.indexes.forEach((index) => {
@@ -159,6 +159,20 @@ export const createIdbDatabase = async <RxDocType>(
               name: genIndexName(index),
               value: index,
             });
+          });
+          indexedColsStore.put({
+            dbName: databaseName,
+            collection: collData.collectionName,
+            name: getPrimaryFieldOfPrimaryKey(collData.primaryPath),
+            value: getPrimaryKeyValue(collData.primaryPath),
+            primary:
+              collData.primaryPath === "string"
+                ? true
+                : {
+                    seperator: (
+                      collData.primaryPath as CompositePrimaryKey<RxDocType>
+                    ).separator,
+                  },
           });
         }
       }
@@ -230,13 +244,23 @@ export const createIdbDatabase = async <RxDocType>(
   return newDbState;
 };
 
+export function getPrimaryKeyValue<RxDocType>(
+  primaryKey: PrimaryKey<RxDocType>
+): string | string[] {
+  if (typeof primaryKey === "string") {
+    return primaryKey;
+  } else {
+    return (primaryKey as CompositePrimaryKey<RxDocType>).fields as string[];
+  }
+}
+
 export function getPrimaryFieldOfPrimaryKey<RxDocType>(
   primaryKey: PrimaryKey<RxDocType>
-): keyof RxDocType {
+): string {
   if (typeof primaryKey === "string") {
-    return primaryKey as any;
+    return primaryKey;
   } else {
-    return (primaryKey as CompositePrimaryKey<RxDocType>).key;
+    return (primaryKey as CompositePrimaryKey<RxDocType>).key as string;
   }
 }
 

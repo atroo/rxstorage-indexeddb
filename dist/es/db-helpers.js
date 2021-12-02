@@ -346,6 +346,8 @@ var createIdbDatabase = /*#__PURE__*/function () {
 exports.createIdbDatabase = createIdbDatabase;
 
 function getPrimaryFieldOfPrimaryKey(primaryKey) {
+  console.log("Primary Key", primaryKey);
+
   if (typeof primaryKey === "string") {
     return primaryKey;
   } else {

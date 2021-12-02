@@ -34,17 +34,12 @@ var getDbMeta = /*#__PURE__*/function () {
             return (0, _idb.openDB)("rx-browser-storage-meta", 1, {
               upgrade: function upgrade(db) {
                 // store version, collections
-                var dbMetaDataStore = db.createObjectStore("dbMetaData", {
+                db.createObjectStore("dbMetaData", {
                   keyPath: "dbName"
-                }); // dbMetaDataStore.createIndex("dbName", "dbName");
-
-                // dbMetaDataStore.createIndex("dbName", "dbName");
-                var indexedColsStore = db.createObjectStore("indexedCols", {
+                });
+                db.createObjectStore("indexedCols", {
                   keyPath: ["dbName", "collection", "name"]
-                }); // indexedColsStore.createIndex("dbNameCollection", [
-                //   "dbName",
-                //   "collection",
-                // ]);
+                });
               },
               blocking: function blocking() {
                 db.close();

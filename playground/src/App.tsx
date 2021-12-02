@@ -61,7 +61,7 @@ function App() {
 
     console.log("find is dispatched");
     coll
-      .find({ limit: 100, skip: 10, selector: {}, sort: [{ name: "desc" }] })
+      .find({ limit: 100, selector: {}, sort: [{ name: "desc" }] })
       .$.subscribe((docs) => {
         setDocs(() => {
           return docs;

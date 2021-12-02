@@ -1,4 +1,5 @@
 import { DBSchema, IDBPDatabase } from "idb";
+import { PrimaryKey } from "rxdb/dist/types/types";
 
 /**
  * @param {number} upgradeVersion Will increment every time new collection are added.
@@ -14,7 +15,7 @@ export interface BrowserStorageState {
   newCollections: Array<{
     collectionName: string;
     indexes: Array<string | string[]>;
-    primaryPath: string | string[];
+    primaryPath: PrimaryKey<any>;
     version: number;
   }>;
   metaData: IMetaDB["dbMetaData"]["value"];
@@ -39,6 +40,7 @@ export interface IMetaDB extends DBSchema {
       name: string;
       value: string | string[];
       collection: string;
+      primary?: boolean | { seperator: string };
     };
     indexes: {
       dbNameCollection: string;
