@@ -15,7 +15,7 @@ export interface IPouchKeyRangeData {
   field: string | null; // TODO: compound fields
   inMemoryFields: string[];
   queryOpts?: IQueryOpts | null;
-  primary?: boolean;
+  notIndexed?: boolean;
 }
 
 export interface IIdbKeyRangeOptions extends IQueryOpts {

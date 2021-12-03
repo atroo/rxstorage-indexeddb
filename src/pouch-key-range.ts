@@ -38,6 +38,7 @@ export const generatePouchKeyRange = <RxDocType>(
       startkey: [],
       endkey: [],
     };
+    selector = Object.assign({}, selector);
 
     for (let i = 0; i < indexes.length; i += 1) {
       const index = indexes[i];
@@ -62,6 +63,33 @@ export const generatePouchKeyRange = <RxDocType>(
         queryOpts,
         inMemoryFields: Object.keys(selector),
         field: index.name,
+        notIndexed: index.primary,
+      };
+    }
+
+    // index field is was not found. use first valid field.
+    const fields = Object.keys(selector);
+    for (let i = 0; i < fields.length; i += 1) {
+      const f = fields[i];
+      if (f.split(".")) {
+        // composite keys are invalid. skip
+        continue;
+      }
+
+      const keyRangeOptsData = keyRangeOptsFromIndex(selector, {
+        name: f,
+        value: f,
+      });
+
+      if (!keyRangeOptsData) {
+        continue;
+      }
+
+      return {
+        queryOpts,
+        inMemoryFields: Object.keys(keyRangeOptsData.selector),
+        field: f,
+        notIndexed: true,
       };
     }
 

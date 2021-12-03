@@ -32,7 +32,7 @@ export const find = async <RxDocType>(
   > | null;
   if (pouchKeyRangeData.field && pouchKeyRangeData.queryOpts) {
     const keyRange = generateKeyRange(pouchKeyRangeData.queryOpts);
-    const index = pouchKeyRangeData.primary
+    const index = pouchKeyRangeData.notIndexed
       ? store
       : store.index(pouchKeyRangeData.field);
     cursor = await index.openCursor(keyRange);
