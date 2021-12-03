@@ -7,6 +7,8 @@ exports.generateKeyRange = void 0;
 
 var _variables = require("./variables");
 
+var COUCH_COLLATE_HI = "\uFFFF"; // actually used as {"\uffff": {}}
+
 var IDB_NULL = Number.MIN_SAFE_INTEGER;
 var IDB_FALSE = Number.MIN_SAFE_INTEGER + 1;
 var IDB_TRUE = Number.MIN_SAFE_INTEGER + 2; // From pouch indexeddb adapter
@@ -23,83 +25,40 @@ var IDB_COLLATE_HI = [[[[[[[[[[[[]]]]]]]]]]]]; // TODO: create type for opts
 var generateKeyRange = function generateKeyRange(opts) {
   function defined(obj, k) {
     return obj[k] !== void 0;
-  } // Converts a valid CouchDB key into a valid IndexedDB one
-
-
-  function convert(key, exact) {
-    // The first item in every native index is doc.deleted, and we always want
-    // to only search documents that are not deleted.
-    // "foo" -> [0, "foo"]
-    // var filterDeleted = [0].concat(key);
-    var filterDeleted = Array.isArray(key) ? key : [key];
-    return filterDeleted.map(function (k) {
-      // null, true and false are not indexable by indexeddb. When we write
-      // these values we convert them to these constants, and so when we
-      // query for them we need to convert the query also.
-      if (k === null && exact) {
-        // for non-exact queries we treat null as a collate property
-        // see `if (!exact)` block below
-        return IDB_NULL;
-      } else if (k === true) {
-        return IDB_TRUE;
-      } else if (k === false) {
-        return IDB_FALSE;
-      }
-
-      if (!exact) {
-        // We get passed CouchDB's collate low and high values, so for non-exact
-        // ranged queries we're going to convert them to our IDB equivalents
-        if (k === _variables.COLLATE_LO) {
-          return IDB_COLLATE_LO;
-        } else if (k.hasOwnProperty(_variables.COLLATE_HI)) {
-          return IDB_COLLATE_HI;
-        }
-      }
-
-      return k;
-    });
   } // CouchDB and so PouchdB defaults to true. We need to make this explicit as
   // we invert these later for IndexedDB.
 
 
-  if (!defined(opts, "inclusive_end")) {
-    opts.inclusive_end = true;
+  if (!defined(opts, "inclusiveEnd")) {
+    opts.inclusiveEnd = true;
   }
 
-  if (!defined(opts, "inclusive_start")) {
-    opts.inclusive_start = true;
+  if (!defined(opts, "inclusiveStart")) {
+    opts.inclusiveStart = true;
   }
 
   if (opts.descending) {
     // Flip before generating. We'll check descending again later when performing
     // an index request
     var realEndkey = opts.startkey,
-        realInclusiveEnd = opts.inclusive_start;
+        realInclusiveEnd = opts.inclusiveStart;
     opts.startkey = opts.endkey;
     opts.endkey = realEndkey;
-    opts.inclusive_start = opts.inclusive_end;
-    opts.inclusive_end = realInclusiveEnd;
+    opts.inclusiveStart = opts.inclusiveEnd;
+    opts.inclusiveEnd = realInclusiveEnd;
   }
 
   try {
-    if (defined(opts, "key")) {
-      return IDBKeyRange.only(convert(opts.key, true));
-    }
-
     if (defined(opts, "startkey") && !defined(opts, "endkey")) {
-      return IDBKeyRange.lowerBound(convert(opts.startkey), opts.inclusive_start);
+      return IDBKeyRange.lowerBound(convertKeys(opts.startkey), !opts.inclusiveStart);
     }
 
     if (!defined(opts, "startkey") && defined(opts, "endkey")) {
-      return IDBKeyRange.upperBound(convert(opts.endkey), opts.inclusive_end);
+      return IDBKeyRange.upperBound(convertKeys(opts.endkey), !opts.inclusiveEnd);
     }
 
     if (defined(opts, "startkey") && defined(opts, "endkey")) {
-      if (opts.startkey === opts.endkey) {
-        return IDBKeyRange.only(convert(opts.startkey, true));
-      }
-
-      return IDBKeyRange.bound(convert(opts.startkey), convert(opts.endkey), !opts.inclusive_start, !opts.inclusive_end);
+      return IDBKeyRange.bound(convertKeys(opts.startkey), convertKeys(opts.endkey), !opts.inclusiveStart, !opts.inclusiveEnd);
     }
 
     return IDBKeyRange.only([0]);
@@ -110,4 +69,45 @@ var generateKeyRange = function generateKeyRange(opts) {
 };
 
 exports.generateKeyRange = generateKeyRange;
+
+function convertKey(k, exact) {
+  // null, true and false are not indexable by indexeddb. When we write
+  // these values we convert them to these constants, and so when we
+  // query for them we need to convert the query also.
+  if (k === null && exact) {
+    // for non-exact queries we treat null as a collate property
+    // see `if (!exact)` block below
+    return IDB_NULL;
+  } else if (k === true) {
+    return IDB_TRUE;
+  } else if (k === false) {
+    return IDB_FALSE;
+  }
+
+  if (!exact) {
+    // We get passed CouchDB's collate low and high values, so for non-exact
+    // ranged queries we're going to convert them to our IDB equivalents
+    if (k === _variables.COLLATE_LO) {
+      return IDB_COLLATE_LO;
+    } else if (typeof k === "object" && k.hasOwnProperty(COUCH_COLLATE_HI)) {
+      return IDB_COLLATE_HI;
+    }
+  }
+
+  return k;
+} // Converts a valid CouchDB key into a valid IndexedDB one
+
+
+function convertKeys(keys, exact) {
+  if (!keys.length) {
+    return keys;
+  } // if (keys.length === 1) {
+  //   return convertKey(keys[0], exact);
+  // }
+
+
+  return keys.map(function (k) {
+    return convertKey(k, exact);
+  });
+}
 //# sourceMappingURL=idb-key-range.js.map

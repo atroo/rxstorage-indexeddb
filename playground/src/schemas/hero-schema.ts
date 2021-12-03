@@ -2,11 +2,12 @@ export const heroSchema = {
   title: "hero schema",
   version: 1,
   description: "describes a simple hero",
-  primaryKey: {
-    key: "id",
-    fields: ["name", "color"],
-    separator: "|",
-  },
+  // primaryKey: {
+  //   key: "id",
+  //   fields: ["name", "color"],
+  //   separator: "|",
+  // },
+  primaryKey: "name",
   type: "object",
   properties: {
     id: {
@@ -55,5 +56,6 @@ export const heroSchema = {
   attachments: {
     encrypted: false,
   },
-  required: ["name", "color"],
+  // required: ["name", "color"],
+  indexes: [["secret", "color"]],
 };

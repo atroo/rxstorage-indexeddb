@@ -49,7 +49,7 @@ var find = /*#__PURE__*/function () {
             }
 
             keyRange = (0, _idbKeyRange.generateKeyRange)(pouchKeyRangeData.queryOpts);
-            index = pouchKeyRangeData.primary ? store : store.index(pouchKeyRangeData.field);
+            index = pouchKeyRangeData.notIndexed ? store : store.index(pouchKeyRangeData.field);
             _context.next = 15;
             return index.openCursor(keyRange);
 

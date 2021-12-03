@@ -112,12 +112,16 @@ function keyRangeOptsFromIndex<RxDocType>(
   };
 
   const matcher = cloneSelector[index.name];
+  if (!matcher) {
+    return null;
+  }
+
   if (Object.keys(matcher).some(isNonLogicalMatcher)) {
     return null;
   }
 
   delete cloneSelector[index.name];
-  queryOpts = generateQueryOpts(queryOpts, matcher);
+  queryOpts = generateQueryOpts(matcher, queryOpts);
 
   return {
     queryOpts,

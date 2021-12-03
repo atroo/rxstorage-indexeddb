@@ -112,9 +112,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
             if (schema.indexes) {
               schema.indexes.forEach(function (idx) {
-                if (!Array.isArray(idx)) {
-                  indexes.push(idx);
-                }
+                indexes.push(idx);
               });
             }
 

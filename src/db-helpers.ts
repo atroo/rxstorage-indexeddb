@@ -68,12 +68,10 @@ export const createIdbDatabase = async <RxDocType>(
     updateNeeded = false;
   }
 
-  const indexes: string | string[] = [];
+  const indexes: Array<string | string[]> = [];
   if (schema.indexes) {
     schema.indexes.forEach((idx) => {
-      if (!Array.isArray(idx)) {
-        indexes.push(idx);
-      }
+      indexes.push(idx);
     });
   }
 

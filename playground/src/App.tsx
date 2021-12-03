@@ -63,19 +63,31 @@ function App() {
       color: "harlequin",
     });
 
-    console.log("ID", id);
+    coll
+      .find({
+        limit: 100,
+        selector: {
+          color: {
+            $gt: "academic_dingo",
+            $lt: "nursing_sloth",
+            $exists: true,
+          },
+          secret: {
+            $gt: "crude_anteater",
+            $lt: "fit_salmon",
+          },
+        },
+        sort: [{ name: "desc" }],
+      })
+      .$.subscribe((docs) => {
+        setDocs(() => {
+          return docs;
+        });
+      });
 
-    // coll
-    //   .find({ limit: 100, selector: {}, sort: [{ name: "desc" }] })
-    //   .$.subscribe((docs) => {
-    //     setDocs(() => {
-    //       return docs;
-    //     });
-    //   });
-
-    coll.findOne(id).$.subscribe((data) => {
-      console.log("Found by id: ", data.toJSON());
-    });
+    // coll.findOne(id).$.subscribe((data) => {
+    //   console.log("Found by id: ", data.toJSON());
+    // });
   }, [database]);
 
   useEffect(() => {
@@ -131,6 +143,9 @@ function App() {
           database?.heroes.upsert({
             name: randomName,
             color: randomColor,
+            secret: uniqueNamesGenerator({
+              dictionaries: [adjectives, animals],
+            }),
             birthyear: 2021,
           });
         }}
