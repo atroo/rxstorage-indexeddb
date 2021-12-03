@@ -67,17 +67,18 @@ function App() {
       .find({
         limit: 100,
         selector: {
-          // color: {
-          //   $gt: "academic_dingo",
-          //   $lt: "nursing_sloth",
-          // },
-          // secret: {
-          //   $gt: "crude_anteater",
-          //   $lt: "fit_salmon",
-          // },
-          name: {
-            $gt: "bottom_bovid",
+          color: {
+            $gt: "academic_dingo",
+            $lt: "nursing_sloth",
+            $exists: true,
           },
+          secret: {
+            $gt: "crude_anteater",
+            $lt: "fit_salmon",
+          },
+          // name: {
+          //   $gt: "bottom_bovid",
+          // },
         },
         sort: [{ name: "desc" }],
       })

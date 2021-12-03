@@ -6,6 +6,7 @@ interface IQueryOpts {
   endkey: Array<EndKey | StartKey>;
   inclusiveStart?: boolean;
   inclusiveEnd?: boolean;
+  compund?: boolean;
 }
 
 /**

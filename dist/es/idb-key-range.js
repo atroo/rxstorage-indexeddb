@@ -7,12 +7,12 @@ exports.generateKeyRange = void 0;
 
 var _variables = require("./variables");
 
+// From pouch indexeddb adapter
 var COUCH_COLLATE_HI = "\uFFFF"; // actually used as {"\uffff": {}}
 
 var IDB_NULL = Number.MIN_SAFE_INTEGER;
 var IDB_FALSE = Number.MIN_SAFE_INTEGER + 1;
-var IDB_TRUE = Number.MIN_SAFE_INTEGER + 2; // From pouch indexeddb adapter
-// Adapted from: https://www.w3.org/TR/IndexedDB/#compare-two-keys
+var IDB_TRUE = Number.MIN_SAFE_INTEGER + 2; // Adapted from: https://www.w3.org/TR/IndexedDB/#compare-two-keys
 // Importantly, *there is no upper bound possible* in idb. The ideal data
 // structure an infintely deep array:
 //   var IDB_COLLATE_HI = []; IDB_COLLATE_HI.push(IDB_COLLATE_HI)
@@ -50,15 +50,15 @@ var generateKeyRange = function generateKeyRange(opts) {
 
   try {
     if (defined(opts, "startkey") && !defined(opts, "endkey")) {
-      return IDBKeyRange.lowerBound(convertKeys(opts.startkey), !opts.inclusiveStart);
+      return IDBKeyRange.lowerBound(convertKeys(opts.startkey, opts.compund), !opts.inclusiveStart);
     }
 
     if (!defined(opts, "startkey") && defined(opts, "endkey")) {
-      return IDBKeyRange.upperBound(convertKeys(opts.endkey), !opts.inclusiveEnd);
+      return IDBKeyRange.upperBound(convertKeys(opts.endkey, opts.compund), !opts.inclusiveEnd);
     }
 
     if (defined(opts, "startkey") && defined(opts, "endkey")) {
-      return IDBKeyRange.bound(convertKeys(opts.startkey), convertKeys(opts.endkey), !opts.inclusiveStart, !opts.inclusiveEnd);
+      return IDBKeyRange.bound(convertKeys(opts.startkey, opts.compund), convertKeys(opts.endkey, opts.compund), !opts.inclusiveStart, !opts.inclusiveEnd);
     }
 
     return IDBKeyRange.only([0]);
@@ -98,16 +98,17 @@ function convertKey(k, exact) {
 } // Converts a valid CouchDB key into a valid IndexedDB one
 
 
-function convertKeys(keys, exact) {
+function convertKeys(keys, compound) {
   if (!keys.length) {
     return keys;
-  } // if (keys.length === 1) {
-  //   return convertKey(keys[0], exact);
-  // }
+  }
 
+  if (keys.length === 1 && !compound) {
+    return convertKey(keys[0]);
+  }
 
   return keys.map(function (k) {
-    return convertKey(k, exact);
+    return convertKey(k);
   });
 }
 //# sourceMappingURL=idb-key-range.js.map

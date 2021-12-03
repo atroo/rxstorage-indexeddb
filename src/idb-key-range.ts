@@ -1,3 +1,5 @@
+// From pouch indexeddb adapter
+
 import { EndKey, IIdbKeyRangeOptions, StartKey } from "./types/pouch-key-range";
 import { COLLATE_LO as COUCH_COLLATE_LO } from "./variables";
 const COUCH_COLLATE_HI = "\uffff"; // actually used as {"\uffff": {}}
@@ -5,8 +7,6 @@ const COUCH_COLLATE_HI = "\uffff"; // actually used as {"\uffff": {}}
 var IDB_NULL = Number.MIN_SAFE_INTEGER;
 var IDB_FALSE = Number.MIN_SAFE_INTEGER + 1;
 var IDB_TRUE = Number.MIN_SAFE_INTEGER + 2;
-
-// From pouch indexeddb adapter
 
 // Adapted from: https://www.w3.org/TR/IndexedDB/#compare-two-keys
 // Importantly, *there is no upper bound possible* in idb. The ideal data
@@ -47,22 +47,22 @@ export const generateKeyRange = (opts: IIdbKeyRangeOptions) => {
   try {
     if (defined(opts, "startkey") && !defined(opts, "endkey")) {
       return IDBKeyRange.lowerBound(
-        convertKeys(opts.startkey),
+        convertKeys(opts.startkey, opts.compund),
         !opts.inclusiveStart
       );
     }
 
     if (!defined(opts, "startkey") && defined(opts, "endkey")) {
       return IDBKeyRange.upperBound(
-        convertKeys(opts.endkey),
+        convertKeys(opts.endkey, opts.compund),
         !opts.inclusiveEnd
       );
     }
 
     if (defined(opts, "startkey") && defined(opts, "endkey")) {
       return IDBKeyRange.bound(
-        convertKeys(opts.startkey),
-        convertKeys(opts.endkey),
+        convertKeys(opts.startkey, opts.compund),
+        convertKeys(opts.endkey, opts.compund),
         !opts.inclusiveStart,
         !opts.inclusiveEnd
       );
@@ -105,15 +105,15 @@ function convertKey(k: StartKey | EndKey | boolean, exact?: boolean) {
 // Converts a valid CouchDB key into a valid IndexedDB one
 function convertKeys(
   keys: Array<StartKey | EndKey | boolean>,
-  exact?: boolean
+  compound?: boolean
 ) {
   if (!keys.length) {
     return keys;
   }
 
-  // if (keys.length === 1) {
-  //   return convertKey(keys[0], exact);
-  // }
+  if (keys.length === 1 && !compound) {
+    return convertKey(keys[0]);
+  }
 
-  return keys.map((k) => convertKey(k, exact));
+  return keys.map((k) => convertKey(k));
 }

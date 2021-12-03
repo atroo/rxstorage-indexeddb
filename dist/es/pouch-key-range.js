@@ -187,7 +187,8 @@ function keyRangeOptsFromCompoundIndex(selector, index) {
 
   return {
     selector: cloneSelector,
-    queryOpts: queryOpts
+    queryOpts: queryOpts,
+    compund: true
   };
 }
 

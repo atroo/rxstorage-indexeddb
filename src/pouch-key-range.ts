@@ -185,6 +185,7 @@ function keyRangeOptsFromCompoundIndex<RxDocType>(
   return {
     selector: cloneSelector,
     queryOpts,
+    compund: true,
   };
 }
 
