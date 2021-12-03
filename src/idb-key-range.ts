@@ -26,15 +26,8 @@ export const generateKeyRange = (opts: IIdbKeyRangeOptions) => {
   }
 
   // Converts a valid CouchDB key into a valid IndexedDB one
-  function convert(key: any, exact?: boolean) {
-    // The first item in every native index is doc.deleted, and we always want
-    // to only search documents that are not deleted.
-    // "foo" -> [0, "foo"]
-    // var filterDeleted = [0].concat(key);
-
-    const filterDeleted = Array.isArray(key) ? key : [key];
-
-    return filterDeleted.map(function (k: any) {
+  function convert(keys: any, exact?: boolean) {
+    return keys.map(function (k: any) {
       // null, true and false are not indexable by indexeddb. When we write
       // these values we convert them to these constants, and so when we
       // query for them we need to convert the query also.
@@ -64,23 +57,23 @@ export const generateKeyRange = (opts: IIdbKeyRangeOptions) => {
 
   // CouchDB and so PouchdB defaults to true. We need to make this explicit as
   // we invert these later for IndexedDB.
-  if (!defined(opts, "inclusive_end")) {
-    opts.inclusive_end = true;
+  if (!defined(opts, "inclusiveEnd")) {
+    opts.inclusiveEnd = true;
   }
-  if (!defined(opts, "inclusive_start")) {
-    opts.inclusive_start = true;
+  if (!defined(opts, "inclusiveStart")) {
+    opts.inclusiveStart = true;
   }
 
   if (opts.descending) {
     // Flip before generating. We'll check descending again later when performing
     // an index request
     var realEndkey = opts.startkey,
-      realInclusiveEnd = opts.inclusive_start;
+      realInclusiveEnd = opts.inclusiveStart;
 
     opts.startkey = opts.endkey;
-    opts.endkey = realEndkey as EndKey | StartKey;
-    opts.inclusive_start = opts.inclusive_end;
-    opts.inclusive_end = realInclusiveEnd;
+    opts.endkey = realEndkey;
+    opts.inclusiveStart = opts.inclusiveEnd;
+    opts.inclusiveEnd = realInclusiveEnd;
   }
 
   try {
@@ -91,12 +84,12 @@ export const generateKeyRange = (opts: IIdbKeyRangeOptions) => {
     if (defined(opts, "startkey") && !defined(opts, "endkey")) {
       return IDBKeyRange.lowerBound(
         convert(opts.startkey),
-        opts.inclusive_start
+        !opts.inclusiveStart
       );
     }
 
     if (!defined(opts, "startkey") && defined(opts, "endkey")) {
-      return IDBKeyRange.upperBound(convert(opts.endkey), opts.inclusive_end);
+      return IDBKeyRange.upperBound(convert(opts.endkey), !opts.inclusiveEnd);
     }
 
     if (defined(opts, "startkey") && defined(opts, "endkey")) {
@@ -107,8 +100,8 @@ export const generateKeyRange = (opts: IIdbKeyRangeOptions) => {
       return IDBKeyRange.bound(
         convert(opts.startkey),
         convert(opts.endkey),
-        !opts.inclusive_start,
-        !opts.inclusive_end
+        !opts.inclusiveStart,
+        !opts.inclusiveEnd
       );
     }
 
