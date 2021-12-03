@@ -15,6 +15,12 @@ function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (O
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { (0, _defineProperty2["default"])(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
+function _createForOfIteratorHelperLoose(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (it) return (it = it.call(o)).next.bind(it); if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; return function () { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 var extend = require("pouchdb-extend");
 
 var combinationFields = ["$or", "$nor", "$not"];
@@ -140,11 +146,18 @@ function keyRangeOptsFromCompoundIndex(selector, index) {
     endkey: []
   };
   var matcher = null;
-  index.value.forEach(function (part) {
+  var foundValidMatcher = false;
+
+  for (var _iterator = _createForOfIteratorHelperLoose(index.value), _step; !(_step = _iterator()).done;) {
+    var part = _step.value;
     var partMatcher = selector[part];
 
     if (!partMatcher || Object.keys(partMatcher).some(isNonLogicalMatcher)) {
-      return;
+      // part of compound index is invalid
+      // query all rows for this col
+      matcher = {};
+      queryOpts = generateQueryOpts(matcher, queryOpts);
+      continue;
     }
 
     if (!matcher) {
@@ -154,18 +167,21 @@ function keyRangeOptsFromCompoundIndex(selector, index) {
     } else {
       var previousKeys = Object.keys(matcher);
       var currentKeys = Object.keys(partMatcher);
-      var previousWasSame = arrayEquals(previousKeys.sort(), currentKeys.sort());
+      var previousWasSame = arrayEquals(previousKeys.sort(), currentKeys.sort()); // if previousKeys is empty, then let's assume matchers are still compatible
 
-      if (!previousWasSame) {
-        return;
+      if (!previousWasSame || !previousKeys.length) {
+        continue;
       }
 
+      matcher = partMatcher;
       delete cloneSelector[part];
       queryOpts = generateQueryOpts(partMatcher, queryOpts);
     }
-  });
 
-  if (!matcher) {
+    foundValidMatcher = true;
+  }
+
+  if (!matcher || !foundValidMatcher) {
     return null;
   }
 
@@ -176,8 +192,6 @@ function keyRangeOptsFromCompoundIndex(selector, index) {
 }
 
 function generateQueryOpts(matcher, queryOpts) {
-  var _combinedOpts;
-
   var userOperators = Object.keys(matcher);
   var combinedOpts = null;
 
@@ -193,17 +207,17 @@ function generateQueryOpts(matcher, queryOpts) {
     }
   }
 
-  var startkey = "startkey" in combinedOpts ? (_combinedOpts = combinedOpts) === null || _combinedOpts === void 0 ? void 0 : _combinedOpts.startkey : _variables.COLLATE_LO;
-  var endkey = "endkey" in combinedOpts ? combinedOpts.endkey : _variables.COLLATE_HI;
+  var startkey = combinedOpts && "startkey" in combinedOpts ? combinedOpts.startkey : _variables.COLLATE_LO;
+  var endkey = combinedOpts && "endkey" in combinedOpts ? combinedOpts.endkey : _variables.COLLATE_HI;
   var inclusiveStart;
 
-  if ("inclusive_start" in combinedOpts) {
+  if (combinedOpts && "inclusive_start" in combinedOpts) {
     inclusiveStart = combinedOpts.inclusive_start;
   }
 
   var inclusiveEnd;
 
-  if ("inclusive_end" in combinedOpts) {
+  if (combinedOpts && "inclusive_end" in combinedOpts) {
     inclusiveEnd = combinedOpts.inclusive_end;
   }
 

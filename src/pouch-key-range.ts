@@ -140,10 +140,16 @@ function keyRangeOptsFromCompoundIndex<RxDocType>(
   };
 
   let matcher: Record<string, any> | null = null;
-  (index.value as string[]).forEach((part) => {
+  let foundValidMatcher = false;
+
+  for (const part of index.value) {
     const partMatcher: Record<string, any> | null = selector[part];
     if (!partMatcher || Object.keys(partMatcher).some(isNonLogicalMatcher)) {
-      return;
+      // part of compound index is invalid
+      // query all rows for this col
+      matcher = {};
+      queryOpts = generateQueryOpts(matcher, queryOpts);
+      continue;
     }
 
     if (!matcher) {
@@ -158,15 +164,21 @@ function keyRangeOptsFromCompoundIndex<RxDocType>(
         previousKeys.sort(),
         currentKeys.sort()
       );
-      if (!previousWasSame) {
-        return;
+
+      // if previousKeys is empty, then let's assume matchers are still compatible
+      if (!previousWasSame || !previousKeys.length) {
+        continue;
       }
 
+      matcher = partMatcher;
       delete cloneSelector[part];
       queryOpts = generateQueryOpts(partMatcher, queryOpts);
     }
-  });
-  if (!matcher) {
+
+    foundValidMatcher = true;
+  }
+
+  if (!matcher || !foundValidMatcher) {
     return null;
   }
 
@@ -198,15 +210,18 @@ function generateQueryOpts(
   }
 
   const startkey =
-    "startkey" in combinedOpts! ? combinedOpts?.startkey : COLLATE_LO;
-  const endkey = "endkey" in combinedOpts! ? combinedOpts.endkey : COLLATE_HI;
+    combinedOpts && "startkey" in combinedOpts
+      ? combinedOpts.startkey
+      : COLLATE_LO;
+  const endkey =
+    combinedOpts && "endkey" in combinedOpts ? combinedOpts.endkey : COLLATE_HI;
 
   let inclusiveStart;
-  if ("inclusive_start" in combinedOpts!) {
+  if (combinedOpts && "inclusive_start" in combinedOpts!) {
     inclusiveStart = combinedOpts.inclusive_start;
   }
   let inclusiveEnd;
-  if ("inclusive_end" in combinedOpts!) {
+  if (combinedOpts && "inclusive_end" in combinedOpts) {
     inclusiveEnd = combinedOpts.inclusive_end;
   }
 
