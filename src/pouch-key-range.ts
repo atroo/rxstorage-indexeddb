@@ -1,6 +1,6 @@
 import { MangoQuery, MangoQuerySelector, MangoQuerySortPart } from "rxdb";
 import { Index } from "./types/browser-storeage-state";
-import { IPouchKeyRangeData } from "./types/pouch-key-range";
+import { IPouchKeyRangeData, IQueryOpts } from "./types/pouch-key-range";
 import { COLLATE_HI, COLLATE_LO } from "./variables";
 const extend = require("pouchdb-extend");
 const combinationFields = ["$or", "$nor", "$not"];
@@ -34,103 +34,157 @@ export const generatePouchKeyRange = <RxDocType>(
     selector: MangoQuerySelector<RxDocType>,
     indexes: Index[]
   ) {
-    const cloneSelector = Object.assign({}, selector);
+    let queryOpts: IQueryOpts = {
+      startkey: [],
+      endkey: [],
+    };
+
     for (let i = 0; i < indexes.length; i += 1) {
       const index = indexes[i];
       const compound = Array.isArray(index.value);
-      let memoMatcher: any;
+      let keyRangeOptsData: ReturnType<
+        typeof keyRangeOptsFromIndex | typeof keyRangeOptsFromCompoundIndex
+      >;
       if (!compound) {
-        memoMatcher = cloneSelector[index.name];
-        if (Object.keys(memoMatcher).some(isNonLogicalMatcher)) {
-          continue;
-        }
+        keyRangeOptsData = keyRangeOptsFromIndex(selector, index);
       } else {
-        (index.value as string[]).forEach((part) => {
-          const matcher = cloneSelector[part];
-          if (!matcher || Object.keys(matcher).some(isNonLogicalMatcher)) {
-            return;
-          }
-
-          if (!memoMatcher) {
-            memoMatcher = part;
-            delete cloneSelector[part];
-          } else {
-            var usingGtlt =
-              "$gt" in matcher ||
-              "$gte" in matcher ||
-              "$lt" in matcher ||
-              "$lte" in matcher;
-            var previousKeys = Object.keys(memoMatcher);
-            var previousWasEq = arrayEquals(previousKeys, ["$eq"]);
-            var previousWasSame = arrayEquals(
-              previousKeys,
-              Object.keys(matcher)
-            );
-            var gtltLostSpecificity =
-              usingGtlt && !previousWasEq && !previousWasSame;
-            if (!gtltLostSpecificity) {
-              delete cloneSelector[part];
-            }
-          }
-        });
-        if (!memoMatcher) {
-          continue;
-        }
+        keyRangeOptsData = keyRangeOptsFromCompoundIndex(selector, index);
       }
 
-      delete cloneSelector[index.name];
-
-      var userOperators = Object.keys(memoMatcher);
-
-      let combinedOpts: Record<any, any> | null = null;
-
-      for (var j = 0; j < userOperators.length; j++) {
-        var userOperator = userOperators[j];
-        var userValue = memoMatcher[userOperator];
-
-        var newOpts = getMultiFieldCoreQueryPlan(userOperator, userValue);
-
-        if (combinedOpts) {
-          combinedOpts = mergeObjects([combinedOpts, newOpts]);
-        } else {
-          combinedOpts = newOpts as any;
-        }
+      if (!keyRangeOptsData) {
+        continue;
       }
 
-      const startkey =
-        "startkey" in combinedOpts! ? combinedOpts?.startkey : COLLATE_LO;
-      const endkey =
-        "endkey" in combinedOpts! ? combinedOpts.endkey : COLLATE_HI;
-
-      let inclusiveStart;
-      if ("inclusive_start" in combinedOpts!) {
-        inclusiveStart = combinedOpts.inclusive_start;
-      }
-      let inclusiveEnd;
-      if ("inclusive_end" in combinedOpts!) {
-        inclusiveEnd = combinedOpts.inclusive_end;
-      }
+      selector = keyRangeOptsData.selector;
+      queryOpts = keyRangeOptsData.queryOpts;
 
       return {
-        queryOpts: {
-          startkey: startkey,
-          endkey: endkey,
-          inclusiveStart,
-          inclusiveEnd,
-        },
-        inMemoryFields: Object.keys(cloneSelector),
+        queryOpts,
+        inMemoryFields: Object.keys(selector),
         field: index.name,
-        primary: index.primary,
       };
     }
 
     return {
       queryOpts: null,
-      inMemoryFields: Object.keys(cloneSelector),
+      inMemoryFields: Object.keys(selector),
       field: null,
     };
   }
 };
+
+function keyRangeOptsFromIndex<RxDocType>(
+  selector: MangoQuerySelector<RxDocType>,
+  index: Index
+) {
+  const cloneSelector = Object.assign({}, selector);
+  let queryOpts: IQueryOpts = {
+    startkey: [],
+    endkey: [],
+  };
+
+  const matcher = cloneSelector[index.name];
+  if (Object.keys(matcher).some(isNonLogicalMatcher)) {
+    return null;
+  }
+
+  delete cloneSelector[index.name];
+  queryOpts = generateQueryOpts(queryOpts, matcher);
+
+  return {
+    queryOpts,
+    selector: cloneSelector,
+  };
+}
+
+function keyRangeOptsFromCompoundIndex<RxDocType>(
+  selector: MangoQuerySelector<RxDocType>,
+  index: Index
+) {
+  const cloneSelector = Object.assign({}, selector);
+  let queryOpts: IQueryOpts = {
+    startkey: [],
+    endkey: [],
+  };
+
+  let matcher: Record<string, any> | null = null;
+  (index.value as string[]).forEach((part) => {
+    const partMatcher: Record<string, any> | null = selector[part];
+    if (!partMatcher || Object.keys(partMatcher).some(isNonLogicalMatcher)) {
+      return;
+    }
+
+    if (!matcher) {
+      matcher = partMatcher;
+      delete cloneSelector[part];
+      queryOpts = generateQueryOpts(matcher, queryOpts);
+    } else {
+      const previousKeys = Object.keys(matcher);
+      const currentKeys = Object.keys(partMatcher);
+
+      const previousWasSame = arrayEquals(
+        previousKeys.sort(),
+        currentKeys.sort()
+      );
+      if (!previousWasSame) {
+        return;
+      }
+
+      delete cloneSelector[part];
+      queryOpts = generateQueryOpts(partMatcher, queryOpts);
+    }
+  });
+  if (!matcher) {
+    return null;
+  }
+
+  return {
+    selector: cloneSelector,
+    queryOpts,
+  };
+}
+
+function generateQueryOpts(
+  matcher: Record<string, any>,
+  queryOpts: IQueryOpts
+): IQueryOpts {
+  const userOperators = Object.keys(matcher);
+
+  let combinedOpts: Record<any, any> | null = null;
+
+  for (var j = 0; j < userOperators.length; j++) {
+    var userOperator = userOperators[j];
+    var userValue = matcher[userOperator];
+
+    var newOpts = getMultiFieldCoreQueryPlan(userOperator, userValue);
+
+    if (combinedOpts) {
+      combinedOpts = mergeObjects([combinedOpts, newOpts]) as IQueryOpts;
+    } else {
+      combinedOpts = newOpts as IQueryOpts;
+    }
+  }
+
+  const startkey =
+    "startkey" in combinedOpts! ? combinedOpts?.startkey : COLLATE_LO;
+  const endkey = "endkey" in combinedOpts! ? combinedOpts.endkey : COLLATE_HI;
+
+  let inclusiveStart;
+  if ("inclusive_start" in combinedOpts!) {
+    inclusiveStart = combinedOpts.inclusive_start;
+  }
+  let inclusiveEnd;
+  if ("inclusive_end" in combinedOpts!) {
+    inclusiveEnd = combinedOpts.inclusive_end;
+  }
+
+  return {
+    startkey: [...queryOpts.startkey, startkey],
+    endkey: [...queryOpts.endkey, endkey],
+    inclusiveStart,
+    inclusiveEnd,
+  };
+}
 
 /**
  * Snippets from pouchdb-find that allow to transform Mango query

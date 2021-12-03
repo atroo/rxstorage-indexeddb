@@ -2,10 +2,10 @@ export type StartKey = number | null | undefined;
 export type EndKey = number | Record<string, {}> | undefined;
 
 interface IQueryOpts {
-  startkey?: StartKey | EndKey;
-  endkey: EndKey | StartKey;
-  inclusive_start?: boolean;
-  inclusive_end?: boolean;
+  startkey: Array<StartKey | EndKey>;
+  endkey: Array<EndKey | StartKey>;
+  inclusiveStart?: boolean;
+  inclusiveEnd?: boolean;
 }
 
 /**
