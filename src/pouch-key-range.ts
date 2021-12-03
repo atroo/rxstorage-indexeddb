@@ -1,6 +1,7 @@
 import { MangoQuery, MangoQuerySelector, MangoQuerySortPart } from "rxdb";
 import { Index } from "./types/browser-storeage-state";
 import { IPouchKeyRangeData, IQueryOpts } from "./types/pouch-key-range";
+import { isIndexValid } from "./utils";
 import { COLLATE_HI, COLLATE_LO } from "./variables";
 const extend = require("pouchdb-extend");
 const combinationFields = ["$or", "$nor", "$not"];
@@ -71,7 +72,7 @@ export const generatePouchKeyRange = <RxDocType>(
     const fields = Object.keys(selector);
     for (let i = 0; i < fields.length; i += 1) {
       const f = fields[i];
-      if (f.split(".")) {
+      if (!isIndexValid(f)) {
         // composite keys are invalid. skip
         continue;
       }

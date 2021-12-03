@@ -13,6 +13,7 @@ import {
 } from "./types/browser-storeage-state";
 import { RxError } from "./rx-error";
 import { getDbMeta } from "./db-meta-helpers";
+import { validateIndexValues } from "./utils";
 
 export const CHANGES_COLLECTION_SUFFIX = "-rxdb-changes";
 
@@ -71,6 +72,10 @@ export const createIdbDatabase = async <RxDocType>(
   const indexes: Array<string | string[]> = [];
   if (schema.indexes) {
     schema.indexes.forEach((idx) => {
+      if (!validateIndexValues(idx)) {
+        return;
+      }
+
       indexes.push(idx);
     });
   }
