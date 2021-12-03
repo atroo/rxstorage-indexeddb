@@ -23,7 +23,7 @@ var _require = require("pouchdb-selector-core"),
 
 var find = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db, collectionName, query) {
-    var metaDB, indexesMeta, indexedCols, pouchKeyRangeData, store, cursor, keyRange, index, rows;
+    var metaDB, indexesMeta, indexedCols, pouchKeyRangeData, store, cursor, keyRange, index, d, rows;
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -44,7 +44,7 @@ var find = /*#__PURE__*/function () {
             store = db.transaction(collectionName).store;
 
             if (!(pouchKeyRangeData.field && pouchKeyRangeData.queryOpts)) {
-              _context.next = 18;
+              _context.next = 21;
               break;
             }
 
@@ -55,21 +55,26 @@ var find = /*#__PURE__*/function () {
 
           case 15:
             cursor = _context.sent;
-            _context.next = 21;
-            break;
+            _context.next = 18;
+            return index.getAll(keyRange);
 
           case 18:
-            _context.next = 20;
-            return store.openCursor();
-
-          case 20:
-            cursor = _context.sent;
+            d = _context.sent;
+            _context.next = 24;
+            break;
 
           case 21:
             _context.next = 23;
-            return getRows(cursor);
+            return store.openCursor();
 
           case 23:
+            cursor = _context.sent;
+
+          case 24:
+            _context.next = 26;
+            return getRows(cursor);
+
+          case 26:
             rows = _context.sent;
 
             /**
@@ -87,7 +92,7 @@ var find = /*#__PURE__*/function () {
               return row.doc;
             }));
 
-          case 26:
+          case 29:
           case "end":
             return _context.stop();
         }

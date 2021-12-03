@@ -36,6 +36,7 @@ export const find = async <RxDocType>(
       ? store
       : store.index(pouchKeyRangeData.field);
     cursor = await index.openCursor(keyRange);
+    const d = await index.getAll(keyRange);
   } else {
     cursor = await store.openCursor();
   }

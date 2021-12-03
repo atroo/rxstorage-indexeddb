@@ -46,10 +46,10 @@ export const generatePouchKeyRange = <RxDocType>(
       let keyRangeOptsData: ReturnType<
         typeof keyRangeOptsFromIndex | typeof keyRangeOptsFromCompoundIndex
       >;
-      if (!compound) {
-        keyRangeOptsData = keyRangeOptsFromIndex(selector, index);
-      } else {
+      if (compound) {
         keyRangeOptsData = keyRangeOptsFromCompoundIndex(selector, index);
+      } else {
+        keyRangeOptsData = keyRangeOptsFromIndex(selector, index);
       }
 
       if (!keyRangeOptsData) {
@@ -154,7 +154,9 @@ function keyRangeOptsFromCompoundIndex<RxDocType>(
 
     if (!matcher) {
       matcher = partMatcher;
-      delete cloneSelector[part];
+      // idbkeyrange for some reason doesn't respect lowerOpen for compund indexes
+      // still want this field inMemoryFields
+      // delete cloneSelector[part];
       queryOpts = generateQueryOpts(matcher, queryOpts);
     } else {
       const previousKeys = Object.keys(matcher);
@@ -171,7 +173,9 @@ function keyRangeOptsFromCompoundIndex<RxDocType>(
       }
 
       matcher = partMatcher;
-      delete cloneSelector[part];
+      // idbkeyrange for some reason doesn't respect lowerOpen for compund indexes
+      // still want this field inMemoryFields
+      // delete cloneSelector[part];
       queryOpts = generateQueryOpts(partMatcher, queryOpts);
     }
 
@@ -229,8 +233,10 @@ function generateQueryOpts(
   return {
     startkey: [...queryOpts.startkey, startkey],
     endkey: [...queryOpts.endkey, endkey],
-    inclusiveStart,
-    inclusiveEnd,
+    inclusiveStart:
+      inclusiveStart !== undefined ? inclusiveStart : queryOpts.inclusiveStart,
+    inclusiveEnd:
+      inclusiveEnd !== undefined ? inclusiveEnd : queryOpts.inclusiveEnd,
   };
 }
 

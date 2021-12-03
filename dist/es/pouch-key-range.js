@@ -57,10 +57,10 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
       var compound = Array.isArray(index.value);
       var keyRangeOptsData = void 0;
 
-      if (!compound) {
-        keyRangeOptsData = keyRangeOptsFromIndex(selector, index);
-      } else {
+      if (compound) {
         keyRangeOptsData = keyRangeOptsFromCompoundIndex(selector, index);
+      } else {
+        keyRangeOptsData = keyRangeOptsFromIndex(selector, index);
       }
 
       if (!keyRangeOptsData) {
@@ -161,8 +161,10 @@ function keyRangeOptsFromCompoundIndex(selector, index) {
     }
 
     if (!matcher) {
-      matcher = partMatcher;
-      delete cloneSelector[part];
+      matcher = partMatcher; // idbkeyrange for some reason doesn't respect lowerOpen for compund indexes
+      // still want this field inMemoryFields
+      // delete cloneSelector[part];
+
       queryOpts = generateQueryOpts(matcher, queryOpts);
     } else {
       var previousKeys = Object.keys(matcher);
@@ -173,8 +175,10 @@ function keyRangeOptsFromCompoundIndex(selector, index) {
         continue;
       }
 
-      matcher = partMatcher;
-      delete cloneSelector[part];
+      matcher = partMatcher; // idbkeyrange for some reason doesn't respect lowerOpen for compund indexes
+      // still want this field inMemoryFields
+      // delete cloneSelector[part];
+
       queryOpts = generateQueryOpts(partMatcher, queryOpts);
     }
 
@@ -225,8 +229,8 @@ function generateQueryOpts(matcher, queryOpts) {
   return {
     startkey: [].concat(queryOpts.startkey, [startkey]),
     endkey: [].concat(queryOpts.endkey, [endkey]),
-    inclusiveStart: inclusiveStart,
-    inclusiveEnd: inclusiveEnd
+    inclusiveStart: inclusiveStart !== undefined ? inclusiveStart : queryOpts.inclusiveStart,
+    inclusiveEnd: inclusiveEnd !== undefined ? inclusiveEnd : queryOpts.inclusiveEnd
   };
 }
 /**
