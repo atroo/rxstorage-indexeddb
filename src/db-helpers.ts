@@ -36,7 +36,14 @@ export const genIndexName = (index: string | string[]) => {
 const lock = new AsyncLock();
 
 /**
- * TODO: handle properly primaryPath.
+ * Can be called several times for the same db
+ * Save all new collections data in map and run migration once db requessted (getDb)
+ *
+ * @param databaseName
+ * @param collectionName
+ * @param primaryPath
+ * @param schema
+ * @returns
  */
 
 export const createIdbDatabase = async <RxDocType>(
