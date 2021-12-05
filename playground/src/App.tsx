@@ -48,7 +48,7 @@ function App() {
               return oldDoc;
             },
             2: function (oldDoc) {
-              console.log("oldDoc", oldDoc);
+              console.log("oldDoc1", oldDoc);
               oldDoc.myVersion1 = 2;
               return oldDoc;
             },

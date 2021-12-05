@@ -25,6 +25,8 @@ var _dbMetaHelpers = require("./db-meta-helpers");
 
 var _utils = require("./utils");
 
+var _asyncLock = _interopRequireDefault(require("async-lock"));
+
 function _createForOfIteratorHelperLoose(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (it) return (it = it.call(o)).next.bind(it); if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; return function () { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
@@ -53,42 +55,42 @@ var genIndexName = function genIndexName(index) {
 
   return index;
 };
+
+exports.genIndexName = genIndexName;
+var lock = new _asyncLock["default"]();
 /**
  * TODO: handle properly primaryPath.
  */
 
-
-exports.genIndexName = genIndexName;
-
 var createIdbDatabase = /*#__PURE__*/function () {
-  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(databaseName, collectionName, primaryPath, schema) {
+  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(databaseName, collectionName, primaryPath, schema) {
     var metaDB, metaData, dbState, reqMetaData, updateNeeded, foundCol, indexes, newCollections, changesCollectionName, newDbState;
-    return _regenerator["default"].wrap(function _callee3$(_context4) {
+    return _regenerator["default"].wrap(function _callee4$(_context5) {
       while (1) {
-        switch (_context4.prev = _context4.next) {
+        switch (_context5.prev = _context5.next) {
           case 0:
-            _context4.next = 2;
+            _context5.next = 2;
             return (0, _dbMetaHelpers.getDbMeta)();
 
           case 2:
-            metaDB = _context4.sent;
+            metaDB = _context5.sent;
             dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
 
             if (!(dbState !== null && dbState !== void 0 && dbState.metaData)) {
-              _context4.next = 8;
+              _context5.next = 8;
               break;
             }
 
             metaData = dbState.metaData;
-            _context4.next = 12;
+            _context5.next = 12;
             break;
 
           case 8:
-            _context4.next = 10;
+            _context5.next = 10;
             return metaDB.get("dbMetaData", databaseName);
 
           case 10:
-            reqMetaData = _context4.sent;
+            reqMetaData = _context5.sent;
 
             if (reqMetaData) {
               metaData = reqMetaData;
@@ -142,199 +144,202 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
             newDbState = _objectSpread(_objectSpread({}, dbState), {}, {
               getDb: function () {
-                var _getDb = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee() {
+                var _getDb = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2() {
                   var deleteCollections,
-                      dataBaseState,
-                      newCollections,
-                      updateNeeded,
-                      metaData,
-                      db,
-                      indexedColsStore,
-                      _loop2,
-                      _iterator3,
-                      _step3,
-                      metaDataCollections,
-                      _iterator4,
-                      _step4,
-                      colName,
-                      newDbState,
-                      _args2 = arguments;
-
-                  return _regenerator["default"].wrap(function _callee$(_context2) {
+                      _args3 = arguments;
+                  return _regenerator["default"].wrap(function _callee2$(_context3) {
                     while (1) {
-                      switch (_context2.prev = _context2.next) {
+                      switch (_context3.prev = _context3.next) {
                         case 0:
-                          deleteCollections = _args2.length > 0 && _args2[0] !== undefined ? _args2[0] : [];
-                          dataBaseState = getDatabaseState(databaseName);
-                          newCollections = dataBaseState.newCollections;
-                          updateNeeded = newCollections.length > 0 || deleteCollections.length > 0;
+                          deleteCollections = _args3.length > 0 && _args3[0] !== undefined ? _args3[0] : [];
+                          return _context3.abrupt("return", lock.acquire(databaseName, /*#__PURE__*/(0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee() {
+                            var dataBaseState, newCollections, updateNeeded, metaData, db, indexedColsStore, _loop2, _iterator3, _step3, metaDataCollections, _iterator4, _step4, colName, newDbState;
 
-                          if (!(!updateNeeded && dataBaseState.db)) {
-                            _context2.next = 6;
-                            break;
-                          }
-
-                          return _context2.abrupt("return", dataBaseState.db);
-
-                        case 6:
-                          metaData = dataBaseState.metaData;
-
-                          if (updateNeeded) {
-                            metaData.version += 1;
-                          }
-
-                          _context2.next = 10;
-                          return (0, _idb.openDB)(databaseName, metaData.version, {
-                            upgrade: function upgrade(db) {
-                              var _loop = function _loop() {
-                                var collectionData = _step.value;
-                                var store = db.createObjectStore(collectionData.collectionName, {
-                                  keyPath: collectionData.primaryPath
-                                });
-                                collectionData.indexes.forEach(function (index) {
-                                  store.createIndex(genIndexName(index), index);
-                                });
-                              };
-
-                              for (var _iterator = _createForOfIteratorHelperLoose(newCollections), _step; !(_step = _iterator()).done;) {
-                                _loop();
-                              }
-
-                              for (var _iterator2 = _createForOfIteratorHelperLoose(deleteCollections), _step2; !(_step2 = _iterator2()).done;) {
-                                var colName = _step2.value;
-                                db.deleteObjectStore(colName);
-                              }
-                            },
-                            blocking: function blocking() {
-                              // Make sure to add a handler to be notified if another page requests a version
-                              // change. We must close the database. This allows the other page to upgrade the database.
-                              // If you don't do this then the upgrade won't happen until the user closes the tab.
-                              //
-                              db.close();
-                            },
-                            terminated: function terminated() {}
-                          });
-
-                        case 10:
-                          db = _context2.sent;
-
-                          if (!newCollections.length) {
-                            _context2.next = 19;
-                            break;
-                          }
-
-                          indexedColsStore = metaDB.transaction("indexedCols", "readwrite").store;
-                          _loop2 = /*#__PURE__*/_regenerator["default"].mark(function _loop2() {
-                            var collData, reqIndexesMeta, indexesMeta, indexes;
-                            return _regenerator["default"].wrap(function _loop2$(_context) {
+                            return _regenerator["default"].wrap(function _callee$(_context2) {
                               while (1) {
-                                switch (_context.prev = _context.next) {
+                                switch (_context2.prev = _context2.next) {
                                   case 0:
-                                    collData = _step3.value;
-                                    _context.next = 3;
-                                    return indexedColsStore.get([databaseName, collData.collectionName]);
+                                    dataBaseState = getDatabaseState(databaseName);
+                                    newCollections = dataBaseState.newCollections;
+                                    updateNeeded = newCollections.length > 0 || deleteCollections.length > 0;
 
-                                  case 3:
-                                    reqIndexesMeta = _context.sent;
-                                    indexesMeta = reqIndexesMeta ? reqIndexesMeta : {
-                                      dbName: databaseName,
-                                      collection: collData.collectionName,
-                                      indexes: []
-                                    };
-                                    indexes = collData.indexes;
-                                    indexes.forEach(function (index) {
-                                      indexesMeta.indexes.push({
-                                        name: genIndexName(index),
-                                        value: index
-                                      });
-                                    }); // primary also can be counted as indexedData, but it should be handled differently.
-                                    // use "primary to dect that it is actually "primary" field.
+                                    if (!(!updateNeeded && dataBaseState.db)) {
+                                      _context2.next = 5;
+                                      break;
+                                    }
 
-                                    indexesMeta.indexes.push({
-                                      name: collData.primaryPath,
-                                      value: collData.primaryPath,
-                                      primary: true
+                                    return _context2.abrupt("return", dataBaseState.db);
+
+                                  case 5:
+                                    metaData = dataBaseState.metaData;
+
+                                    if (updateNeeded) {
+                                      metaData.version += 1;
+                                    }
+
+                                    _context2.next = 9;
+                                    return (0, _idb.openDB)(databaseName, metaData.version, {
+                                      upgrade: function upgrade(db) {
+                                        var _loop = function _loop() {
+                                          var collectionData = _step.value;
+                                          var store = db.createObjectStore(collectionData.collectionName, {
+                                            keyPath: collectionData.primaryPath
+                                          });
+                                          collectionData.indexes.forEach(function (index) {
+                                            store.createIndex(genIndexName(index), index);
+                                          });
+                                        };
+
+                                        for (var _iterator = _createForOfIteratorHelperLoose(newCollections), _step; !(_step = _iterator()).done;) {
+                                          _loop();
+                                        }
+
+                                        for (var _iterator2 = _createForOfIteratorHelperLoose(deleteCollections), _step2; !(_step2 = _iterator2()).done;) {
+                                          var colName = _step2.value;
+                                          db.deleteObjectStore(colName);
+                                        }
+                                      },
+                                      blocking: function blocking() {
+                                        // Make sure to add a handler to be notified if another page requests a version
+                                        // change. We must close the database. This allows the other page to upgrade the database.
+                                        // If you don't do this then the upgrade won't happen until the user closes the tab.
+                                        //
+                                        db.close();
+                                      },
+                                      terminated: function terminated() {}
                                     });
-                                    indexedColsStore.put(indexesMeta);
 
                                   case 9:
+                                    db = _context2.sent;
+
+                                    if (!newCollections.length) {
+                                      _context2.next = 18;
+                                      break;
+                                    }
+
+                                    indexedColsStore = metaDB.transaction("indexedCols", "readwrite").store;
+                                    _loop2 = /*#__PURE__*/_regenerator["default"].mark(function _loop2() {
+                                      var collData, reqIndexesMeta, indexesMeta, indexes;
+                                      return _regenerator["default"].wrap(function _loop2$(_context) {
+                                        while (1) {
+                                          switch (_context.prev = _context.next) {
+                                            case 0:
+                                              collData = _step3.value;
+                                              _context.next = 3;
+                                              return indexedColsStore.get([databaseName, collData.collectionName]);
+
+                                            case 3:
+                                              reqIndexesMeta = _context.sent;
+                                              indexesMeta = reqIndexesMeta ? reqIndexesMeta : {
+                                                dbName: databaseName,
+                                                collection: collData.collectionName,
+                                                indexes: []
+                                              };
+                                              indexes = collData.indexes;
+                                              indexes.forEach(function (index) {
+                                                indexesMeta.indexes.push({
+                                                  name: genIndexName(index),
+                                                  value: index
+                                                });
+                                              }); // primary also can be counted as indexedData, but it should be handled differently.
+                                              // use "primary to dect that it is actually "primary" field.
+
+                                              // primary also can be counted as indexedData, but it should be handled differently.
+                                              // use "primary to dect that it is actually "primary" field.
+                                              indexesMeta.indexes.push({
+                                                name: collData.primaryPath,
+                                                value: collData.primaryPath,
+                                                primary: true
+                                              });
+                                              indexedColsStore.put(indexesMeta);
+
+                                            case 9:
+                                            case "end":
+                                              return _context.stop();
+                                          }
+                                        }
+                                      }, _loop2);
+                                    });
+                                    _iterator3 = _createForOfIteratorHelperLoose(newCollections);
+
+                                  case 14:
+                                    if ((_step3 = _iterator3()).done) {
+                                      _context2.next = 18;
+                                      break;
+                                    }
+
+                                    return _context2.delegateYield(_loop2(), "t0", 16);
+
+                                  case 16:
+                                    _context2.next = 14;
+                                    break;
+
+                                  case 18:
+                                    metaDataCollections = metaData.collections.concat(newCollections.map(function (coll) {
+                                      return {
+                                        name: coll.collectionName,
+                                        version: coll.version
+                                      };
+                                    }));
+                                    /**
+                                     * exclude deleted collections from meta.
+                                     */
+
+                                    if (!deleteCollections) {
+                                      _context2.next = 28;
+                                      break;
+                                    }
+
+                                    metaDataCollections = metaDataCollections.filter(function (coll) {
+                                      return deleteCollections.indexOf(coll.name) === -1;
+                                    });
+                                    _iterator4 = _createForOfIteratorHelperLoose(deleteCollections);
+
+                                  case 22:
+                                    if ((_step4 = _iterator4()).done) {
+                                      _context2.next = 28;
+                                      break;
+                                    }
+
+                                    colName = _step4.value;
+                                    _context2.next = 26;
+                                    return metaDB["delete"]("indexedCols", [databaseName, colName]);
+
+                                  case 26:
+                                    _context2.next = 22;
+                                    break;
+
+                                  case 28:
+                                    // transaction went successfully. clear "newCollections"
+                                    newDbState = _objectSpread(_objectSpread({}, dataBaseState), {}, {
+                                      db: db,
+                                      newCollections: [],
+                                      metaData: _objectSpread(_objectSpread({}, dataBaseState.metaData), {}, {
+                                        collections: metaDataCollections
+                                      }),
+                                      locked: undefined
+                                    });
+                                    _context2.next = 31;
+                                    return metaDB.put("dbMetaData", newDbState.metaData);
+
+                                  case 31:
+                                    IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
+                                    return _context2.abrupt("return", db);
+
+                                  case 33:
                                   case "end":
-                                    return _context.stop();
+                                    return _context2.stop();
                                 }
                               }
-                            }, _loop2);
-                          });
-                          _iterator3 = _createForOfIteratorHelperLoose(newCollections);
+                            }, _callee);
+                          }))));
 
-                        case 15:
-                          if ((_step3 = _iterator3()).done) {
-                            _context2.next = 19;
-                            break;
-                          }
-
-                          return _context2.delegateYield(_loop2(), "t0", 17);
-
-                        case 17:
-                          _context2.next = 15;
-                          break;
-
-                        case 19:
-                          metaDataCollections = metaData.collections.concat(newCollections.map(function (coll) {
-                            return {
-                              name: coll.collectionName,
-                              version: coll.version
-                            };
-                          }));
-                          /**
-                           * exclude deleted collections from meta.
-                           */
-
-                          if (!deleteCollections) {
-                            _context2.next = 29;
-                            break;
-                          }
-
-                          metaDataCollections = metaDataCollections.filter(function (coll) {
-                            return deleteCollections.indexOf(coll.name) === -1;
-                          });
-                          _iterator4 = _createForOfIteratorHelperLoose(deleteCollections);
-
-                        case 23:
-                          if ((_step4 = _iterator4()).done) {
-                            _context2.next = 29;
-                            break;
-                          }
-
-                          colName = _step4.value;
-                          _context2.next = 27;
-                          return metaDB["delete"]("indexedCols", [databaseName, colName]);
-
-                        case 27:
-                          _context2.next = 23;
-                          break;
-
-                        case 29:
-                          // transaction went successfully. clear "newCollections"
-                          newDbState = _objectSpread(_objectSpread({}, dataBaseState), {}, {
-                            db: db,
-                            newCollections: [],
-                            metaData: _objectSpread(_objectSpread({}, dataBaseState.metaData), {}, {
-                              collections: metaDataCollections
-                            })
-                          });
-                          _context2.next = 32;
-                          return metaDB.put("dbMetaData", newDbState.metaData);
-
-                        case 32:
-                          IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
-                          return _context2.abrupt("return", db);
-
-                        case 34:
+                        case 2:
                         case "end":
-                          return _context2.stop();
+                          return _context3.stop();
                       }
                     }
-                  }, _callee);
+                  }, _callee2);
                 }));
 
                 function getDb() {
@@ -344,21 +349,21 @@ var createIdbDatabase = /*#__PURE__*/function () {
                 return getDb;
               }(),
               removeCollection: function () {
-                var _removeCollection = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2() {
+                var _removeCollection = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3() {
                   var dataBaseState;
-                  return _regenerator["default"].wrap(function _callee2$(_context3) {
+                  return _regenerator["default"].wrap(function _callee3$(_context4) {
                     while (1) {
-                      switch (_context3.prev = _context3.next) {
+                      switch (_context4.prev = _context4.next) {
                         case 0:
                           dataBaseState = getDatabaseState(databaseName);
-                          return _context3.abrupt("return", dataBaseState.getDb([collectionName, getChangesCollName(collectionName)]));
+                          return _context4.abrupt("return", dataBaseState.getDb([collectionName, getChangesCollName(collectionName)]));
 
                         case 2:
                         case "end":
-                          return _context3.stop();
+                          return _context4.stop();
                       }
                     }
-                  }, _callee2);
+                  }, _callee3);
                 }));
 
                 function removeCollection() {
@@ -371,14 +376,14 @@ var createIdbDatabase = /*#__PURE__*/function () {
               newCollections: [].concat(dbState ? dbState.newCollections : [], newCollections)
             });
             IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
-            return _context4.abrupt("return", newDbState);
+            return _context5.abrupt("return", newDbState);
 
           case 23:
           case "end":
-            return _context4.stop();
+            return _context5.stop();
         }
       }
-    }, _callee3);
+    }, _callee4);
   }));
 
   return function createIdbDatabase(_x, _x2, _x3, _x4) {

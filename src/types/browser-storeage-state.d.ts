@@ -17,6 +17,7 @@ export interface BrowserStorageState {
     version: number;
   }>;
   metaData: IMetaDB["dbMetaData"]["value"];
+  locked?: Promise<IDBPDatabase<unknown>>;
 }
 
 export interface IMetaDB extends DBSchema {
