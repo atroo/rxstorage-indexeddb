@@ -1,6 +1,6 @@
 export const heroSchema = {
   title: "hero schema",
-  version: 1,
+  version: 2,
   description: "describes a simple hero",
   // primaryKey: {
   //   key: "id",
@@ -14,6 +14,9 @@ export const heroSchema = {
       type: "string",
     },
     myVersion: {
+      type: "number",
+    },
+    myVersion1: {
       type: "number",
     },
     name: {

@@ -47,6 +47,11 @@ function App() {
               oldDoc.myVersion = 1;
               return oldDoc;
             },
+            2: function (oldDoc) {
+              console.log("oldDoc", oldDoc);
+              oldDoc.myVersion1 = 2;
+              return oldDoc;
+            },
           },
         },
       });
@@ -63,8 +68,8 @@ function App() {
     const coll = database.heroes;
     const coll1 = database.heroes1;
 
-    // const heroes1Data = coll1.find().exec();
-    // console.log("heroes1Data:", heroes1Data);
+    const heroes1Data = coll1.find().exec();
+    console.log("heroes1Data:", heroes1Data);
 
     // const id = coll.schema.getPrimaryOfDocumentData({
     //   name: "fat_puma",
@@ -75,17 +80,17 @@ function App() {
       .find({
         limit: 100,
         selector: {
-          color: {
-            $gte: "beige",
-            $lte: "beige",
-            // $exists: true,
-          },
-          secret: {
-            // $gte: "f",
-            // $lte: "g",
-            $eq: "vague_cardinal",
-            // $exists: true,
-          },
+          // color: {
+          //   $gte: "beige",
+          //   $lte: "beige",
+          //   // $exists: true,
+          // },
+          // secret: {
+          //   // $gte: "f",
+          //   // $lte: "g",
+          //   $eq: "vague_cardinal",
+          //   // $exists: true,
+          // },
           // name: {
           //   $gt: "bottom_bovid",
           // },

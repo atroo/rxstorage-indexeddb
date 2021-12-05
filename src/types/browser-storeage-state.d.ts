@@ -10,7 +10,6 @@ export interface BrowserStorageState {
   getDb: (deleteCollections?: string[]) => Promise<IDBPDatabase<unknown>>;
   removeCollection: () => Promise<IDBPDatabase<unknown>>;
   db?: IDBPDatabase<unknown>;
-  updateNeeded: boolean;
   newCollections: Array<{
     collectionName: string;
     indexes: Array<string | string[]>;

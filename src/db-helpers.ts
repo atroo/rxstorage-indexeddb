@@ -101,25 +101,24 @@ export const createIdbDatabase = async <RxDocType>(
 
   const newDbState: BrowserStorageState = {
     ...dbState,
-    getDb: async (deleteCollections?: string[]) => {
+    getDb: async (deleteCollections: string[] = []) => {
       const dataBaseState = getDatabaseState(databaseName);
 
-      if (!dataBaseState.updateNeeded && dataBaseState.db) {
+      const newCollections = dataBaseState.newCollections;
+      const updateNeeded =
+        newCollections.length > 0 || deleteCollections.length > 0;
+
+      if (!updateNeeded && dataBaseState.db) {
         return dataBaseState.db;
       }
 
       const metaData = dataBaseState.metaData;
-      if (dataBaseState.updateNeeded) {
+      if (updateNeeded) {
         metaData.version += 1;
       }
 
-      const newCollections = dataBaseState.newCollections;
-
       const db = await openDB(databaseName, metaData.version, {
         upgrade(db) {
-          if (!newCollections.length && !deleteCollections?.length) {
-            return;
-          }
           for (const collectionData of newCollections) {
             const store = db.createObjectStore(collectionData.collectionName, {
               keyPath: collectionData.primaryPath,
@@ -130,10 +129,8 @@ export const createIdbDatabase = async <RxDocType>(
             });
           }
 
-          if (deleteCollections) {
-            for (const colName of deleteCollections) {
-              db.deleteObjectStore(colName);
-            }
+          for (const colName of deleteCollections) {
+            db.deleteObjectStore(colName);
           }
         },
         blocking() {
@@ -216,7 +213,6 @@ export const createIdbDatabase = async <RxDocType>(
       // transaction went successfully. clear "newCollections"
       const newDbState: BrowserStorageState = {
         ...dataBaseState,
-        updateNeeded: false,
         db,
         newCollections: [],
         metaData: {
@@ -232,19 +228,12 @@ export const createIdbDatabase = async <RxDocType>(
     },
     removeCollection: async () => {
       const dataBaseState = getDatabaseState(databaseName);
-
-      IDB_DATABASE_STATE_BY_NAME.set(databaseName, {
-        ...dataBaseState,
-        updateNeeded: true,
-      });
-
       return dataBaseState.getDb([
         collectionName,
         getChangesCollName(collectionName),
       ]);
     },
     metaData,
-    updateNeeded,
     newCollections: [
       ...(dbState ? dbState.newCollections : []),
       ...newCollections,
