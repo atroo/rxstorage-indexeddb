@@ -35,8 +35,6 @@ export const find = async <RxDocType>(
       ? store
       : store.index(pouchKeyRangeData.field);
     cursor = await index.openCursor(keyRange);
-    console.log("index name: ", pouchKeyRangeData.field);
-    console.log("keyRange: ", keyRange);
   } else {
     cursor = await store.openCursor();
   }
@@ -48,7 +46,6 @@ export const find = async <RxDocType>(
    * TODO: if there's indexed field, then use IDBKeyRange to sort data.
    */
 
-  console.log("in memory fields: ", pouchKeyRangeData.inMemoryFields);
   rows = filterInMemoryFields(
     rows.map((row) => {
       // make data compatible with filterInMemoryFields

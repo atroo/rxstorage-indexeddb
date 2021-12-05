@@ -86,7 +86,6 @@ export const generatePouchKeyRange = <RxDocType>(
         continue;
       }
 
-      console.log("KEY RANGE OPTS:", keyRangeOptsData);
       delete keyRangeOptsData.selector[f];
       return {
         queryOpts: keyRangeOptsData.queryOpts,
