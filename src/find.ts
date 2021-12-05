@@ -19,7 +19,6 @@ export const find = async <RxDocType>(
   ]);
 
   const indexedCols = indexesMeta ? indexesMeta.indexes : [];
-  console.log("indexedCols", indexedCols);
   const pouchKeyRangeData = generatePouchKeyRange(query, indexedCols);
 
   const store = db.transaction(collectionName).store;
@@ -36,7 +35,8 @@ export const find = async <RxDocType>(
       ? store
       : store.index(pouchKeyRangeData.field);
     cursor = await index.openCursor(keyRange);
-    const d = await index.getAll(keyRange);
+    console.log("index name: ", pouchKeyRangeData.field);
+    console.log("keyRange: ", keyRange);
   } else {
     cursor = await store.openCursor();
   }
@@ -48,6 +48,7 @@ export const find = async <RxDocType>(
    * TODO: if there's indexed field, then use IDBKeyRange to sort data.
    */
 
+  console.log("in memory fields: ", pouchKeyRangeData.inMemoryFields);
   rows = filterInMemoryFields(
     rows.map((row) => {
       // make data compatible with filterInMemoryFields

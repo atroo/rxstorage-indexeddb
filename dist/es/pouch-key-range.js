@@ -9,6 +9,8 @@ exports.generatePouchKeyRange = void 0;
 
 var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
 
+var _utils = require("./utils");
+
 var _variables = require("./variables");
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
@@ -83,7 +85,7 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
     for (var _i = 0; _i < fields.length; _i += 1) {
       var f = fields[_i];
 
-      if (f.split(".")) {
+      if (!(0, _utils.isIndexValid)(f)) {
         // composite keys are invalid. skip
         continue;
       }
@@ -97,8 +99,10 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
         continue;
       }
 
+      console.log("KEY RANGE OPTS:", _keyRangeOptsData);
+      delete _keyRangeOptsData.selector[f];
       return {
-        queryOpts: queryOpts,
+        queryOpts: _keyRangeOptsData.queryOpts,
         inMemoryFields: Object.keys(_keyRangeOptsData.selector),
         field: f,
         notIndexed: true
@@ -153,35 +157,14 @@ function keyRangeOptsFromCompoundIndex(selector, index) {
     var partMatcher = selector[part];
 
     if (!partMatcher || Object.keys(partMatcher).some(isNonLogicalMatcher)) {
-      // part of compound index is invalid
-      // query all rows for this col
-      matcher = {};
-      queryOpts = generateQueryOpts(matcher, queryOpts);
-      continue;
+      // wasn't able generate valid key range. go to next index.
+      foundValidMatcher = false;
+      break;
     }
 
-    if (!matcher) {
-      matcher = partMatcher; // idbkeyrange for some reason doesn't respect lowerOpen for compund indexes
-      // still want this field inMemoryFields
-      // delete cloneSelector[part];
-
-      queryOpts = generateQueryOpts(matcher, queryOpts);
-    } else {
-      var previousKeys = Object.keys(matcher);
-      var currentKeys = Object.keys(partMatcher);
-      var previousWasSame = arrayEquals(previousKeys.sort(), currentKeys.sort()); // if previousKeys is empty, then let's assume matchers are still compatible
-
-      if (!previousWasSame || !previousKeys.length) {
-        continue;
-      }
-
-      matcher = partMatcher; // idbkeyrange for some reason doesn't respect lowerOpen for compund indexes
-      // still want this field inMemoryFields
-      // delete cloneSelector[part];
-
-      queryOpts = generateQueryOpts(partMatcher, queryOpts);
-    }
-
+    matcher = partMatcher;
+    delete cloneSelector[part];
+    queryOpts = generateQueryOpts(partMatcher, queryOpts);
     foundValidMatcher = true;
   }
 
@@ -191,8 +174,9 @@ function keyRangeOptsFromCompoundIndex(selector, index) {
 
   return {
     selector: cloneSelector,
-    queryOpts: queryOpts,
-    compund: true
+    queryOpts: _objectSpread(_objectSpread({}, queryOpts), {}, {
+      compound: true
+    })
   };
 }
 

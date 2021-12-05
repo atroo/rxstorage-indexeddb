@@ -86,8 +86,10 @@ export const generatePouchKeyRange = <RxDocType>(
         continue;
       }
 
+      console.log("KEY RANGE OPTS:", keyRangeOptsData);
+      delete keyRangeOptsData.selector[f];
       return {
-        queryOpts,
+        queryOpts: keyRangeOptsData.queryOpts,
         inMemoryFields: Object.keys(keyRangeOptsData.selector),
         field: f,
         notIndexed: true,
@@ -146,39 +148,14 @@ function keyRangeOptsFromCompoundIndex<RxDocType>(
   for (const part of index.value) {
     const partMatcher: Record<string, any> | null = selector[part];
     if (!partMatcher || Object.keys(partMatcher).some(isNonLogicalMatcher)) {
-      // part of compound index is invalid
-      // query all rows for this col
-      matcher = {};
-      queryOpts = generateQueryOpts(matcher, queryOpts);
-      continue;
+      // wasn't able generate valid key range. go to next index.
+      foundValidMatcher = false;
+      break;
     }
 
-    if (!matcher) {
-      matcher = partMatcher;
-      // idbkeyrange for some reason doesn't respect lowerOpen for compund indexes
-      // still want this field inMemoryFields
-      // delete cloneSelector[part];
-      queryOpts = generateQueryOpts(matcher, queryOpts);
-    } else {
-      const previousKeys = Object.keys(matcher);
-      const currentKeys = Object.keys(partMatcher);
-
-      const previousWasSame = arrayEquals(
-        previousKeys.sort(),
-        currentKeys.sort()
-      );
-
-      // if previousKeys is empty, then let's assume matchers are still compatible
-      if (!previousWasSame || !previousKeys.length) {
-        continue;
-      }
-
-      matcher = partMatcher;
-      // idbkeyrange for some reason doesn't respect lowerOpen for compund indexes
-      // still want this field inMemoryFields
-      // delete cloneSelector[part];
-      queryOpts = generateQueryOpts(partMatcher, queryOpts);
-    }
+    matcher = partMatcher;
+    delete cloneSelector[part];
+    queryOpts = generateQueryOpts(partMatcher, queryOpts);
 
     foundValidMatcher = true;
   }
@@ -189,8 +166,7 @@ function keyRangeOptsFromCompoundIndex<RxDocType>(
 
   return {
     selector: cloneSelector,
-    queryOpts,
-    compund: true,
+    queryOpts: { ...queryOpts, compound: true },
   };
 }
 

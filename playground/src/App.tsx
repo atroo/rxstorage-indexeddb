@@ -11,6 +11,7 @@ import {
 // import { getRxStorageLoki } from "rxdb/plugins/lokijs";
 import { heroSchema } from "./schemas/hero-schema";
 import { getRxSBrowserIdbStorage } from "atroo-browser-storage";
+import { heroSchema1 } from "./schemas/hero-schema-1";
 const {
   uniqueNamesGenerator,
   adjectives,
@@ -35,6 +36,9 @@ function App() {
       });
 
       await database.addCollections({
+        heroes1: {
+          schema: heroSchema1,
+        },
         heroes: {
           schema: heroSchema,
           migrationStrategies: {
@@ -57,31 +61,36 @@ function App() {
     }
 
     const coll = database.heroes;
+    const coll1 = database.heroes1;
 
-    const id = coll.schema.getPrimaryOfDocumentData({
-      name: "fat_puma",
-      color: "harlequin",
-    });
+    // const heroes1Data = coll1.find().exec();
+    // console.log("heroes1Data:", heroes1Data);
+
+    // const id = coll.schema.getPrimaryOfDocumentData({
+    //   name: "fat_puma",
+    //   color: "harlequin",
+    // });
 
     coll
       .find({
         limit: 100,
         selector: {
-          // color: {
-          //   $gt: "academic_dingo",
-          //   $lt: "nursing_sloth",
-          //   // $exists: true,
-          // },
-          // secret: {
-          //   $gt: "crude_anteater",
-          //   $lt: "fit_salmon",
-          //   // $exists: true,
-          // },
-          name: {
-            $gt: "bottom_bovid",
+          color: {
+            $gte: "beige",
+            $lte: "beige",
+            // $exists: true,
           },
+          secret: {
+            // $gte: "f",
+            // $lte: "g",
+            $eq: "vague_cardinal",
+            // $exists: true,
+          },
+          // name: {
+          //   $gt: "bottom_bovid",
+          // },
         },
-        sort: [{ name: "desc" }],
+        sort: [{ color: "desc" }],
       })
       .$.subscribe((docs) => {
         setDocs(() => {

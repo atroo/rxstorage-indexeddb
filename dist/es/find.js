@@ -23,7 +23,7 @@ var _require = require("pouchdb-selector-core"),
 
 var find = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db, collectionName, query) {
-    var metaDB, indexesMeta, indexedCols, pouchKeyRangeData, store, cursor, keyRange, index, d, rows;
+    var metaDB, indexesMeta, indexedCols, pouchKeyRangeData, store, cursor, keyRange, index, rows;
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -39,48 +39,45 @@ var find = /*#__PURE__*/function () {
           case 5:
             indexesMeta = _context.sent;
             indexedCols = indexesMeta ? indexesMeta.indexes : [];
-            console.log("indexedCols", indexedCols);
             pouchKeyRangeData = (0, _pouchKeyRange.generatePouchKeyRange)(query, indexedCols);
             store = db.transaction(collectionName).store;
 
             if (!(pouchKeyRangeData.field && pouchKeyRangeData.queryOpts)) {
-              _context.next = 21;
+              _context.next = 19;
               break;
             }
 
             keyRange = (0, _idbKeyRange.generateKeyRange)(pouchKeyRangeData.queryOpts);
             index = pouchKeyRangeData.notIndexed ? store : store.index(pouchKeyRangeData.field);
-            _context.next = 15;
+            _context.next = 14;
             return index.openCursor(keyRange);
 
-          case 15:
+          case 14:
             cursor = _context.sent;
-            _context.next = 18;
-            return index.getAll(keyRange);
-
-          case 18:
-            d = _context.sent;
-            _context.next = 24;
+            console.log("index name: ", pouchKeyRangeData.field);
+            console.log("keyRange: ", keyRange);
+            _context.next = 22;
             break;
 
-          case 21:
-            _context.next = 23;
+          case 19:
+            _context.next = 21;
             return store.openCursor();
 
-          case 23:
+          case 21:
             cursor = _context.sent;
 
-          case 24:
-            _context.next = 26;
+          case 22:
+            _context.next = 24;
             return getRows(cursor);
 
-          case 26:
+          case 24:
             rows = _context.sent;
 
             /**
              * Filter in Memory Fields will take care of sort, limit and skip.
              * TODO: if there's indexed field, then use IDBKeyRange to sort data.
              */
+            console.log("in memory fields: ", pouchKeyRangeData.inMemoryFields);
             rows = filterInMemoryFields(rows.map(function (row) {
               // make data compatible with filterInMemoryFields
               // TODO: fork "pouchdb-selector-core" and adapt lib for our uses case.
@@ -92,7 +89,7 @@ var find = /*#__PURE__*/function () {
               return row.doc;
             }));
 
-          case 29:
+          case 28:
           case "end":
             return _context.stop();
         }

@@ -47,22 +47,22 @@ export const generateKeyRange = (opts: IIdbKeyRangeOptions) => {
   try {
     if (defined(opts, "startkey") && !defined(opts, "endkey")) {
       return IDBKeyRange.lowerBound(
-        convertKeys(opts.startkey, opts.compund),
+        convertKeys(opts.startkey, opts.compound),
         !opts.inclusiveStart
       );
     }
 
     if (!defined(opts, "startkey") && defined(opts, "endkey")) {
       return IDBKeyRange.upperBound(
-        convertKeys(opts.endkey, opts.compund),
+        convertKeys(opts.endkey, opts.compound),
         !opts.inclusiveEnd
       );
     }
 
     if (defined(opts, "startkey") && defined(opts, "endkey")) {
       return IDBKeyRange.bound(
-        convertKeys(opts.startkey, opts.compund),
-        convertKeys(opts.endkey, opts.compund),
+        convertKeys(opts.startkey, opts.compound),
+        convertKeys(opts.endkey, opts.compound),
         !opts.inclusiveStart,
         !opts.inclusiveEnd
       );
