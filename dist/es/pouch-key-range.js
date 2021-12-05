@@ -150,7 +150,6 @@ function keyRangeOptsFromCompoundIndex(selector, index) {
     endkey: []
   };
   var matcher = null;
-  var foundValidMatcher = false;
 
   for (var _iterator = _createForOfIteratorHelperLoose(index.value), _step; !(_step = _iterator()).done;) {
     var part = _step.value;
@@ -158,17 +157,18 @@ function keyRangeOptsFromCompoundIndex(selector, index) {
 
     if (!partMatcher || Object.keys(partMatcher).some(isNonLogicalMatcher)) {
       // wasn't able generate valid key range. go to next index.
-      foundValidMatcher = false;
+      matcher = null;
       break;
     }
 
-    matcher = partMatcher;
-    delete cloneSelector[part];
+    matcher = partMatcher; // still add this field inMemoryFields
+    // Reason: https://stackoverflow.com/questions/26196599/weird-behavior-of-idbkeyrange-with-a-compound-index
+    // delete cloneSelector[part];
+
     queryOpts = generateQueryOpts(partMatcher, queryOpts);
-    foundValidMatcher = true;
   }
 
-  if (!matcher || !foundValidMatcher) {
+  if (!matcher) {
     return null;
   }
 

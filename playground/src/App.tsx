@@ -80,19 +80,20 @@ function App() {
       .find({
         limit: 100,
         selector: {
-          // color: {
-          //   $gte: "beige",
-          //   $lte: "beige",
-          //   // $exists: true,
-          // },
-          // secret: {
-          //   // $gte: "f",
-          //   // $lte: "g",
-          //   $eq: "vague_cardinal",
-          //   // $exists: true,
-          // },
+          color: {
+            $gte: "coral",
+            $lte: "maroon",
+            // $exists: true,
+          },
+          secret: {
+            $gte: "definite_marsupial",
+            $lte: "grumpy_fox",
+            // $eq: "vague_cardinal",
+            // $exists: true,
+          },
           // name: {
-          //   $gt: "bottom_bovid",
+          //   $gt: "chubby_hippopotamus",
+          //   $exists: true,
           // },
         },
         sort: [{ color: "desc" }],
@@ -102,6 +103,20 @@ function App() {
           return docs;
         });
       });
+
+    (async () => {
+      const localDoc = await coll.upsertLocal(
+        "foobar", // id
+        {
+          // data
+          foo: "bar",
+        }
+      );
+      console.log("upserted local doc", localDoc);
+
+      const reqLocalDoc = await coll.getLocal("foobar");
+      console.log("req local document: ", reqLocalDoc);
+    })();
 
     // coll.findOne(id).$.subscribe((data) => {
     //   console.log("Found by id: ", data.toJSON());

@@ -143,24 +143,25 @@ function keyRangeOptsFromCompoundIndex<RxDocType>(
   };
 
   let matcher: Record<string, any> | null = null;
-  let foundValidMatcher = false;
 
   for (const part of index.value) {
     const partMatcher: Record<string, any> | null = selector[part];
     if (!partMatcher || Object.keys(partMatcher).some(isNonLogicalMatcher)) {
       // wasn't able generate valid key range. go to next index.
-      foundValidMatcher = false;
+      matcher = null;
       break;
     }
 
     matcher = partMatcher;
-    delete cloneSelector[part];
-    queryOpts = generateQueryOpts(partMatcher, queryOpts);
 
-    foundValidMatcher = true;
+    // still add this field inMemoryFields
+    // Reason: https://stackoverflow.com/questions/26196599/weird-behavior-of-idbkeyrange-with-a-compound-index
+    // delete cloneSelector[part];
+
+    queryOpts = generateQueryOpts(partMatcher, queryOpts);
   }
 
-  if (!matcher || !foundValidMatcher) {
+  if (!matcher) {
     return null;
   }
 
