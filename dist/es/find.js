@@ -43,7 +43,7 @@ var find = /*#__PURE__*/function () {
             store = db.transaction(collectionName).store;
 
             if (!(pouchKeyRangeData.field && pouchKeyRangeData.queryOpts)) {
-              _context.next = 19;
+              _context.next = 17;
               break;
             }
 
@@ -54,30 +54,27 @@ var find = /*#__PURE__*/function () {
 
           case 14:
             cursor = _context.sent;
-            console.log("index name: ", pouchKeyRangeData.field);
-            console.log("keyRange: ", keyRange);
-            _context.next = 22;
+            _context.next = 20;
             break;
 
-          case 19:
-            _context.next = 21;
+          case 17:
+            _context.next = 19;
             return store.openCursor();
 
-          case 21:
+          case 19:
             cursor = _context.sent;
 
-          case 22:
-            _context.next = 24;
+          case 20:
+            _context.next = 22;
             return getRows(cursor);
 
-          case 24:
+          case 22:
             rows = _context.sent;
 
             /**
              * Filter in Memory Fields will take care of sort, limit and skip.
              * TODO: if there's indexed field, then use IDBKeyRange to sort data.
              */
-            console.log("in memory fields: ", pouchKeyRangeData.inMemoryFields);
             rows = filterInMemoryFields(rows.map(function (row) {
               // make data compatible with filterInMemoryFields
               // TODO: fork "pouchdb-selector-core" and adapt lib for our uses case.
@@ -89,7 +86,7 @@ var find = /*#__PURE__*/function () {
               return row.doc;
             }));
 
-          case 28:
+          case 25:
           case "end":
             return _context.stop();
         }

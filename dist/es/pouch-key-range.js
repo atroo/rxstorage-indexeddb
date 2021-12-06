@@ -99,7 +99,6 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
         continue;
       }
 
-      console.log("KEY RANGE OPTS:", _keyRangeOptsData);
       delete _keyRangeOptsData.selector[f];
       return {
         queryOpts: _keyRangeOptsData.queryOpts,

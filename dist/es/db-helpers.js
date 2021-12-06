@@ -59,7 +59,14 @@ var genIndexName = function genIndexName(index) {
 exports.genIndexName = genIndexName;
 var lock = new _asyncLock["default"]();
 /**
- * TODO: handle properly primaryPath.
+ * Can be called several times for the same db
+ * Save all new collections data in map and run migration once db requessted (getDb)
+ *
+ * @param databaseName
+ * @param collectionName
+ * @param primaryPath
+ * @param schema
+ * @returns
  */
 
 var createIdbDatabase = /*#__PURE__*/function () {
