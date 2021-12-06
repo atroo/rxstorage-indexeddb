@@ -1,4 +1,4 @@
-const plugins = [
+let plugins = [
   "@babel/plugin-transform-typescript",
   "transform-class-properties",
   [
@@ -72,7 +72,13 @@ let presets = [
   ],
 ];
 
-// console.log('babel: NODE_ENV: ' + process.env['NODE_ENV']);
+if (process.env["NODE_ENV"] === "test") {
+  presets = [
+    ["@babel/preset-env", { targets: { node: "current" } }],
+    "@babel/preset-typescript",
+  ];
+  plugins = [];
+}
 
 if (process.env["NODE_ENV"] === "es5") {
   presets = [

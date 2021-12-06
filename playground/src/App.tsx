@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
 import {
   // addPouchPlugin,
@@ -19,8 +19,6 @@ const {
   animals,
 } = require("unique-names-generator");
 // addPouchPlugin(require("pouchdb-adapter-indexeddb"));
-
-let locked = false;
 
 function App() {
   const [database, setDatabase] = useState<RxDatabase | null>(null);
@@ -123,24 +121,20 @@ function App() {
     // });
   }, [database]);
 
+  const hasMountedRef = useRef(false);
   useEffect(() => {
     (async () => {
-      if (docs?.length && !locked) {
-        locked = true;
+      if (docs?.length && !hasMountedRef.current) {
+        hasMountedRef.current = true;
         const doc: RxDocument = docs[0];
         await doc.putAttachment({
           id: "cat.jpg",
           data: new Blob(["cat"]),
           type: "hey",
         });
-        doc.allAttachments$.subscribe((attachments) =>
-          console.log("All attachments", attachments)
-        );
 
         const catAttachment = await doc.getAttachment("cat.jpg");
         console.log("catATtachment:", catAttachment);
-        const attachmentData = await catAttachment?.getStringData();
-        console.log("Attachment data: ", attachmentData);
       }
     })();
   }, [docs]);
