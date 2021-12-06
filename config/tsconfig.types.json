@@ -8,8 +8,8 @@
     "declarationMap": false,
     "stripInternal": true,
     "noEmit": false,
-    "types": []
+    "types": ["jest"]
   },
   "include": ["../src"],
-  "exclude": []
+  "exclude": ["**/*.spec.ts", "**/*.test.ts"]
 }

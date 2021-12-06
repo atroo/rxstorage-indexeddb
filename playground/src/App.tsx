@@ -78,21 +78,21 @@ function App() {
       .find({
         limit: 100,
         selector: {
-          color: {
-            $gte: "coral",
-            $lte: "maroon",
-            // $exists: true,
-          },
-          secret: {
-            $gte: "definite_marsupial",
-            $lte: "grumpy_fox",
-            // $eq: "vague_cardinal",
-            // $exists: true,
-          },
-          // name: {
-          //   $gt: "chubby_hippopotamus",
-          //   $exists: true,
+          // color: {
+          //   $gte: "coral",
+          //   $lte: "maroon",
+          //   // $exists: true,
           // },
+          // secret: {
+          //   $gte: "definite_marsupial",
+          //   $lte: "grumpy_fox",
+          //   // $eq: "vague_cardinal",
+          //   // $exists: true,
+          // },
+          // // name: {
+          // //   $gt: "chubby_hippopotamus",
+          // //   $exists: true,
+          // // },
         },
         sort: [{ color: "desc" }],
       })

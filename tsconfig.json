@@ -17,13 +17,21 @@
 
     "outDir": "./dist/typings",
     "noEmit": true,
-    "declaration": true
+    "declaration": true,
+    "types": ["jest"]
   },
   "formatCodeOptions": {
     "indentSize": 2,
     "tabSize": 2
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "**/node_modules/*", "dist", "examples"],
+  "include": ["src/**/*.tsx", "src/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "**/node_modules/*",
+    "dist",
+    "examples",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
   "compileOnSave": false
 }
