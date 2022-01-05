@@ -8,7 +8,8 @@
     "declarationMap": false,
     "stripInternal": true,
     "noEmit": false,
-    "types": ["jest"]
+    "types": ["jest"],
+    "skipLibCheck": true
   },
   "include": ["../src"],
   "exclude": ["**/*.spec.ts", "**/*.test.ts"]
