@@ -1,5 +1,3 @@
-/// <reference types="pouchdb-core" />
-/// <reference types="node" />
 import { RxStorage } from "rxdb";
 import { RxKeyObjectStorageInstanceCreationParams, RxStorageInstanceCreationParams } from "rxdb/dist/types/types/rx-storage";
 import { BrowserStorageInternals, BrowserStorageSettings } from "./types/browser-storage";

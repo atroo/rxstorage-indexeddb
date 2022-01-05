@@ -16,7 +16,7 @@ export declare const genIndexName: (index: string | string[]) => string;
  * @param schema
  * @returns
  */
-export declare const createIdbDatabase: <RxDocType>(databaseName: string, collectionName: string, primaryPath: string, schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">) => Promise<BrowserStorageState>;
+export declare const createIdbDatabase: <RxDocType>(databaseName: string, collectionName: string, primaryPath: string, schema: Pick<RxJsonSchema<RxDocType>, "version" | "indexes">) => Promise<BrowserStorageState>;
 export declare function getPrimaryFieldOfPrimaryKey<RxDocType>(primaryKey: PrimaryKey<RxDocType>): string;
 export declare function newRxError(code: RxErrorKey, parameters?: RxErrorParameters): RxError;
 export declare const getDatabaseState: (databaseName: string) => BrowserStorageState;
