@@ -1,4 +1,4 @@
-import { BlobBuffer, BulkWriteRow, ChangeStreamOnceOptions, MangoQuery, RxDocumentData, RxDocumentWriteData, RxJsonSchema, RxStorageBulkWriteResponse, RxStorageChangedDocumentMeta, RxStorageChangeEvent, RxStorageInstance, RxStorageInstanceCreationParams, RxStorageQueryResult } from "rxdb/dist/types/types";
+import { BlobBuffer, BulkWriteRow, ChangeStreamOnceOptions, EventBulk, MangoQuery, RxDocumentData, RxDocumentWriteData, RxJsonSchema, RxStorageBulkWriteResponse, RxStorageChangedDocumentMeta, RxStorageChangeEvent, RxStorageInstance, RxStorageInstanceCreationParams, RxStorageQueryResult } from "rxdb/dist/types/types";
 import { Observable } from "rxjs";
 import { BrowserStorageInternals, BrowserStorageSettings } from "./types/browser-storage";
 import { DeterministicSortComparator, QueryMatcher } from "event-reduce-js/dist/lib/types";
@@ -19,12 +19,14 @@ export declare class RxStorageBrowserInstance<RxDocType> implements RxStorageIns
     query(preparedQuery: MangoQuery<RxDocType>): Promise<RxStorageQueryResult<RxDocType>>;
     bulkWrite(documentWrites: BulkWriteRow<RxDocType>[]): Promise<RxStorageBulkWriteResponse<RxDocType>>;
     bulkAddRevisions(documents: RxDocumentData<RxDocType>[]): Promise<void>;
-    findDocumentsById(ids: string[], deleted: boolean): Promise<Map<string, RxDocumentData<RxDocType>>>;
+    findDocumentsById(ids: string[], deleted: boolean): Promise<{
+        [documentId: string]: RxDocumentData<RxDocType>;
+    }>;
     getChangedDocuments(options: ChangeStreamOnceOptions): Promise<{
         changedDocuments: RxStorageChangedDocumentMeta[];
         lastSequence: number;
     }>;
-    changeStream(): Observable<RxStorageChangeEvent<RxDocumentData<RxDocType>>>;
+    changeStream(): Observable<EventBulk<RxStorageChangeEvent<RxDocumentData<RxDocType>>>>;
     getAttachmentData(_documentId: string, _attachmentId: string): Promise<BlobBuffer>;
     close(): Promise<void>;
     remove(): Promise<void>;

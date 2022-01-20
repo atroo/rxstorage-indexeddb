@@ -70,8 +70,8 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
             case 2:
               ret = {
-                success: new Map(),
-                error: new Map()
+                success: {},
+                error: {}
               };
 
               if (!this.closed) {
@@ -131,7 +131,7 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
                 documentId: id,
                 writeRow: writeRow
               };
-              ret.error.set(id, err);
+              ret.error[id] = err;
               return _context.abrupt("continue", 51);
 
             case 33:
@@ -166,7 +166,7 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
               return store.add(Object.assign({}, writeDoc));
 
             case 46:
-              ret.success.set(id, writeDoc);
+              ret.success[id] = writeDoc;
               endTime = Date.now();
               event = void 0;
 
@@ -251,7 +251,7 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
         while (1) {
           switch (_context2.prev = _context2.next) {
             case 0:
-              ret = new Map();
+              ret = {};
 
               if (!this.closed) {
                 _context2.next = 3;
@@ -288,7 +288,7 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
               documentInDb = _context2.sent;
 
               if (documentInDb && !documentInDb._deleted) {
-                ret.set(id, documentInDb);
+                ret[id] = documentInDb;
               }
 
             case 17:

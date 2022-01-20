@@ -76,10 +76,6 @@ export class RxStorageBrowserInstance<RxDocType>
     // this.primaryPath = getPrimaryFieldOfPrimaryKey(this.schema.primaryKey);
   }
 
-  prepareQuery(mutateableQuery: MangoQuery<RxDocType>) {
-    return mutateableQuery;
-  }
-
   getSortComparator(query: MangoQuery<RxDocType>) {
     // TODO if no sort is given, use sort by primary.
     // This should be done inside of RxDB and not in the storage implementations.

@@ -1,4 +1,10 @@
-import { hash, RxStorage } from "rxdb";
+import {
+  hash,
+  MangoQuery,
+  RxJsonSchema,
+  RxStorage,
+  RxStorageStatics,
+} from "rxdb";
 import {
   RxKeyObjectStorageInstanceCreationParams,
   RxStorageInstanceCreationParams,
@@ -10,14 +16,24 @@ import {
   BrowserStorageSettings,
 } from "./types/browser-storage";
 
+const RxBrowserStorageStatics: RxStorageStatics = {
+  hash(data: Buffer | Blob | string): Promise<string> {
+    return Promise.resolve(hash(data));
+  },
+
+  prepareQuery<RxDocType>(
+    schema: RxJsonSchema<RxDocType>,
+    mutateableQuery: MangoQuery<RxDocType>
+  ) {
+    return mutateableQuery;
+  },
+};
+
 export class RxBrowserStorage
   implements RxStorage<BrowserStorageInternals, BrowserStorageSettings>
 {
   public name = "atroo-browser-storage";
-
-  hash(data: Buffer | Blob | string): Promise<string> {
-    return Promise.resolve(hash(data));
-  }
+  public statics = RxBrowserStorageStatics;
 
   async createStorageInstance<RxDocType>(
     params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>

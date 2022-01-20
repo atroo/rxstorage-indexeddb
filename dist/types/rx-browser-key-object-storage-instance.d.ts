@@ -1,4 +1,4 @@
-import { BulkWriteLocalRow, RxKeyObjectStorageInstanceCreationParams, RxLocalDocumentData, RxLocalStorageBulkWriteResponse, RxStorageChangeEvent, RxStorageKeyObjectInstance } from "rxdb/dist/types/types";
+import { BulkWriteLocalRow, EventBulk, RxKeyObjectStorageInstanceCreationParams, RxLocalDocumentData, RxLocalStorageBulkWriteResponse, RxStorageChangeEvent, RxStorageKeyObjectInstance } from "rxdb/dist/types/types";
 import { Observable } from "rxjs";
 import { BrowserStorageInternals, BrowserStorageSettings } from "./types/browser-storage";
 export declare class RxBrowserKeyObjectStorageInstance<RxDocType> implements RxStorageKeyObjectInstance<BrowserStorageInternals, BrowserStorageSettings> {
@@ -11,10 +11,12 @@ export declare class RxBrowserKeyObjectStorageInstance<RxDocType> implements RxS
     private closed;
     constructor(databaseName: string, collectionName: string, options: Readonly<BrowserStorageSettings>, internals: BrowserStorageInternals);
     bulkWrite<RxDocType>(documentWrites: BulkWriteLocalRow<RxDocType>[]): Promise<RxLocalStorageBulkWriteResponse<RxDocType>>;
-    findLocalDocumentsById<RxDocType = any>(ids: string[]): Promise<Map<string, RxLocalDocumentData<RxDocType>>>;
-    changeStream(): Observable<RxStorageChangeEvent<RxLocalDocumentData<{
+    findLocalDocumentsById<RxDocType = any>(ids: string[]): Promise<{
+        [documentId: string]: RxLocalDocumentData<RxDocType>;
+    }>;
+    changeStream(): Observable<EventBulk<RxStorageChangeEvent<RxLocalDocumentData<{
         [key: string]: any;
-    }>>>;
+    }>>>>;
     close(): Promise<void>;
     remove(): Promise<void>;
     private getLocalState;
