@@ -157,8 +157,8 @@ export class RxStorageBrowserInstance<RxDocType>
     }
 
     const ret: RxStorageBulkWriteResponse<RxDocType> = {
-      success: new Map(),
-      error: new Map(),
+      success: {},
+      error: {},
     };
 
     if (this.closed) {
@@ -209,7 +209,7 @@ export class RxStorageBrowserInstance<RxDocType>
           startTime,
           endTime: Date.now(),
         });
-        ret.success.set(id, writeDoc as any);
+        ret.success[id] = writeDoc;
       } else {
         // update existing document
         const revInDb: string = documentInDb._rev;
@@ -224,7 +224,7 @@ export class RxStorageBrowserInstance<RxDocType>
             documentId: id,
             writeRow: writeRow,
           };
-          ret.error.set(id, err);
+          ret.error[id] = err;
         } else {
           const newRevHeight = getHeightOfRevision(revInDb) + 1;
           const newRevision =
@@ -299,7 +299,7 @@ export class RxStorageBrowserInstance<RxDocType>
             startTime,
             endTime: Date.now(),
           });
-          ret.success.set(id, writeDoc);
+          ret.success[id] = writeDoc;
         }
       }
     }
