@@ -2,6 +2,7 @@ import {
   BlobBuffer,
   BulkWriteRow,
   ChangeStreamOnceOptions,
+  EventBulk,
   MangoQuery,
   MangoQuerySortDirection,
   MangoQuerySortPart,
@@ -36,7 +37,12 @@ import {
   QueryMatcher,
 } from "event-reduce-js/dist/lib/types";
 import { find } from "./find";
-import { createRevision, getHeightOfRevision, parseRevision } from "rxdb";
+import {
+  createRevision,
+  getHeightOfRevision,
+  parseRevision,
+  randomCouchString,
+} from "rxdb";
 import { getEventKey } from "./utils";
 const { filterInMemoryFields } = require("pouchdb-selector-core");
 
@@ -53,8 +59,9 @@ export class RxStorageBrowserInstance<RxDocType>
     >
 {
   //   public readonly primaryPath: keyof RxDocType;
-  private changes$: Subject<RxStorageChangeEvent<RxDocumentData<RxDocType>>> =
-    new Subject();
+  private changes$: Subject<
+    EventBulk<RxStorageChangeEvent<RxDocumentData<RxDocType>>>
+  > = new Subject();
   public readonly instanceId = instanceId++;
   private closed = false;
   private lastChangefeedSequence: number = 0;
@@ -161,6 +168,13 @@ export class RxStorageBrowserInstance<RxDocType>
       error: {},
     };
 
+    const eventBulk: EventBulk<
+      RxStorageChangeEvent<RxDocumentData<RxDocType>>
+    > = {
+      id: randomCouchString(10),
+      events: [],
+    };
+
     if (this.closed) {
       return ret;
     }
@@ -197,7 +211,7 @@ export class RxStorageBrowserInstance<RxDocType>
 
         await store.add(writeDoc);
         this.addChangeDocumentMeta(id);
-        this.changes$.next({
+        eventBulk.events.push({
           eventId: getEventKey(false, id, newRevision),
           documentId: id,
           change: {
@@ -245,7 +259,7 @@ export class RxStorageBrowserInstance<RxDocType>
               previous,
               doc: null,
             };
-            this.changes$.next({
+            eventBulk.events.push({
               eventId: getEventKey(false, id, newRevision),
               documentId: id,
               change,
@@ -292,7 +306,7 @@ export class RxStorageBrowserInstance<RxDocType>
           if (!change) {
             throw newRxError("SNH", { args: { writeRow } });
           }
-          this.changes$.next({
+          eventBulk.events.push({
             eventId: getEventKey(false, id, newRevision),
             documentId: id,
             change,
@@ -305,6 +319,7 @@ export class RxStorageBrowserInstance<RxDocType>
     }
 
     txn.commit();
+    this.changes$.next(eventBulk);
     return ret;
   }
 
@@ -491,7 +506,9 @@ export class RxStorageBrowserInstance<RxDocType>
     return ret;
   }
 
-  changeStream(): Observable<RxStorageChangeEvent<RxDocumentData<RxDocType>>> {
+  changeStream(): Observable<
+    EventBulk<RxStorageChangeEvent<RxDocumentData<RxDocType>>>
+  > {
     return this.changes$.asObservable();
   }
 
