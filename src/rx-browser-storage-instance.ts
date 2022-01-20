@@ -411,8 +411,8 @@ export class RxStorageBrowserInstance<RxDocType>
   async findDocumentsById(
     ids: string[],
     deleted: boolean
-  ): Promise<Map<string, RxDocumentData<RxDocType>>> {
-    const ret: Map<string, RxDocumentData<RxDocType>> = new Map();
+  ): Promise<{ [documentId: string]: RxDocumentData<RxDocType> }> {
+    const ret: { [documentId: string]: RxDocumentData<RxDocType> } = {};
 
     if (this.closed) {
       return ret;
@@ -424,7 +424,7 @@ export class RxStorageBrowserInstance<RxDocType>
     for (const id of ids) {
       const documentInDb = await store.get(id);
       if (documentInDb && (!documentInDb._deleted || deleted)) {
-        ret.set(id, documentInDb);
+        ret[id] = documentInDb;
       }
     }
 
