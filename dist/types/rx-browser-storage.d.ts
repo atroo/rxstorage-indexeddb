@@ -18,4 +18,4 @@ export declare class RxBrowserStorage implements RxStorage<BrowserStorageInterna
     createStorageInstance<RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>): Promise<import("./rx-browser-storage-instance").RxStorageBrowserInstance<RxDocType>>;
     createKeyObjectStorageInstance(params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>): Promise<import("./rx-browser-key-object-storage-instance").RxBrowserKeyObjectStorageInstance<unknown>>;
 }
-export declare function getRxSBrowserIdbStorage(databaseSettings?: IdbSettings): RxBrowserStorage;
+export declare function getRxIdbStorage(databaseSettings?: IdbSettings): RxBrowserStorage;

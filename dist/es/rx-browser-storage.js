@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.RxBrowserStorage = void 0;
-exports.getRxSBrowserIdbStorage = getRxSBrowserIdbStorage;
+exports.getRxIdbStorage = getRxIdbStorage;
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 
@@ -157,7 +157,7 @@ var RxBrowserStorage = /*#__PURE__*/function () {
 
 exports.RxBrowserStorage = RxBrowserStorage;
 
-function getRxSBrowserIdbStorage() {
+function getRxIdbStorage() {
   var databaseSettings = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
   var storage = new RxBrowserStorage(databaseSettings);
   return storage;

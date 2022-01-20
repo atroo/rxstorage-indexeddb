@@ -10,7 +10,7 @@ import {
 } from "rxdb";
 // import { getRxStorageLoki } from "rxdb/plugins/lokijs";
 import { heroSchema } from "./schemas/hero-schema";
-import { getRxSBrowserIdbStorage } from "atroo-browser-storage";
+import { getRxIdbStorage } from "atroo-browser-storage";
 import { heroSchema1 } from "./schemas/hero-schema-1";
 const {
   uniqueNamesGenerator,
@@ -29,7 +29,7 @@ function App() {
       const database = await createRxDatabase({
         name: "mydatabase",
         // storage: getRxStorageLoki(),
-        storage: getRxSBrowserIdbStorage({
+        storage: getRxIdbStorage({
           blocking: () => {
             alert("Blocking");
           },

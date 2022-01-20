@@ -125,7 +125,7 @@ export class RxBrowserStorage
   }
 }
 
-export function getRxSBrowserIdbStorage(databaseSettings: IdbSettings = {}) {
+export function getRxIdbStorage(databaseSettings: IdbSettings = {}) {
   const storage = new RxBrowserStorage(databaseSettings);
   return storage;
 }
