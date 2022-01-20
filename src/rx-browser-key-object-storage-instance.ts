@@ -237,7 +237,8 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
 }
 
 export async function createBrowserKeyValueStorageLocalState(
-  params: RxKeyObjectStorageInstanceCreationParams<IdbSettings>
+  params: RxKeyObjectStorageInstanceCreationParams<IdbSettings>,
+  idbSettings: IdbSettings
 ): Promise<BrowserStorageInternals> {
   const primaryPath = "_id";
 
@@ -246,6 +247,7 @@ export async function createBrowserKeyValueStorageLocalState(
     collectionName: params.collectionName,
     primaryPath: "_id",
     schema: { indexes: [], version: 0 },
+    idbSettings,
   });
 
   return {
@@ -256,14 +258,18 @@ export async function createBrowserKeyValueStorageLocalState(
 }
 
 export const createBrowserKeyObjectStorageInstance = async <RxDocType>(
-  _params: RxKeyObjectStorageInstanceCreationParams<IdbSettings>
+  _params: RxKeyObjectStorageInstanceCreationParams<IdbSettings>,
+  idbSettings: IdbSettings
 ) => {
   const params: typeof _params = {
     ..._params,
     databaseName: _params.databaseName + "-key-object",
   };
 
-  const internals = await createBrowserKeyValueStorageLocalState(params);
+  const internals = await createBrowserKeyValueStorageLocalState(
+    params,
+    idbSettings
+  );
 
   const instance = new RxBrowserKeyObjectStorageInstance<RxDocType>(
     params.databaseName,

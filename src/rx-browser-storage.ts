@@ -121,7 +121,7 @@ export class RxBrowserStorage
     params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>
   ) {
     params.collectionName = params.collectionName + "-key-object";
-    return createBrowserKeyObjectStorageInstance(params);
+    return createBrowserKeyObjectStorageInstance(params, this.databaseSettings);
   }
 }
 
