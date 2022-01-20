@@ -51,7 +51,7 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
   _proto.bulkWrite = /*#__PURE__*/function () {
     var _bulkWrite = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(documentWrites) {
-      var ret, db, txn, store, writeRowById, startTime, _iterator, _step, writeRow, id, documentInDbCursor, writeDoc, docInDb, previous, newRevHeight, newRevision, err, docCpy, endTime, event, previousDoc, doc, eventId, storageChangeEvent;
+      var ret, db, txn, store, eventBulk, writeRowById, startTime, _iterator, _step, writeRow, id, documentInDbCursor, writeDoc, docInDb, previous, newRevHeight, newRevision, err, docCpy, endTime, event, previousDoc, doc, eventId, storageChangeEvent;
 
       return _regenerator["default"].wrap(function _callee$(_context) {
         while (1) {
@@ -89,23 +89,27 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
               db = _context.sent;
               txn = db.transaction(this.collectionName, "readwrite");
               store = txn.store;
+              eventBulk = {
+                id: (0, _rxdb.randomCouchString)(10),
+                events: []
+              };
               writeRowById = new Map();
               startTime = Date.now();
               _iterator = _createForOfIteratorHelperLoose(documentWrites);
 
-            case 13:
+            case 14:
               if ((_step = _iterator()).done) {
-                _context.next = 53;
+                _context.next = 54;
                 break;
               }
 
               writeRow = _step.value;
               id = writeRow.document._id;
               writeRowById.set(id, writeRow);
-              _context.next = 19;
+              _context.next = 20;
               return store.openCursor(id);
 
-            case 19:
+            case 20:
               documentInDbCursor = _context.sent;
               writeDoc = Object.assign({}, writeRow.document);
               docInDb = documentInDbCursor === null || documentInDbCursor === void 0 ? void 0 : documentInDbCursor.value;
@@ -115,12 +119,12 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
               writeDoc._rev = newRevision;
 
               if (!docInDb) {
-                _context.next = 43;
+                _context.next = 44;
                 break;
               }
 
               if (!(!writeRow.previous || docInDb._rev !== writeRow.previous._rev)) {
-                _context.next = 33;
+                _context.next = 34;
                 break;
               }
 
@@ -132,40 +136,40 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
                 writeRow: writeRow
               };
               ret.error[id] = err;
-              return _context.abrupt("continue", 51);
+              return _context.abrupt("continue", 52);
 
-            case 33:
+            case 34:
               if (writeRow.document._deleted) {
-                _context.next = 39;
+                _context.next = 40;
                 break;
               }
 
               docCpy = Object.assign({}, writeDoc);
-              _context.next = 37;
+              _context.next = 38;
               return documentInDbCursor.update(docCpy);
 
-            case 37:
-              _context.next = 41;
+            case 38:
+              _context.next = 42;
               break;
 
-            case 39:
-              _context.next = 41;
+            case 40:
+              _context.next = 42;
               return documentInDbCursor["delete"]();
 
-            case 41:
-              _context.next = 46;
+            case 42:
+              _context.next = 47;
               break;
 
-            case 43:
+            case 44:
               if (writeRow.document._deleted) {
-                _context.next = 46;
+                _context.next = 47;
                 break;
               }
 
-              _context.next = 46;
+              _context.next = 47;
               return store.add(Object.assign({}, writeDoc));
 
-            case 46:
+            case 47:
               ret.success[id] = writeDoc;
               endTime = Date.now();
               event = void 0;
@@ -215,20 +219,20 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
                   change: event,
                   startTime: startTime,
                   endTime: endTime
-                }; // TODO: fix type
-
-                this.changes$.next(storageChangeEvent);
+                };
+                eventBulk.events.push(storageChangeEvent);
               }
 
-            case 51:
-              _context.next = 13;
+            case 52:
+              _context.next = 14;
               break;
 
-            case 53:
+            case 54:
               txn.commit();
+              this.changes$.next(eventBulk);
               return _context.abrupt("return", ret);
 
-            case 55:
+            case 57:
             case "end":
               return _context.stop();
           }

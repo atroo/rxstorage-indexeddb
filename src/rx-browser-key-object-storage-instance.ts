@@ -1,5 +1,5 @@
 import { ChangeEvent } from "event-reduce-js/dist/lib/types";
-import { createRevision, parseRevision } from "rxdb";
+import { createRevision, parseRevision, randomCouchString } from "rxdb";
 import {
   BulkWriteLocalRow,
   EventBulk,
@@ -68,6 +68,10 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
     const txn = db.transaction(this.collectionName, "readwrite");
     const store = txn.store;
 
+    const eventBulk: EventBulk<RxStorageChangeEvent<RxLocalDocumentData>> = {
+      id: randomCouchString(10),
+      events: [],
+    };
     const writeRowById: Map<string, BulkWriteLocalRow<RxDocType>> = new Map();
     const startTime = Date.now();
 
@@ -168,12 +172,12 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
           startTime,
           endTime,
         };
-        // TODO: fix type
-        this.changes$.next(storageChangeEvent as any);
+        eventBulk.events.push(storageChangeEvent);
       }
     }
 
     txn.commit();
+    this.changes$.next(eventBulk);
     return ret;
   }
 
