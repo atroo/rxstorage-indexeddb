@@ -1,4 +1,4 @@
-import { DeterministicSortComparator } from "event-reduce-js";
+import { DeterministicSortComparator, QueryMatcher } from "event-reduce-js";
 import {
   hash,
   MangoQuery,
@@ -9,18 +9,21 @@ import {
   RxStorageStatics,
 } from "rxdb";
 import {
+  RxDocumentWriteData,
   RxKeyObjectStorageInstanceCreationParams,
   RxStorageInstanceCreationParams,
 } from "rxdb/dist/types/types/rx-storage";
 import { getPrimaryFieldOfPrimaryKey, newRxError } from "./db-helpers";
 import { createBrowserKeyObjectStorageInstance } from "./rx-browser-key-object-storage-instance";
 import { createBrowserStorageInstance } from "./rx-browser-storage-instance";
+const { filterInMemoryFields } = require("pouchdb-selector-core");
 import {
   BrowserStorageInternals,
   BrowserStorageSettings,
 } from "./types/browser-storage";
 
 const RxBrowserStorageStatics: RxStorageStatics = {
+  hashKey: "md5",
   hash(data: Buffer | Blob | string): Promise<string> {
     return Promise.resolve(hash(data));
   },
@@ -78,6 +81,21 @@ const RxBrowserStorageStatics: RxStorageStatics = {
       }
 
       return compareResult as 1 | -1;
+    };
+
+    return fun;
+  },
+
+  getQueryMatcher<RxDocType>(
+    schema: RxJsonSchema<RxDocType>,
+    query: MangoQuery<RxDocType>
+  ) {
+    const fun: QueryMatcher<RxDocumentWriteData<RxDocType>> = (
+      doc: RxDocumentWriteData<RxDocType>
+    ) => {
+      const { _attachments, _deleted, _rev, ...json } = doc;
+      const inMemoryFields = Object.keys(json);
+      return filterInMemoryFields([json], query, inMemoryFields).length > 0;
     };
 
     return fun;

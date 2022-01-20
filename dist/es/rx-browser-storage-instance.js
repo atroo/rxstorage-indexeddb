@@ -13,8 +13,6 @@ var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/de
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
-var _objectWithoutPropertiesLoose2 = _interopRequireDefault(require("@babel/runtime/helpers/objectWithoutPropertiesLoose"));
-
 var _rxjs = require("rxjs");
 
 var _dbHelpers = require("./db-helpers");
@@ -25,8 +23,6 @@ var _rxdb = require("rxdb");
 
 var _utils = require("./utils");
 
-var _excluded = ["_attachments", "_deleted", "_rev"];
-
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { (0, _defineProperty2["default"])(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
@@ -36,9 +32,6 @@ function _createForOfIteratorHelperLoose(o, allowArrayLike) { var it = typeof Sy
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-var _require = require("pouchdb-selector-core"),
-    filterInMemoryFields = _require.filterInMemoryFields;
 
 var instanceId = 1; // TODO: attachments: should we add "digest" and "length" to attachment ourself?
 
@@ -59,71 +52,6 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
   }
 
   var _proto = RxStorageBrowserInstance.prototype;
-
-  _proto.prepareQuery = function prepareQuery(mutateableQuery) {
-    return mutateableQuery;
-  };
-
-  _proto.getSortComparator = function getSortComparator(query) {
-    var _ref;
-
-    // TODO if no sort is given, use sort by primary.
-    // This should be done inside of RxDB and not in the storage implementations.
-    var sortOptions = query.sort ? query.sort : [(_ref = {}, _ref[this.internals.primaryPath] = "asc", _ref)];
-
-    var fun = function fun(a, b) {
-      var compareResult = 0;
-      sortOptions.forEach(function (sortPart) {
-        var fieldName = Object.keys(sortPart)[0];
-        var direction = Object.values(sortPart)[0];
-        var directionMultiplier = direction === "asc" ? 1 : -1;
-        var valueA = a[fieldName];
-        var valueB = b[fieldName];
-
-        if (valueA === valueB) {
-          return;
-        } else {
-          if (valueA > valueB) {
-            compareResult = 1 * directionMultiplier;
-          } else {
-            compareResult = -1 * directionMultiplier;
-          }
-        }
-      });
-      /**
-       * Two different objects should never have the same sort position.
-       * We ensure this by having the unique primaryKey in the sort params
-       * at this.prepareQuery()
-       */
-
-      if (!compareResult) {
-        throw (0, _dbHelpers.newRxError)("SNH", {
-          args: {
-            query: query,
-            a: a,
-            b: b
-          }
-        });
-      }
-
-      return compareResult;
-    };
-
-    return fun;
-  };
-
-  _proto.getQueryMatcher = function getQueryMatcher(query) {
-    var fun = function fun(doc) {
-      var _attachments = doc._attachments,
-          _deleted = doc._deleted,
-          _rev = doc._rev,
-          json = (0, _objectWithoutPropertiesLoose2["default"])(doc, _excluded);
-      var inMemoryFields = Object.keys(json);
-      return filterInMemoryFields([json], query, inMemoryFields).length > 0;
-    };
-
-    return fun;
-  };
 
   _proto.query = /*#__PURE__*/function () {
     var _query = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(preparedQuery) {
@@ -941,7 +869,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 exports.RxStorageBrowserInstance = RxStorageBrowserInstance;
 
 var createBrowserStorageLocalState = /*#__PURE__*/function () {
-  var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(params) {
+  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(params) {
     var primaryPath, databaseState;
     return _regenerator["default"].wrap(function _callee10$(_context10) {
       while (1) {
@@ -968,14 +896,14 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
   }));
 
   return function createBrowserStorageLocalState(_x10) {
-    return _ref2.apply(this, arguments);
+    return _ref.apply(this, arguments);
   };
 }();
 
 exports.createBrowserStorageLocalState = createBrowserStorageLocalState;
 
 var createBrowserStorageInstance = /*#__PURE__*/function () {
-  var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee11(_params) {
+  var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee11(_params) {
     var params, internals, instance;
     return _regenerator["default"].wrap(function _callee11$(_context11) {
       while (1) {
@@ -1011,7 +939,7 @@ var createBrowserStorageInstance = /*#__PURE__*/function () {
   }));
 
   return function createBrowserStorageInstance(_x11) {
-    return _ref3.apply(this, arguments);
+    return _ref2.apply(this, arguments);
   };
 }();
 

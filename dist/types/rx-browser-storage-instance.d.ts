@@ -1,7 +1,6 @@
-import { BlobBuffer, BulkWriteRow, ChangeStreamOnceOptions, EventBulk, MangoQuery, RxDocumentData, RxDocumentWriteData, RxJsonSchema, RxStorageBulkWriteResponse, RxStorageChangedDocumentMeta, RxStorageChangeEvent, RxStorageInstance, RxStorageInstanceCreationParams, RxStorageQueryResult } from "rxdb/dist/types/types";
+import { BlobBuffer, BulkWriteRow, ChangeStreamOnceOptions, EventBulk, MangoQuery, RxDocumentData, RxJsonSchema, RxStorageBulkWriteResponse, RxStorageChangedDocumentMeta, RxStorageChangeEvent, RxStorageInstance, RxStorageInstanceCreationParams, RxStorageQueryResult } from "rxdb/dist/types/types";
 import { Observable } from "rxjs";
 import { BrowserStorageInternals, BrowserStorageSettings } from "./types/browser-storage";
-import { DeterministicSortComparator, QueryMatcher } from "event-reduce-js/dist/lib/types";
 export declare class RxStorageBrowserInstance<RxDocType> implements RxStorageInstance<RxDocType, BrowserStorageInternals, BrowserStorageSettings> {
     readonly databaseName: string;
     readonly collectionName: string;
@@ -13,9 +12,6 @@ export declare class RxStorageBrowserInstance<RxDocType> implements RxStorageIns
     private closed;
     private lastChangefeedSequence;
     constructor(databaseName: string, collectionName: string, options: Readonly<BrowserStorageSettings>, schema: Readonly<RxJsonSchema<RxDocType>>, internals: BrowserStorageInternals);
-    prepareQuery(mutateableQuery: MangoQuery<RxDocType>): MangoQuery<RxDocType>;
-    getSortComparator(query: MangoQuery<RxDocType>): DeterministicSortComparator<RxDocType>;
-    getQueryMatcher(query: MangoQuery<RxDocType>): QueryMatcher<RxDocumentWriteData<RxDocType>>;
     query(preparedQuery: MangoQuery<RxDocType>): Promise<RxStorageQueryResult<RxDocType>>;
     bulkWrite(documentWrites: BulkWriteRow<RxDocType>[]): Promise<RxStorageBulkWriteResponse<RxDocType>>;
     bulkAddRevisions(documents: RxDocumentData<RxDocType>[]): Promise<void>;

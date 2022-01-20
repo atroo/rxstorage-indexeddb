@@ -4,12 +4,9 @@ import {
   ChangeStreamOnceOptions,
   EventBulk,
   MangoQuery,
-  MangoQuerySortDirection,
-  MangoQuerySortPart,
   RxAttachmentData,
   RxAttachmentWriteData,
   RxDocumentData,
-  RxDocumentWriteData,
   RxJsonSchema,
   RxStorageBulkWriteError,
   RxStorageBulkWriteResponse,
@@ -31,11 +28,7 @@ import {
   IDB_DATABASE_STATE_BY_NAME,
   newRxError,
 } from "./db-helpers";
-import {
-  ChangeEvent,
-  DeterministicSortComparator,
-  QueryMatcher,
-} from "event-reduce-js/dist/lib/types";
+import { ChangeEvent } from "event-reduce-js/dist/lib/types";
 import { find } from "./find";
 import {
   createRevision,
@@ -44,7 +37,6 @@ import {
   randomCouchString,
 } from "rxdb";
 import { getEventKey } from "./utils";
-const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 let instanceId = 1;
 
@@ -74,18 +66,6 @@ export class RxStorageBrowserInstance<RxDocType>
     public readonly internals: BrowserStorageInternals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
   ) {
     // this.primaryPath = getPrimaryFieldOfPrimaryKey(this.schema.primaryKey);
-  }
-
-  getQueryMatcher(query: MangoQuery<RxDocType>) {
-    const fun: QueryMatcher<RxDocumentWriteData<RxDocType>> = (
-      doc: RxDocumentWriteData<RxDocType>
-    ) => {
-      const { _attachments, _deleted, _rev, ...json } = doc;
-      const inMemoryFields = Object.keys(json);
-      return filterInMemoryFields([json], query, inMemoryFields).length > 0;
-    };
-
-    return fun;
   }
 
   async query(
