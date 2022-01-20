@@ -206,7 +206,8 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
   async close(): Promise<void> {
     this.closed = true;
 
-    if (!IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
+    const state = IDB_DATABASE_STATE_BY_NAME.get(this.databaseName);
+    if (!state) {
       // already closed.
       // different instance could already close db.
       return;
@@ -216,7 +217,8 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
     const localState = this.getLocalState();
     const db = await localState.getDb();
     db.close();
-    IDB_DATABASE_STATE_BY_NAME.delete(this.databaseName);
+    delete state.db;
+    IDB_DATABASE_STATE_BY_NAME.set(this.databaseName, state);
   }
   async remove(): Promise<void> {
     const localState = this.getLocalState();

@@ -323,33 +323,35 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
   _proto.close = /*#__PURE__*/function () {
     var _close = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3() {
-      var localState, db;
+      var state, localState, db;
       return _regenerator["default"].wrap(function _callee3$(_context3) {
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
               this.closed = true;
+              state = _dbHelpers.IDB_DATABASE_STATE_BY_NAME.get(this.databaseName);
 
-              if (_dbHelpers.IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
-                _context3.next = 3;
+              if (state) {
+                _context3.next = 4;
                 break;
               }
 
               return _context3.abrupt("return");
 
-            case 3:
+            case 4:
               this.changes$.complete();
               localState = this.getLocalState();
-              _context3.next = 7;
+              _context3.next = 8;
               return localState.getDb();
 
-            case 7:
+            case 8:
               db = _context3.sent;
               db.close();
+              delete state.db;
 
-              _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
+              _dbHelpers.IDB_DATABASE_STATE_BY_NAME.set(this.databaseName, state);
 
-            case 10:
+            case 12:
             case "end":
               return _context3.stop();
           }

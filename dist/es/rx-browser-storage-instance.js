@@ -713,33 +713,35 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
   _proto.close = /*#__PURE__*/function () {
     var _close = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee7() {
-      var localState, db;
+      var state, localState, db;
       return _regenerator["default"].wrap(function _callee7$(_context7) {
         while (1) {
           switch (_context7.prev = _context7.next) {
             case 0:
               this.closed = true;
+              state = _dbHelpers.IDB_DATABASE_STATE_BY_NAME.get(this.databaseName);
 
-              if (_dbHelpers.IDB_DATABASE_STATE_BY_NAME.get(this.databaseName)) {
-                _context7.next = 3;
+              if (state) {
+                _context7.next = 4;
                 break;
               }
 
               return _context7.abrupt("return");
 
-            case 3:
+            case 4:
               this.changes$.complete();
               localState = this.getLocalState();
-              _context7.next = 7;
+              _context7.next = 8;
               return localState.getDb();
 
-            case 7:
+            case 8:
               db = _context7.sent;
               db.close();
+              delete state.db;
 
-              _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"](this.databaseName);
+              _dbHelpers.IDB_DATABASE_STATE_BY_NAME.set(this.databaseName, state);
 
-            case 10:
+            case 12:
             case "end":
               return _context7.stop();
           }
