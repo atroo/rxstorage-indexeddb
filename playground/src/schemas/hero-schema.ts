@@ -1,6 +1,6 @@
 export const heroSchema = {
   title: "hero schema",
-  version: 2,
+  version: 3,
   description: "describes a simple hero",
   // primaryKey: {
   //   key: "id",

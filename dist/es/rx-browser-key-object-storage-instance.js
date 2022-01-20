@@ -408,12 +408,12 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
 exports.RxBrowserKeyObjectStorageInstance = RxBrowserKeyObjectStorageInstance;
 
-function createBrowserKeyValueStorageLocalState(_x3) {
+function createBrowserKeyValueStorageLocalState(_x3, _x4) {
   return _createBrowserKeyValueStorageLocalState.apply(this, arguments);
 }
 
 function _createBrowserKeyValueStorageLocalState() {
-  _createBrowserKeyValueStorageLocalState = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6(params) {
+  _createBrowserKeyValueStorageLocalState = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6(params, idbSettings) {
     var primaryPath, databaseState;
     return _regenerator["default"].wrap(function _callee6$(_context6) {
       while (1) {
@@ -421,9 +421,15 @@ function _createBrowserKeyValueStorageLocalState() {
           case 0:
             primaryPath = "_id";
             _context6.next = 3;
-            return (0, _dbHelpers.createIdbDatabase)(params.databaseName, params.collectionName, "_id", {
-              indexes: [],
-              version: 0
+            return (0, _dbHelpers.createIdbDatabase)({
+              databaseName: params.databaseName,
+              collectionName: params.collectionName,
+              primaryPath: "_id",
+              schema: {
+                indexes: [],
+                version: 0
+              },
+              idbSettings: idbSettings
             });
 
           case 3:
@@ -445,7 +451,7 @@ function _createBrowserKeyValueStorageLocalState() {
 }
 
 var createBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
-  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(_params) {
+  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(_params, idbSettings) {
     var params, internals, instance;
     return _regenerator["default"].wrap(function _callee5$(_context5) {
       while (1) {
@@ -455,7 +461,7 @@ var createBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
               databaseName: _params.databaseName + "-key-object"
             });
             _context5.next = 3;
-            return createBrowserKeyValueStorageLocalState(params);
+            return createBrowserKeyValueStorageLocalState(params, idbSettings);
 
           case 3:
             internals = _context5.sent;
@@ -474,7 +480,7 @@ var createBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
     }, _callee5);
   }));
 
-  return function createBrowserKeyObjectStorageInstance(_x4) {
+  return function createBrowserKeyObjectStorageInstance(_x5, _x6) {
     return _ref.apply(this, arguments);
   };
 }();

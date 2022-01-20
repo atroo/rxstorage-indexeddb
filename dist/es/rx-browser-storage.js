@@ -97,9 +97,10 @@ var RxBrowserStorageStatics = {
 };
 
 var RxBrowserStorage = /*#__PURE__*/function () {
-  function RxBrowserStorage() {
+  function RxBrowserStorage(databaseSettings) {
     this.name = "atroo-browser-storage";
     this.statics = RxBrowserStorageStatics;
+    this.databaseSettings = databaseSettings;
   }
 
   var _proto = RxBrowserStorage.prototype;
@@ -110,14 +111,14 @@ var RxBrowserStorage = /*#__PURE__*/function () {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              return _context.abrupt("return", (0, _rxBrowserStorageInstance.createBrowserStorageInstance)(params));
+              return _context.abrupt("return", (0, _rxBrowserStorageInstance.createBrowserStorageInstance)(params, this.databaseSettings));
 
             case 1:
             case "end":
               return _context.stop();
           }
         }
-      }, _callee);
+      }, _callee, this);
     }));
 
     function createStorageInstance(_x) {
@@ -134,14 +135,14 @@ var RxBrowserStorage = /*#__PURE__*/function () {
           switch (_context2.prev = _context2.next) {
             case 0:
               params.collectionName = params.collectionName + "-key-object";
-              return _context2.abrupt("return", (0, _rxBrowserKeyObjectStorageInstance.createBrowserKeyObjectStorageInstance)(params));
+              return _context2.abrupt("return", (0, _rxBrowserKeyObjectStorageInstance.createBrowserKeyObjectStorageInstance)(params, this.databaseSettings));
 
             case 2:
             case "end":
               return _context2.stop();
           }
         }
-      }, _callee2);
+      }, _callee2, this);
     }));
 
     function createKeyObjectStorageInstance(_x2) {
@@ -158,7 +159,7 @@ exports.RxBrowserStorage = RxBrowserStorage;
 
 function getRxSBrowserIdbStorage() {
   var databaseSettings = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-  var storage = new RxBrowserStorage();
+  var storage = new RxBrowserStorage(databaseSettings);
   return storage;
 }
 //# sourceMappingURL=rx-browser-storage.js.map

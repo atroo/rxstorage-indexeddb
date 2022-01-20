@@ -29,7 +29,11 @@ function App() {
       const database = await createRxDatabase({
         name: "mydatabase",
         // storage: getRxStorageLoki(),
-        storage: getRxSBrowserIdbStorage(),
+        storage: getRxSBrowserIdbStorage({
+          blocking: () => {
+            alert("Blocking");
+          },
+        }),
         // storage: getRxStoragePouch("indexeddb"),
       });
 
@@ -48,6 +52,9 @@ function App() {
             2: function (oldDoc) {
               console.log("oldDoc1", oldDoc);
               oldDoc.myVersion1 = 2;
+              return oldDoc;
+            },
+            3: function (oldDoc) {
               return oldDoc;
             },
           },

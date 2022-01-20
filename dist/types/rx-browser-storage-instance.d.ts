@@ -1,17 +1,17 @@
 import { BlobBuffer, BulkWriteRow, ChangeStreamOnceOptions, EventBulk, MangoQuery, RxDocumentData, RxJsonSchema, RxStorageBulkWriteResponse, RxStorageChangedDocumentMeta, RxStorageChangeEvent, RxStorageInstance, RxStorageInstanceCreationParams, RxStorageQueryResult } from "rxdb/dist/types/types";
 import { Observable } from "rxjs";
-import { BrowserStorageInternals, BrowserStorageSettings } from "./types/browser-storage";
-export declare class RxStorageBrowserInstance<RxDocType> implements RxStorageInstance<RxDocType, BrowserStorageInternals, BrowserStorageSettings> {
+import { BrowserStorageInternals, IdbSettings } from "./types/browser-storage";
+export declare class RxStorageBrowserInstance<RxDocType> implements RxStorageInstance<RxDocType, BrowserStorageInternals, IdbSettings> {
     readonly databaseName: string;
     readonly collectionName: string;
-    readonly options: Readonly<BrowserStorageSettings>;
+    readonly options: Readonly<IdbSettings>;
     readonly schema: Readonly<RxJsonSchema<RxDocType>>;
     readonly internals: BrowserStorageInternals;
     private changes$;
     readonly instanceId: number;
     private closed;
     private lastChangefeedSequence;
-    constructor(databaseName: string, collectionName: string, options: Readonly<BrowserStorageSettings>, schema: Readonly<RxJsonSchema<RxDocType>>, internals: BrowserStorageInternals);
+    constructor(databaseName: string, collectionName: string, options: Readonly<IdbSettings>, schema: Readonly<RxJsonSchema<RxDocType>>, internals: BrowserStorageInternals);
     query(preparedQuery: MangoQuery<RxDocType>): Promise<RxStorageQueryResult<RxDocType>>;
     bulkWrite(documentWrites: BulkWriteRow<RxDocType>[]): Promise<RxStorageBulkWriteResponse<RxDocType>>;
     bulkAddRevisions(documents: RxDocumentData<RxDocType>[]): Promise<void>;
@@ -35,5 +35,5 @@ export declare class RxStorageBrowserInstance<RxDocType> implements RxStorageIns
      */
     private addChangeDocumentMeta;
 }
-export declare const createBrowserStorageLocalState: <RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>) => Promise<BrowserStorageInternals>;
-export declare const createBrowserStorageInstance: <RxDocType>(_params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>) => Promise<RxStorageBrowserInstance<RxDocType>>;
+export declare const createBrowserStorageLocalState: <RxDocType>(params: RxStorageInstanceCreationParams<RxDocType, IdbSettings>, idbSettings: IdbSettings) => Promise<BrowserStorageInternals>;
+export declare const createBrowserStorageInstance: <RxDocType>(_params: RxStorageInstanceCreationParams<RxDocType, IdbSettings>, idbSettings: IdbSettings) => Promise<RxStorageBrowserInstance<RxDocType>>;

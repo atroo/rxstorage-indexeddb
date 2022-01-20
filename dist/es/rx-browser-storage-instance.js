@@ -869,7 +869,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 exports.RxStorageBrowserInstance = RxStorageBrowserInstance;
 
 var createBrowserStorageLocalState = /*#__PURE__*/function () {
-  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(params) {
+  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(params, idbSettings) {
     var primaryPath, databaseState;
     return _regenerator["default"].wrap(function _callee10$(_context10) {
       while (1) {
@@ -877,7 +877,13 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
           case 0:
             primaryPath = (0, _dbHelpers.getPrimaryFieldOfPrimaryKey)(params.schema.primaryKey);
             _context10.next = 3;
-            return (0, _dbHelpers.createIdbDatabase)(params.databaseName, params.collectionName, primaryPath, params.schema);
+            return (0, _dbHelpers.createIdbDatabase)({
+              databaseName: params.databaseName,
+              collectionName: params.collectionName,
+              primaryPath: primaryPath,
+              schema: params.schema,
+              idbSettings: idbSettings
+            });
 
           case 3:
             databaseState = _context10.sent;
@@ -895,7 +901,7 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
     }, _callee10);
   }));
 
-  return function createBrowserStorageLocalState(_x10) {
+  return function createBrowserStorageLocalState(_x10, _x11) {
     return _ref.apply(this, arguments);
   };
 }();
@@ -903,7 +909,7 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
 exports.createBrowserStorageLocalState = createBrowserStorageLocalState;
 
 var createBrowserStorageInstance = /*#__PURE__*/function () {
-  var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee11(_params) {
+  var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee11(_params, idbSettings) {
     var params, internals, instance;
     return _regenerator["default"].wrap(function _callee11$(_context11) {
       while (1) {
@@ -919,7 +925,7 @@ var createBrowserStorageInstance = /*#__PURE__*/function () {
               collectionName: _params.collectionName + "-" + _params.schema.version
             });
             _context11.next = 3;
-            return createBrowserStorageLocalState(params);
+            return createBrowserStorageLocalState(params, idbSettings);
 
           case 3:
             internals = _context11.sent;
@@ -938,7 +944,7 @@ var createBrowserStorageInstance = /*#__PURE__*/function () {
     }, _callee11);
   }));
 
-  return function createBrowserStorageInstance(_x11) {
+  return function createBrowserStorageInstance(_x12, _x13) {
     return _ref2.apply(this, arguments);
   };
 }();

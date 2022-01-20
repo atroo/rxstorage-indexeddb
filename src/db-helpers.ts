@@ -157,6 +157,7 @@ export const createIdbDatabase = async <RxDocType>(settings: {
             // change. We must close the database. This allows the other page to upgrade the database.
             // If you don't do this then the upgrade won't happen until the user closes the tab.
             //
+            settings.idbSettings.blocking?.();
             db.close();
           },
           terminated() {},

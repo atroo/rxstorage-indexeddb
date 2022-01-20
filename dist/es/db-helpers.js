@@ -70,7 +70,7 @@ var lock = new _asyncLock["default"]();
  */
 
 var createIdbDatabase = /*#__PURE__*/function () {
-  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(databaseName, collectionName, primaryPath, schema) {
+  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(settings) {
     var metaDB, metaData, dbState, reqMetaData, updateNeeded, foundCol, indexes, newCollections, changesCollectionName, newDbState;
     return _regenerator["default"].wrap(function _callee4$(_context5) {
       while (1) {
@@ -81,7 +81,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
           case 2:
             metaDB = _context5.sent;
-            dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
+            dbState = IDB_DATABASE_STATE_BY_NAME.get(settings.databaseName);
 
             if (!(dbState !== null && dbState !== void 0 && dbState.metaData)) {
               _context5.next = 8;
@@ -94,7 +94,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
           case 8:
             _context5.next = 10;
-            return metaDB.get("dbMetaData", databaseName);
+            return metaDB.get("dbMetaData", settings.databaseName);
 
           case 10:
             reqMetaData = _context5.sent;
@@ -105,14 +105,14 @@ var createIdbDatabase = /*#__PURE__*/function () {
               metaData = {
                 version: 0,
                 collections: [],
-                dbName: databaseName
+                dbName: settings.databaseName
               };
             }
 
           case 12:
             updateNeeded = true;
             foundCol = metaData.collections.find(function (col) {
-              return col.name === collectionName;
+              return col.name === settings.collectionName;
             });
 
             if (foundCol) {
@@ -121,8 +121,8 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
             indexes = [];
 
-            if (schema.indexes) {
-              schema.indexes.forEach(function (idx) {
+            if (settings.schema.indexes) {
+              settings.schema.indexes.forEach(function (idx) {
                 if (!(0, _utils.validateIndexValues)(idx)) {
                   return;
                 }
@@ -132,14 +132,14 @@ var createIdbDatabase = /*#__PURE__*/function () {
             }
 
             newCollections = [];
-            changesCollectionName = getChangesCollName(collectionName);
+            changesCollectionName = getChangesCollName(settings.collectionName);
 
             if (updateNeeded) {
               newCollections.push({
-                collectionName: collectionName,
-                primaryPath: primaryPath,
+                collectionName: settings.collectionName,
+                primaryPath: settings.primaryPath,
                 indexes: indexes,
-                version: schema.version
+                version: settings.schema.version
               });
               newCollections.push({
                 collectionName: changesCollectionName,
@@ -159,14 +159,14 @@ var createIdbDatabase = /*#__PURE__*/function () {
                       switch (_context3.prev = _context3.next) {
                         case 0:
                           deleteCollections = _args3.length > 0 && _args3[0] !== undefined ? _args3[0] : [];
-                          return _context3.abrupt("return", lock.acquire(databaseName, /*#__PURE__*/(0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee() {
+                          return _context3.abrupt("return", lock.acquire(settings.databaseName, /*#__PURE__*/(0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee() {
                             var dataBaseState, newCollections, updateNeeded, metaData, db, indexedColsStore, _loop2, _iterator3, _step3, metaDataCollections, _iterator4, _step4, colName, newDbState;
 
                             return _regenerator["default"].wrap(function _callee$(_context2) {
                               while (1) {
                                 switch (_context2.prev = _context2.next) {
                                   case 0:
-                                    dataBaseState = getDatabaseState(databaseName);
+                                    dataBaseState = getDatabaseState(settings.databaseName);
                                     newCollections = dataBaseState.newCollections;
                                     updateNeeded = newCollections.length > 0 || deleteCollections.length > 0;
 
@@ -185,7 +185,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                     }
 
                                     _context2.next = 9;
-                                    return (0, _idb.openDB)(databaseName, metaData.version, {
+                                    return (0, _idb.openDB)(settings.databaseName, metaData.version, {
                                       upgrade: function upgrade(db) {
                                         var _loop = function _loop() {
                                           var collectionData = _step.value;
@@ -207,10 +207,13 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                         }
                                       },
                                       blocking: function blocking() {
+                                        var _settings$idbSettings, _settings$idbSettings2;
+
                                         // Make sure to add a handler to be notified if another page requests a version
                                         // change. We must close the database. This allows the other page to upgrade the database.
                                         // If you don't do this then the upgrade won't happen until the user closes the tab.
                                         //
+                                        (_settings$idbSettings = (_settings$idbSettings2 = settings.idbSettings).blocking) === null || _settings$idbSettings === void 0 ? void 0 : _settings$idbSettings.call(_settings$idbSettings2);
                                         db.close();
                                       },
                                       terminated: function terminated() {}
@@ -233,12 +236,12 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                             case 0:
                                               collData = _step3.value;
                                               _context.next = 3;
-                                              return indexedColsStore.get([databaseName, collData.collectionName]);
+                                              return indexedColsStore.get([settings.databaseName, collData.collectionName]);
 
                                             case 3:
                                               reqIndexesMeta = _context.sent;
                                               indexesMeta = reqIndexesMeta ? reqIndexesMeta : {
-                                                dbName: databaseName,
+                                                dbName: settings.databaseName,
                                                 collection: collData.collectionName,
                                                 indexes: []
                                               };
@@ -310,7 +313,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
 
                                     colName = _step4.value;
                                     _context2.next = 26;
-                                    return metaDB["delete"]("indexedCols", [databaseName, colName]);
+                                    return metaDB["delete"]("indexedCols", [settings.databaseName, colName]);
 
                                   case 26:
                                     _context2.next = 22;
@@ -330,7 +333,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
                                     return metaDB.put("dbMetaData", newDbState.metaData);
 
                                   case 31:
-                                    IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
+                                    IDB_DATABASE_STATE_BY_NAME.set(settings.databaseName, newDbState);
                                     return _context2.abrupt("return", db);
 
                                   case 33:
@@ -362,8 +365,8 @@ var createIdbDatabase = /*#__PURE__*/function () {
                     while (1) {
                       switch (_context4.prev = _context4.next) {
                         case 0:
-                          dataBaseState = getDatabaseState(databaseName);
-                          return _context4.abrupt("return", dataBaseState.getDb([collectionName, getChangesCollName(collectionName)]));
+                          dataBaseState = getDatabaseState(settings.databaseName);
+                          return _context4.abrupt("return", dataBaseState.getDb([settings.collectionName, getChangesCollName(settings.collectionName)]));
 
                         case 2:
                         case "end":
@@ -382,7 +385,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
               metaData: metaData,
               newCollections: [].concat(dbState ? dbState.newCollections : [], newCollections)
             });
-            IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
+            IDB_DATABASE_STATE_BY_NAME.set(settings.databaseName, newDbState);
             return _context5.abrupt("return", newDbState);
 
           case 23:
@@ -393,7 +396,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
     }, _callee4);
   }));
 
-  return function createIdbDatabase(_x, _x2, _x3, _x4) {
+  return function createIdbDatabase(_x) {
     return _ref.apply(this, arguments);
   };
 }();
