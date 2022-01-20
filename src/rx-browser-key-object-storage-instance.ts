@@ -55,8 +55,8 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
     }
 
     const ret: RxLocalStorageBulkWriteResponse<RxDocType> = {
-      success: new Map(),
-      error: new Map(),
+      success: {},
+      error: {},
     };
 
     if (this.closed) {
@@ -92,7 +92,7 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
             documentId: id,
             writeRow: writeRow,
           };
-          ret.error.set(id, err);
+          ret.error[id] = err;
           continue;
         } else if (!writeRow.document._deleted) {
           const docCpy: any = Object.assign({}, writeDoc);
@@ -106,7 +106,7 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
         await store.add(Object.assign({}, writeDoc));
       }
 
-      ret.success.set(id, writeDoc);
+      ret.success[id] = writeDoc;
 
       const endTime = Date.now();
 
@@ -176,10 +176,8 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
     return ret;
   }
 
-  async findLocalDocumentsById<RxDocType = any>(
-    ids: string[]
-  ): Promise<Map<string, RxLocalDocumentData<RxDocType>>> {
-    const ret: Map<string, RxLocalDocumentData<RxDocType>> = new Map();
+  async findLocalDocumentsById<RxDocType = any>(ids: string[]) {
+    const ret: { [documentId: string]: RxLocalDocumentData<RxDocType> } = {};
 
     if (this.closed) {
       return ret;
@@ -192,7 +190,7 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
     for (const id of ids) {
       const documentInDb = await store.get(id);
       if (documentInDb && !documentInDb._deleted) {
-        ret.set(id, documentInDb);
+        ret[id] = documentInDb;
       }
     }
 
