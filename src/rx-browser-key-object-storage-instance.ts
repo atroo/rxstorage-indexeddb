@@ -260,7 +260,7 @@ export async function createBrowserKeyValueStorageLocalState(
 }
 
 export const createBrowserKeyObjectStorageInstance = async <RxDocType>(
-  _params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageInternals>
+  _params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>
 ) => {
   const params: typeof _params = {
     ..._params,

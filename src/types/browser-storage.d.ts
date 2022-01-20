@@ -6,4 +6,6 @@ export interface BrowserStorageInternals {
   changesCollectionName: string;
 }
 
-export interface BrowserStorageSettings {}
+export interface BrowserStorageSettings {
+  blocking?: () => void | Promise<void>;
+}

@@ -115,7 +115,7 @@ export class RxBrowserStorage
   }
 
   public async createKeyObjectStorageInstance(
-    params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageInternals>
+    params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>
   ) {
     params.collectionName = params.collectionName + "-key-object";
     return createBrowserKeyObjectStorageInstance(params);
