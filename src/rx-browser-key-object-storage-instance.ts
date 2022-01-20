@@ -2,6 +2,7 @@ import { ChangeEvent } from "event-reduce-js/dist/lib/types";
 import { createRevision, parseRevision } from "rxdb";
 import {
   BulkWriteLocalRow,
+  EventBulk,
   RxKeyObjectStorageInstanceCreationParams,
   RxLocalDocumentData,
   RxLocalStorageBulkWriteResponse,
@@ -29,7 +30,7 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
     RxStorageKeyObjectInstance<BrowserStorageInternals, BrowserStorageSettings>
 {
   private changes$: Subject<
-    RxStorageChangeEvent<RxLocalDocumentData<RxDocType>>
+    EventBulk<RxStorageChangeEvent<RxLocalDocumentData>>
   > = new Subject();
   public readonly instanceId = instanceId++;
   private closed = false;
@@ -197,7 +198,7 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
     return ret;
   }
   changeStream(): Observable<
-    RxStorageChangeEvent<RxLocalDocumentData<{ [key: string]: any }>>
+    EventBulk<RxStorageChangeEvent<RxLocalDocumentData<{ [key: string]: any }>>>
   > {
     return this.changes$.asObservable();
   }
