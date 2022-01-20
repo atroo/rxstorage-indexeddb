@@ -17,10 +17,7 @@ import {
   RxStorageQueryResult,
 } from "rxdb/dist/types/types";
 import { Observable, Subject } from "rxjs";
-import {
-  BrowserStorageInternals,
-  BrowserStorageSettings,
-} from "./types/browser-storage";
+import { BrowserStorageInternals, IdbSettings } from "./types/browser-storage";
 import {
   createIdbDatabase,
   getChangesCollName,
@@ -43,12 +40,7 @@ let instanceId = 1;
 // TODO: attachments: should we add "digest" and "length" to attachment ourself?
 
 export class RxStorageBrowserInstance<RxDocType>
-  implements
-    RxStorageInstance<
-      RxDocType,
-      BrowserStorageInternals,
-      BrowserStorageSettings
-    >
+  implements RxStorageInstance<RxDocType, BrowserStorageInternals, IdbSettings>
 {
   //   public readonly primaryPath: keyof RxDocType;
   private changes$: Subject<
@@ -61,7 +53,7 @@ export class RxStorageBrowserInstance<RxDocType>
   constructor(
     public readonly databaseName: string,
     public readonly collectionName: string,
-    public readonly options: Readonly<BrowserStorageSettings>,
+    public readonly options: Readonly<IdbSettings>,
     public readonly schema: Readonly<RxJsonSchema<RxDocType>>,
     public readonly internals: BrowserStorageInternals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
   ) {
@@ -528,15 +520,17 @@ export class RxStorageBrowserInstance<RxDocType>
 }
 
 export const createBrowserStorageLocalState = async <RxDocType>(
-  params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
+  params: RxStorageInstanceCreationParams<RxDocType, IdbSettings>,
+  idbSettings: IdbSettings
 ): Promise<BrowserStorageInternals> => {
   const primaryPath = getPrimaryFieldOfPrimaryKey(params.schema.primaryKey);
-  const databaseState = await createIdbDatabase(
-    params.databaseName,
-    params.collectionName,
-    primaryPath,
-    params.schema
-  );
+  const databaseState = await createIdbDatabase({
+    databaseName: params.databaseName,
+    collectionName: params.collectionName,
+    primaryPath: primaryPath,
+    schema: params.schema,
+    idbSettings,
+  });
 
   return {
     databaseState,
@@ -546,7 +540,8 @@ export const createBrowserStorageLocalState = async <RxDocType>(
 };
 
 export const createBrowserStorageInstance = async <RxDocType>(
-  _params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
+  _params: RxStorageInstanceCreationParams<RxDocType, IdbSettings>,
+  idbSettings: IdbSettings
 ) => {
   /**
    * every collection name must have suffix: ${collName}-${coll.version}.
@@ -560,7 +555,7 @@ export const createBrowserStorageInstance = async <RxDocType>(
   };
 
   const internals: BrowserStorageInternals =
-    await createBrowserStorageLocalState(params);
+    await createBrowserStorageLocalState(params, idbSettings);
 
   const instance = new RxStorageBrowserInstance(
     params.databaseName,

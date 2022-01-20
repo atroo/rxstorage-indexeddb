@@ -20,6 +20,7 @@ const { filterInMemoryFields } = require("pouchdb-selector-core");
 import {
   BrowserStorageInternals,
   BrowserStorageSettings,
+  IdbSettings,
 } from "./types/browser-storage";
 
 const RxBrowserStorageStatics: RxStorageStatics = {
@@ -103,15 +104,17 @@ const RxBrowserStorageStatics: RxStorageStatics = {
 };
 
 export class RxBrowserStorage
-  implements RxStorage<BrowserStorageInternals, BrowserStorageSettings>
+  implements RxStorage<BrowserStorageInternals, IdbSettings>
 {
   public name = "atroo-browser-storage";
   public statics = RxBrowserStorageStatics;
 
+  constructor(public databaseSettings: IdbSettings) {}
+
   async createStorageInstance<RxDocType>(
     params: RxStorageInstanceCreationParams<RxDocType, BrowserStorageSettings>
   ) {
-    return createBrowserStorageInstance(params);
+    return createBrowserStorageInstance(params, this.databaseSettings);
   }
 
   public async createKeyObjectStorageInstance(
@@ -122,9 +125,7 @@ export class RxBrowserStorage
   }
 }
 
-export function getRxSBrowserIdbStorage(
-  databaseSettings: BrowserStorageSettings = {}
-) {
-  const storage = new RxBrowserStorage();
+export function getRxSBrowserIdbStorage(databaseSettings: IdbSettings = {}) {
+  const storage = new RxBrowserStorage(databaseSettings);
   return storage;
 }

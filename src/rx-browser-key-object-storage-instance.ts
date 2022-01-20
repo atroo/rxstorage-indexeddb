@@ -17,17 +17,13 @@ import {
   IDB_DATABASE_STATE_BY_NAME,
   newRxError,
 } from "./db-helpers";
-import {
-  BrowserStorageInternals,
-  BrowserStorageSettings,
-} from "./types/browser-storage";
+import { BrowserStorageInternals, IdbSettings } from "./types/browser-storage";
 import { getEventKey } from "./utils";
 
 let instanceId = 1;
 
 export class RxBrowserKeyObjectStorageInstance<RxDocType>
-  implements
-    RxStorageKeyObjectInstance<BrowserStorageInternals, BrowserStorageSettings>
+  implements RxStorageKeyObjectInstance<BrowserStorageInternals, IdbSettings>
 {
   private changes$: Subject<
     EventBulk<RxStorageChangeEvent<RxLocalDocumentData>>
@@ -38,7 +34,7 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
   constructor(
     public readonly databaseName: string,
     public readonly collectionName: string,
-    public readonly options: Readonly<BrowserStorageSettings>,
+    public readonly options: Readonly<IdbSettings>,
     public readonly internals: BrowserStorageInternals // public readonly options: Readonly<BrowserStorageSettings> // public readonly databaseSettings: BrowserStorageSettings, // public readonly idleQueue: IdleQueue
   ) {
     // this.primaryPath = getPrimaryFieldOfPrimaryKey(this.schema.primaryKey);
@@ -241,16 +237,16 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
 }
 
 export async function createBrowserKeyValueStorageLocalState(
-  params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>
+  params: RxKeyObjectStorageInstanceCreationParams<IdbSettings>
 ): Promise<BrowserStorageInternals> {
   const primaryPath = "_id";
 
-  const databaseState = await createIdbDatabase(
-    params.databaseName,
-    params.collectionName,
-    "_id",
-    { indexes: [], version: 0 }
-  );
+  const databaseState = await createIdbDatabase({
+    databaseName: params.databaseName,
+    collectionName: params.collectionName,
+    primaryPath: "_id",
+    schema: { indexes: [], version: 0 },
+  });
 
   return {
     databaseState,
@@ -260,7 +256,7 @@ export async function createBrowserKeyValueStorageLocalState(
 }
 
 export const createBrowserKeyObjectStorageInstance = async <RxDocType>(
-  _params: RxKeyObjectStorageInstanceCreationParams<BrowserStorageSettings>
+  _params: RxKeyObjectStorageInstanceCreationParams<IdbSettings>
 ) => {
   const params: typeof _params = {
     ..._params,

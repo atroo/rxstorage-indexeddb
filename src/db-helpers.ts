@@ -15,6 +15,7 @@ import { RxError } from "./rx-error";
 import { getDbMeta } from "./db-meta-helpers";
 import { validateIndexValues } from "./utils";
 import AsyncLock from "async-lock";
+import { IdbSettings } from "./types";
 
 export const CHANGES_COLLECTION_SUFFIX = "-rxdb-changes";
 
@@ -46,42 +47,43 @@ const lock = new AsyncLock();
  * @returns
  */
 
-export const createIdbDatabase = async <RxDocType>(
-  databaseName: string,
-  collectionName: string,
-  primaryPath: string,
-  schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">
-) => {
+export const createIdbDatabase = async <RxDocType>(settings: {
+  databaseName: string;
+  collectionName: string;
+  primaryPath: string;
+  schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">;
+  idbSettings: IdbSettings;
+}) => {
   const metaDB = await getDbMeta();
   let metaData: BrowserStorageState["metaData"];
-  const dbState = IDB_DATABASE_STATE_BY_NAME.get(databaseName);
+  const dbState = IDB_DATABASE_STATE_BY_NAME.get(settings.databaseName);
   if (dbState?.metaData) {
     metaData = dbState.metaData;
   } else {
     // Store "version" data in seperate db to properly handle indexeddb version update.
-    const reqMetaData = await metaDB.get("dbMetaData", databaseName);
+    const reqMetaData = await metaDB.get("dbMetaData", settings.databaseName);
     if (reqMetaData) {
       metaData = reqMetaData;
     } else {
       metaData = {
         version: 0,
         collections: [],
-        dbName: databaseName,
+        dbName: settings.databaseName,
       };
     }
   }
 
   let updateNeeded = true;
   const foundCol = metaData.collections.find(
-    (col) => col.name === collectionName
+    (col) => col.name === settings.collectionName
   );
   if (foundCol) {
     updateNeeded = false;
   }
 
   const indexes: Array<string | string[]> = [];
-  if (schema.indexes) {
-    schema.indexes.forEach((idx) => {
+  if (settings.schema.indexes) {
+    settings.schema.indexes.forEach((idx) => {
       if (!validateIndexValues(idx)) {
         return;
       }
@@ -91,14 +93,14 @@ export const createIdbDatabase = async <RxDocType>(
   }
 
   const newCollections: BrowserStorageState["newCollections"] = [];
-  const changesCollectionName = getChangesCollName(collectionName);
+  const changesCollectionName = getChangesCollName(settings.collectionName);
 
   if (updateNeeded) {
     newCollections.push({
-      collectionName,
-      primaryPath,
+      collectionName: settings.collectionName,
+      primaryPath: settings.primaryPath,
       indexes,
-      version: schema.version,
+      version: settings.schema.version,
     });
 
     newCollections.push({
@@ -115,8 +117,8 @@ export const createIdbDatabase = async <RxDocType>(
       // lock db request.
       // without lock somebody else can request database while idb update is still running.
       // this will lead to unexpected results
-      return lock.acquire(databaseName, async () => {
-        const dataBaseState = getDatabaseState(databaseName);
+      return lock.acquire(settings.databaseName, async () => {
+        const dataBaseState = getDatabaseState(settings.databaseName);
 
         const newCollections = dataBaseState.newCollections;
         const updateNeeded =
@@ -131,7 +133,7 @@ export const createIdbDatabase = async <RxDocType>(
           metaData.version += 1;
         }
 
-        const db = await openDB(databaseName, metaData.version, {
+        const db = await openDB(settings.databaseName, metaData.version, {
           upgrade(db) {
             for (const collectionData of newCollections) {
               const store = db.createObjectStore(
@@ -173,13 +175,13 @@ export const createIdbDatabase = async <RxDocType>(
 
           for (const collData of newCollections) {
             const reqIndexesMeta = await indexedColsStore.get([
-              databaseName,
+              settings.databaseName,
               collData.collectionName,
             ]);
             const indexesMeta: IMetaDB["indexedCols"]["value"] = reqIndexesMeta
               ? reqIndexesMeta
               : {
-                  dbName: databaseName,
+                  dbName: settings.databaseName,
                   collection: collData.collectionName,
                   indexes: [],
                 };
@@ -223,7 +225,10 @@ export const createIdbDatabase = async <RxDocType>(
              * DO NOT do this via "upgrade" callback as upgrade transaction can be finish while
              * indexes meta being removed
              */
-            await metaDB.delete("indexedCols", [databaseName, colName]);
+            await metaDB.delete("indexedCols", [
+              settings.databaseName,
+              colName,
+            ]);
           }
         }
 
@@ -240,16 +245,16 @@ export const createIdbDatabase = async <RxDocType>(
         };
 
         await metaDB.put("dbMetaData", newDbState.metaData);
-        IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
+        IDB_DATABASE_STATE_BY_NAME.set(settings.databaseName, newDbState);
 
         return db;
       });
     },
     removeCollection: async () => {
-      const dataBaseState = getDatabaseState(databaseName);
+      const dataBaseState = getDatabaseState(settings.databaseName);
       return dataBaseState.getDb([
-        collectionName,
-        getChangesCollName(collectionName),
+        settings.collectionName,
+        getChangesCollName(settings.collectionName),
       ]);
     },
     metaData,
@@ -259,7 +264,7 @@ export const createIdbDatabase = async <RxDocType>(
     ],
   };
 
-  IDB_DATABASE_STATE_BY_NAME.set(databaseName, newDbState);
+  IDB_DATABASE_STATE_BY_NAME.set(settings.databaseName, newDbState);
 
   return newDbState;
 };
