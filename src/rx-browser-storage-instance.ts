@@ -338,6 +338,13 @@ export class RxStorageBrowserInstance<RxDocType>
       return;
     }
 
+    const eventBulk: EventBulk<
+      RxStorageChangeEvent<RxDocumentData<RxDocType>>
+    > = {
+      id: randomCouchString(10),
+      events: [],
+    };
+
     const localState = this.getLocalState();
     const db = await localState.getDb();
     const txn = db.transaction(this.collectionName, "readwrite");
@@ -351,7 +358,7 @@ export class RxStorageBrowserInstance<RxDocType>
         // document not here, so we can directly insert
         await store.add(Object.assign({}, docData));
 
-        this.changes$.next({
+        eventBulk.events.push({
           documentId: id,
           eventId: getEventKey(false, id, docData._rev),
           change: {
@@ -407,7 +414,7 @@ export class RxStorageBrowserInstance<RxDocType>
             change = null;
           }
           if (change) {
-            this.changes$.next({
+            eventBulk.events.push({
               documentId: id,
               eventId: getEventKey(false, id, docData._rev),
               change,
@@ -421,6 +428,7 @@ export class RxStorageBrowserInstance<RxDocType>
     }
 
     txn.commit();
+    this.changes$.next(eventBulk);
   }
 
   async findDocumentsById(
