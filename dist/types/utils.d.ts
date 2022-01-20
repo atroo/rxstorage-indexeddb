@@ -10,4 +10,4 @@ export declare const isIndexValid: (index: string) => boolean;
  * @param {string | string[]} index
  * @returns {boolean}
  */
-export declare const validateIndexValues: (index: string | string[]) => boolean;
+export declare const validateIndexValues: (index: string | readonly string[] | string[]) => boolean;

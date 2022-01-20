@@ -17,7 +17,7 @@
   "author": "",
   "license": "ISC",
   "peerDependencies": {
-    "rxdb": "~10.5.3",
+    "rxdb": "~11.3.0",
     "rxjs": "^7.4.0"
   },
   "dependencies": {
@@ -54,7 +54,7 @@
     "jest": "^27.4.3",
     "pouchdb-selector-core": "^7.2.2",
     "rimraf": "3.0.2",
-    "rxdb": "^10.5.3",
+    "rxdb": "^11.3.0",
     "rxjs": "^7.4.0",
     "terser": "5.9.0",
     "ts-node": "^10.4.0",

@@ -22,7 +22,9 @@ export const isIndexValid = (index: string) => {
  * @param {string | string[]} index
  * @returns {boolean}
  */
-export const validateIndexValues = (index: string | string[]) => {
+export const validateIndexValues = (
+  index: string | readonly string[] | string[]
+) => {
   if (typeof index === "string") {
     return isIndexValid(index);
   }

@@ -86,7 +86,7 @@ export const createIdbDatabase = async <RxDocType>(
         return;
       }
 
-      indexes.push(idx);
+      indexes.push(idx as string | string[]);
     });
   }
 
