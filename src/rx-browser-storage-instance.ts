@@ -553,7 +553,6 @@ export const createBrowserStorageInstance = async <RxDocType>(
   const internals: BrowserStorageInternals =
     await createBrowserStorageLocalState(params, idbSettings);
 
-  console.log("instance per call");
   const instance = new RxStorageBrowserInstance(
     params.databaseName,
     params.collectionName,

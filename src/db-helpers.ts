@@ -1,4 +1,4 @@
-import { deleteDB, IDBPDatabase, openDB } from "idb";
+import { deleteDB, openDB } from "idb";
 import { overwritable, RxJsonSchema } from "rxdb";
 import {
   CompositePrimaryKey,
@@ -6,15 +6,10 @@ import {
   RxErrorKey,
   RxErrorParameters,
 } from "rxdb/dist/types/types";
-import {
-  BrowserStorageState,
-  IMetaDB,
-  Index,
-} from "./types/browser-storeage-state";
+import { BrowserStorageState, IMetaDB } from "./types/browser-storeage-state";
 import { RxError } from "./rx-error";
 import { getDbMeta } from "./db-meta-helpers";
 import { validateIndexValues } from "./utils";
-import AsyncLock from "async-lock";
 import { IdbSettings } from "./types";
 
 export const CHANGES_COLLECTION_NAME = "rxdb-changes";
@@ -37,19 +32,6 @@ export const genIndexName = (index: string | string[]) => {
 export const getDbName = (dbName: string, collectionName: string) => {
   return `${dbName}-${collectionName}`;
 };
-
-const lock = new AsyncLock();
-
-/**
- * Can be called several times for the same db
- * Save all new collections data in map and run migration once db requessted (getDb)
- *
- * @param databaseName
- * @param collectionName
- * @param primaryPath
- * @param schema
- * @returns
- */
 
 export const createIdbDatabase = async <RxDocType>(settings: {
   databaseName: string;
@@ -120,21 +102,22 @@ export const createIdbDatabase = async <RxDocType>(settings: {
       settings.databaseName,
       collData.collectionName,
     ]);
-    const indexesMeta: IMetaDB["indexedCols"]["value"] = reqIndexesMeta
-      ? reqIndexesMeta
-      : {
-          dbName: settings.databaseName,
-          collection: collData.collectionName,
-          indexes: [],
-        };
 
-    const indexes = collData.indexes;
-    indexes.forEach((index) => {
-      indexesMeta.indexes.push({
-        name: genIndexName(index),
-        value: index,
-      });
-    });
+    if (reqIndexesMeta) {
+      continue;
+    }
+
+    const indexesMeta: IMetaDB["indexedCols"]["value"] = {
+      dbName: settings.databaseName,
+      collection: collData.collectionName,
+      indexes: collData.indexes.map((index) => {
+        return {
+          name: genIndexName(index),
+          value: index,
+        };
+      }),
+    };
+
     // primary also can be counted as indexedData, but it should be handled differently.
     // use "primary to dect that it is actually "primary" field.
     indexesMeta.indexes.push({

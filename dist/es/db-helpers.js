@@ -23,8 +23,6 @@ var _dbMetaHelpers = require("./db-meta-helpers");
 
 var _utils = require("./utils");
 
-var _asyncLock = _interopRequireDefault(require("async-lock"));
-
 function _createForOfIteratorHelperLoose(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (it) return (it = it.call(o)).next.bind(it); if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; return function () { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
@@ -57,25 +55,14 @@ var getDbName = function getDbName(dbName, collectionName) {
 };
 
 exports.getDbName = getDbName;
-var lock = new _asyncLock["default"]();
-/**
- * Can be called several times for the same db
- * Save all new collections data in map and run migration once db requessted (getDb)
- *
- * @param databaseName
- * @param collectionName
- * @param primaryPath
- * @param schema
- * @returns
- */
 
 var createIdbDatabase = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(settings) {
-    var indexes, newCollections, dbName, db, metaDB, indexedColsStore, _loop2, _i, _newCollections, state;
+    var indexes, newCollections, dbName, db, metaDB, indexedColsStore, _i, _newCollections, collData, reqIndexesMeta, indexesMeta, state;
 
-    return _regenerator["default"].wrap(function _callee$(_context2) {
+    return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
-        switch (_context2.prev = _context2.next) {
+        switch (_context.prev = _context.next) {
           case 0:
             indexes = [];
 
@@ -99,7 +86,7 @@ var createIdbDatabase = /*#__PURE__*/function () {
               indexes: ["sequence"]
             }];
             dbName = getDbName(settings.databaseName, settings.collectionName);
-            _context2.next = 6;
+            _context.next = 6;
             return (0, _idb.openDB)(dbName, 1, {
               upgrade: function upgrade(db) {
                 var _loop = function _loop() {
@@ -130,69 +117,61 @@ var createIdbDatabase = /*#__PURE__*/function () {
             });
 
           case 6:
-            db = _context2.sent;
-            _context2.next = 9;
+            db = _context.sent;
+            _context.next = 9;
             return (0, _dbMetaHelpers.getDbMeta)();
 
           case 9:
-            metaDB = _context2.sent;
+            metaDB = _context.sent;
             indexedColsStore = metaDB.transaction("indexedCols", "readwrite").store;
-            _loop2 = /*#__PURE__*/_regenerator["default"].mark(function _loop2() {
-              var collData, reqIndexesMeta, indexesMeta, indexes;
-              return _regenerator["default"].wrap(function _loop2$(_context) {
-                while (1) {
-                  switch (_context.prev = _context.next) {
-                    case 0:
-                      collData = _newCollections[_i];
-                      _context.next = 3;
-                      return indexedColsStore.get([settings.databaseName, collData.collectionName]);
-
-                    case 3:
-                      reqIndexesMeta = _context.sent;
-                      indexesMeta = reqIndexesMeta ? reqIndexesMeta : {
-                        dbName: settings.databaseName,
-                        collection: collData.collectionName,
-                        indexes: []
-                      };
-                      indexes = collData.indexes;
-                      indexes.forEach(function (index) {
-                        indexesMeta.indexes.push({
-                          name: genIndexName(index),
-                          value: index
-                        });
-                      }); // primary also can be counted as indexedData, but it should be handled differently.
-                      // use "primary to dect that it is actually "primary" field.
-
-                      indexesMeta.indexes.push({
-                        name: collData.primaryPath,
-                        value: collData.primaryPath,
-                        primary: true
-                      });
-                      indexedColsStore.put(indexesMeta);
-
-                    case 9:
-                    case "end":
-                      return _context.stop();
-                  }
-                }
-              }, _loop2);
-            });
             _i = 0, _newCollections = newCollections;
 
-          case 13:
+          case 12:
             if (!(_i < _newCollections.length)) {
-              _context2.next = 18;
+              _context.next = 25;
               break;
             }
 
-            return _context2.delegateYield(_loop2(), "t0", 15);
+            collData = _newCollections[_i];
+            _context.next = 16;
+            return indexedColsStore.get([settings.databaseName, collData.collectionName]);
 
-          case 15:
+          case 16:
+            reqIndexesMeta = _context.sent;
+
+            if (!reqIndexesMeta) {
+              _context.next = 19;
+              break;
+            }
+
+            return _context.abrupt("continue", 22);
+
+          case 19:
+            indexesMeta = {
+              dbName: settings.databaseName,
+              collection: collData.collectionName,
+              indexes: collData.indexes.map(function (index) {
+                return {
+                  name: genIndexName(index),
+                  value: index
+                };
+              })
+            }; // primary also can be counted as indexedData, but it should be handled differently.
+            // use "primary to dect that it is actually "primary" field.
+
+            indexesMeta.indexes.push({
+              name: collData.primaryPath,
+              value: collData.primaryPath,
+              primary: true
+            });
+            indexedColsStore.put(indexesMeta);
+
+          case 22:
             _i++;
-            _context2.next = 13;
+            _context.next = 12;
             break;
 
-          case 18:
+          case 25:
             state = {
               _db: db,
               getDb: function getDb() {
@@ -203,11 +182,11 @@ var createIdbDatabase = /*#__PURE__*/function () {
               }
             };
             IDB_DATABASE_STATE_BY_NAME.set(dbName, state);
-            return _context2.abrupt("return", state);
+            return _context.abrupt("return", state);
 
-          case 21:
+          case 28:
           case "end":
-            return _context2.stop();
+            return _context.stop();
         }
       }
     }, _callee);

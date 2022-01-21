@@ -33,10 +33,6 @@ var getDbMeta = /*#__PURE__*/function () {
             _context.next = 4;
             return (0, _idb.openDB)("rx-browser-storage-meta", 1, {
               upgrade: function upgrade(db) {
-                // store version, collections
-                db.createObjectStore("dbMetaData", {
-                  keyPath: "dbName"
-                });
                 db.createObjectStore("indexedCols", {
                   keyPath: ["dbName", "collection"]
                 });

@@ -13,14 +13,6 @@ export interface BrowserStorageState {
 }
 
 export interface IMetaDB extends DBSchema {
-  dbMetaData: {
-    key: string;
-    value: {
-      version: number;
-      collections: Array<{ name: string; version: number }>;
-      dbName: string;
-    };
-  };
   indexedCols: {
     key: string[];
     value: {
