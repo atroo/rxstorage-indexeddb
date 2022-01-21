@@ -96,15 +96,11 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
           };
           ret.error[id] = err;
           continue;
-        } else if (!writeRow.document._deleted) {
+        } else {
           const docCpy: any = Object.assign({}, writeDoc);
           await documentInDbCursor.update(docCpy);
-        } else {
-          // TODO: purge
-          await documentInDbCursor.delete();
         }
-      } else if (!writeRow.document._deleted) {
-        // TODO: purge
+      } else {
         await store.add(Object.assign({}, writeDoc));
       }
 
