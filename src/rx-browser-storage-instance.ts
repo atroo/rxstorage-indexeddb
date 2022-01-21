@@ -74,7 +74,8 @@ export class RxStorageBrowserInstance<RxDocType>
   }
 
   async bulkWrite(
-    documentWrites: BulkWriteRow<RxDocType>[]
+    documentWrites: BulkWriteRow<RxDocType>[],
+    hardDeleteMode = false
   ): Promise<RxStorageBulkWriteResponse<RxDocType>> {
     if (documentWrites.length === 0) {
       throw newRxError("P2", {
@@ -118,6 +119,9 @@ export class RxStorageBrowserInstance<RxDocType>
          * this can happen on replication.
          */
         const insertedIsDeleted = writeRow.document._deleted ? true : false;
+        if (hardDeleteMode && insertedIsDeleted) {
+          continue;
+        }
 
         const writeDoc = Object.assign({}, writeRow.document, {
           _rev: newRevision,
@@ -173,7 +177,13 @@ export class RxStorageBrowserInstance<RxDocType>
             _rev: newRevision,
             _deleted: isDeleted,
           });
-          await documentInDbCursor.update(writeDoc);
+
+          if (hardDeleteMode && isDeleted) {
+            await documentInDbCursor.delete();
+          } else {
+            await documentInDbCursor.update(writeDoc);
+          }
+
           this.addChangeDocumentMeta(id);
 
           let change: ChangeEvent<RxDocumentData<RxDocType>> | null = null;
