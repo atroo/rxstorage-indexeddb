@@ -101,7 +101,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
   _proto.bulkWrite = /*#__PURE__*/function () {
     var _bulkWrite = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(documentWrites) {
-      var ret, eventBulk, db, txn, store, _iterator, _step, writeRow, startTime, id, documentInDbCursor, documentInDb, insertedIsDeleted, newRevision, writeDoc, revInDb, err, newRevHeight, _newRevision, previous, _change, _writeDoc, change;
+      var ret, eventBulk, db, txn, store, _iterator, _step, writeRow, startTime, id, documentInDbCursor, documentInDb, newRevision, insertedIsDeleted, writeDoc, revInDb, err, newRevHeight, _newRevision, isDeleted, _writeDoc, change, previous;
 
       return _regenerator["default"].wrap(function _callee2$(_context2) {
         while (1) {
@@ -147,7 +147,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 12:
               if ((_step = _iterator()).done) {
-                _context2.next = 64;
+                _context2.next = 53;
                 break;
               }
 
@@ -162,35 +162,27 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               documentInDb = documentInDbCursor === null || documentInDbCursor === void 0 ? void 0 : documentInDbCursor.value;
 
               if (documentInDb) {
-                _context2.next = 33;
+                _context2.next = 31;
                 break;
               }
 
+              // insert new document
+              newRevision = "1-" + (0, _rxdb.createRevision)(writeRow.document);
               /**
                * It is possible to insert already deleted documents,
                * this can happen on replication.
                */
+
               insertedIsDeleted = writeRow.document._deleted ? true : false;
-
-              if (!insertedIsDeleted) {
-                _context2.next = 24;
-                break;
-              }
-
-              return _context2.abrupt("continue", 62);
-
-            case 24:
-              // insert new document
-              newRevision = "1-" + (0, _rxdb.createRevision)(writeRow.document);
               writeDoc = Object.assign({}, writeRow.document, {
                 _rev: newRevision,
                 _deleted: insertedIsDeleted,
                 _attachments: writeRow.document._attachments
               });
-              _context2.next = 28;
+              _context2.next = 26;
               return store.add(writeDoc);
 
-            case 28:
+            case 26:
               this.addChangeDocumentMeta(id);
               eventBulk.events.push({
                 eventId: (0, _utils.getEventKey)(false, id, newRevision),
@@ -205,15 +197,20 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 endTime: Date.now()
               });
               ret.success[id] = writeDoc;
-              _context2.next = 62;
+              _context2.next = 51;
               break;
 
-            case 33:
+            case 31:
               // update existing document
-              revInDb = documentInDb._rev;
+              revInDb = documentInDb._rev; // inserting a deleted document is possible
+              // without sending the previous data.
+
+              if (!writeRow.previous && documentInDb._deleted) {
+                writeRow.previous = documentInDb;
+              }
 
               if (!(!writeRow.previous && !documentInDb._deleted || !!writeRow.previous && revInDb !== writeRow.previous._rev)) {
-                _context2.next = 39;
+                _context2.next = 38;
                 break;
               }
 
@@ -225,62 +222,21 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 writeRow: writeRow
               };
               ret.error[id] = err;
-              _context2.next = 62;
+              _context2.next = 51;
               break;
 
-            case 39:
+            case 38:
               newRevHeight = (0, _rxdb.getHeightOfRevision)(revInDb) + 1;
               _newRevision = newRevHeight + "-" + (0, _rxdb.createRevision)(writeRow.document);
-
-              if (!(writeRow.previous && !writeRow.previous._deleted && writeRow.document._deleted)) {
-                _context2.next = 50;
-                break;
-              }
-
-              _context2.next = 44;
-              return documentInDbCursor["delete"]();
-
-            case 44:
-              this.addChangeDocumentMeta(id); // TODO: do I need this here.
-
-              previous = Object.assign({}, writeRow.previous);
-              previous._rev = _newRevision;
-              _change = {
-                id: id,
-                operation: "DELETE",
-                previous: previous,
-                doc: null
-              };
-              eventBulk.events.push({
-                eventId: (0, _utils.getEventKey)(false, id, _newRevision),
-                documentId: id,
-                change: _change,
-                startTime: startTime,
-                endTime: Date.now()
-              });
-              return _context2.abrupt("continue", 62);
-
-            case 50:
-              if (!writeRow.document._deleted) {
-                _context2.next = 52;
-                break;
-              }
-
-              throw (0, _dbHelpers.newRxError)("SNH", {
-                args: {
-                  writeRow: writeRow
-                }
-              });
-
-            case 52:
+              isDeleted = !!writeRow.document._deleted;
               _writeDoc = Object.assign({}, writeRow.document, {
                 _rev: _newRevision,
-                _deleted: false
+                _deleted: isDeleted
               });
-              _context2.next = 55;
+              _context2.next = 44;
               return documentInDbCursor.update(_writeDoc);
 
-            case 55:
+            case 44:
               this.addChangeDocumentMeta(id);
               change = null;
 
@@ -298,10 +254,23 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                   previous: writeRow.previous,
                   doc: _writeDoc
                 };
+              } else if (writeRow.previous && !writeRow.previous._deleted && _writeDoc._deleted) {
+                /**
+                 * On delete, we send the 'new' rev in the previous property,
+                 * to have the equal behavior as pouchdb.
+                 */
+                previous = Object.assign({}, writeRow.previous);
+                previous._rev = _newRevision;
+                change = {
+                  id: id,
+                  operation: "DELETE",
+                  previous: previous,
+                  doc: null
+                };
               }
 
               if (change) {
-                _context2.next = 60;
+                _context2.next = 49;
                 break;
               }
 
@@ -311,7 +280,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 }
               });
 
-            case 60:
+            case 49:
               eventBulk.events.push({
                 eventId: (0, _utils.getEventKey)(false, id, _newRevision),
                 documentId: id,
@@ -321,16 +290,16 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               });
               ret.success[id] = _writeDoc;
 
-            case 62:
+            case 51:
               _context2.next = 12;
               break;
 
-            case 64:
+            case 53:
               txn.commit();
               this.changes$.next(eventBulk);
               return _context2.abrupt("return", ret);
 
-            case 67:
+            case 56:
             case "end":
               return _context2.stop();
           }

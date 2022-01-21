@@ -99,7 +99,7 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
             case 14:
               if ((_step = _iterator()).done) {
-                _context.next = 54;
+                _context.next = 48;
                 break;
               }
 
@@ -119,7 +119,7 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
               writeDoc._rev = newRevision;
 
               if (!docInDb) {
-                _context.next = 44;
+                _context.next = 39;
                 break;
               }
 
@@ -136,40 +136,22 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
                 writeRow: writeRow
               };
               ret.error[id] = err;
-              return _context.abrupt("continue", 52);
+              return _context.abrupt("continue", 46);
 
             case 34:
-              if (writeRow.document._deleted) {
-                _context.next = 40;
-                break;
-              }
-
               docCpy = Object.assign({}, writeDoc);
-              _context.next = 38;
+              _context.next = 37;
               return documentInDbCursor.update(docCpy);
 
-            case 38:
-              _context.next = 42;
+            case 37:
+              _context.next = 41;
               break;
 
-            case 40:
-              _context.next = 42;
-              return documentInDbCursor["delete"]();
-
-            case 42:
-              _context.next = 47;
-              break;
-
-            case 44:
-              if (writeRow.document._deleted) {
-                _context.next = 47;
-                break;
-              }
-
-              _context.next = 47;
+            case 39:
+              _context.next = 41;
               return store.add(Object.assign({}, writeDoc));
 
-            case 47:
+            case 41:
               ret.success[id] = writeDoc;
               endTime = Date.now();
               event = void 0;
@@ -223,16 +205,16 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
                 eventBulk.events.push(storageChangeEvent);
               }
 
-            case 52:
+            case 46:
               _context.next = 14;
               break;
 
-            case 54:
+            case 48:
               txn.commit();
               this.changes$.next(eventBulk);
               return _context.abrupt("return", ret);
 
-            case 57:
+            case 51:
             case "end":
               return _context.stop();
           }
