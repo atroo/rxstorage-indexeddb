@@ -17,13 +17,13 @@ import { validateIndexValues } from "./utils";
 import AsyncLock from "async-lock";
 import { IdbSettings } from "./types";
 
-export const CHANGES_COLLECTION_SUFFIX = "-rxdb-changes";
+export const CHANGES_COLLECTION_NAME = "rxdb-changes";
 
 export const IDB_DATABASE_STATE_BY_NAME: Map<string, BrowserStorageState> =
   new Map();
 
-export const getChangesCollName = (collName: string) => {
-  return collName + CHANGES_COLLECTION_SUFFIX;
+export const getChangesCollName = () => {
+  return CHANGES_COLLECTION_NAME;
 };
 
 export const genIndexName = (index: string | string[]) => {
@@ -32,6 +32,10 @@ export const genIndexName = (index: string | string[]) => {
   }
 
   return index;
+};
+
+export const getDbName = (dbName: string, collectionName: string) => {
+  return `${dbName}-${collectionName}`;
 };
 
 const lock = new AsyncLock();
@@ -46,6 +50,106 @@ const lock = new AsyncLock();
  * @param schema
  * @returns
  */
+
+export const createIdbDatabase1 = async <RxDocType>(settings: {
+  databaseName: string;
+  collectionName: string;
+  primaryPath: string;
+  schema: Pick<RxJsonSchema<RxDocType>, "indexes" | "version">;
+  idbSettings: IdbSettings;
+}) => {
+  const indexes: Array<string | string[]> = [];
+  if (settings.schema.indexes) {
+    settings.schema.indexes.forEach((idx) => {
+      if (!validateIndexValues(idx)) {
+        return;
+      }
+
+      indexes.push(idx as string | string[]);
+    });
+  }
+
+  const newCollections = [
+    {
+      collectionName: settings.collectionName,
+      primaryPath: settings.primaryPath,
+      indexes,
+    },
+    {
+      collectionName: CHANGES_COLLECTION_NAME,
+      primaryPath: "eventId",
+      indexes: ["sequence"],
+    },
+  ];
+
+  const db = await openDB(
+    getDbName(settings.databaseName, settings.collectionName),
+    0,
+    {
+      upgrade(db) {
+        for (const collectionData of newCollections) {
+          const store = db.createObjectStore(collectionData.collectionName, {
+            keyPath: collectionData.primaryPath,
+          });
+
+          collectionData.indexes.forEach((index) => {
+            store.createIndex(genIndexName(index), index);
+          });
+        }
+      },
+      blocking() {
+        // Make sure to add a handler to be notified if another page requests a version
+        // change. We must close the database. This allows the other page to upgrade the database.
+        // If you don't do this then the upgrade won't happen until the user closes the tab.
+        //
+        settings.idbSettings.blocking?.();
+        db.close();
+      },
+      terminated() {},
+    }
+  );
+
+  /**
+   * Store meta data about indexes
+   * Use it later to understand what index to use to query data
+   *
+   */
+  const metaDB = await getDbMeta();
+  const indexedColsStore = metaDB.transaction("indexedCols", "readwrite").store;
+
+  for (const collData of newCollections) {
+    const reqIndexesMeta = await indexedColsStore.get([
+      settings.databaseName,
+      collData.collectionName,
+    ]);
+    const indexesMeta: IMetaDB["indexedCols"]["value"] = reqIndexesMeta
+      ? reqIndexesMeta
+      : {
+          dbName: settings.databaseName,
+          collection: collData.collectionName,
+          indexes: [],
+        };
+
+    const indexes = collData.indexes;
+    indexes.forEach((index) => {
+      indexesMeta.indexes.push({
+        name: genIndexName(index),
+        value: index,
+      });
+    });
+    // primary also can be counted as indexedData, but it should be handled differently.
+    // use "primary to dect that it is actually "primary" field.
+    indexesMeta.indexes.push({
+      name: collData.primaryPath,
+      value: collData.primaryPath,
+      primary: true,
+    });
+
+    indexedColsStore.put(indexesMeta);
+  }
+
+  // IDB_DATABASE_STATE_BY_NAME.set()
+};
 
 export const createIdbDatabase = async <RxDocType>(settings: {
   databaseName: string;
@@ -242,7 +346,6 @@ export const createIdbDatabase = async <RxDocType>(settings: {
             ...dataBaseState.metaData,
             collections: metaDataCollections,
           },
-          locked: undefined,
         };
 
         await metaDB.put("dbMetaData", newDbState.metaData);
