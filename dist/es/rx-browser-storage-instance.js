@@ -931,6 +931,7 @@ var createBrowserStorageInstance = /*#__PURE__*/function () {
 
           case 3:
             internals = _context11.sent;
+            console.log("instance per call");
             instance = new RxStorageBrowserInstance(params.databaseName, params.collectionName, {}, params.schema, internals);
             /**
              * TODO: should we do extra steps to enable CORRECT multiinstance?
@@ -938,7 +939,7 @@ var createBrowserStorageInstance = /*#__PURE__*/function () {
 
             return _context11.abrupt("return", instance);
 
-          case 6:
+          case 7:
           case "end":
             return _context11.stop();
         }

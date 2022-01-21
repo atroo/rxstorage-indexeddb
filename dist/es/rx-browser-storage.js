@@ -89,7 +89,9 @@ var RxBrowserStorageStatics = {
           _rev = doc._rev,
           json = (0, _objectWithoutPropertiesLoose2["default"])(doc, _excluded);
       var inMemoryFields = Object.keys(json);
-      return filterInMemoryFields([json], query, inMemoryFields).length > 0;
+      return filterInMemoryFields([{
+        doc: json
+      }], query, inMemoryFields).length > 0;
     };
 
     return fun;

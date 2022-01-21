@@ -96,7 +96,9 @@ const RxBrowserStorageStatics: RxStorageStatics = {
     ) => {
       const { _attachments, _deleted, _rev, ...json } = doc;
       const inMemoryFields = Object.keys(json);
-      return filterInMemoryFields([json], query, inMemoryFields).length > 0;
+      return (
+        filterInMemoryFields([{ doc: json }], query, inMemoryFields).length > 0
+      );
     };
 
     return fun;

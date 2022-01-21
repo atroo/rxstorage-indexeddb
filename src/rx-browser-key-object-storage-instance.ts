@@ -208,8 +208,6 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
 
     const state = IDB_DATABASE_STATE_BY_NAME.get(this.databaseName);
     if (!state) {
-      // already closed.
-      // different instance could already close db.
       return;
     }
 

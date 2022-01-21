@@ -461,8 +461,6 @@ export class RxStorageBrowserInstance<RxDocType>
     const state = IDB_DATABASE_STATE_BY_NAME.get(this.databaseName);
 
     if (!state) {
-      // already closed.
-      // different instance could already close db.
       return;
     }
 
@@ -560,6 +558,7 @@ export const createBrowserStorageInstance = async <RxDocType>(
   const internals: BrowserStorageInternals =
     await createBrowserStorageLocalState(params, idbSettings);
 
+  console.log("instance per call");
   const instance = new RxStorageBrowserInstance(
     params.databaseName,
     params.collectionName,
