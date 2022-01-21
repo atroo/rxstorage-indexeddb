@@ -21,6 +21,7 @@ import { BrowserStorageInternals, IdbSettings } from "./types/browser-storage";
 import {
   createIdbDatabase,
   getChangesCollName,
+  getDbName,
   getPrimaryFieldOfPrimaryKey,
   IDB_DATABASE_STATE_BY_NAME,
   newRxError,
@@ -456,24 +457,18 @@ export class RxStorageBrowserInstance<RxDocType>
   }
 
   async close(): Promise<void> {
-    this.closed = true;
-
-    const state = IDB_DATABASE_STATE_BY_NAME.get(this.databaseName);
-
-    if (!state) {
-      return;
-    }
-
     this.changes$.complete();
     const localState = this.getLocalState();
     const db = await localState.getDb();
     db.close();
-    delete state.db;
-    IDB_DATABASE_STATE_BY_NAME.set(this.databaseName, state);
+    IDB_DATABASE_STATE_BY_NAME.delete(
+      getDbName(this.databaseName, this.collectionName)
+    );
+    this.closed = true;
   }
   async remove(): Promise<void> {
     const localState = this.getLocalState();
-    await localState.removeCollection();
+    await localState.removeDb();
     this.closed = true;
   }
 
@@ -535,7 +530,7 @@ export const createBrowserStorageLocalState = async <RxDocType>(
 
   return {
     databaseState,
-    changesCollectionName: getChangesCollName(params.collectionName),
+    changesCollectionName: getChangesCollName(),
     primaryPath,
   };
 };

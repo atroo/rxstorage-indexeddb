@@ -713,35 +713,25 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
   _proto.close = /*#__PURE__*/function () {
     var _close = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee7() {
-      var state, localState, db;
+      var localState, db;
       return _regenerator["default"].wrap(function _callee7$(_context7) {
         while (1) {
           switch (_context7.prev = _context7.next) {
             case 0:
-              this.closed = true;
-              state = _dbHelpers.IDB_DATABASE_STATE_BY_NAME.get(this.databaseName);
-
-              if (state) {
-                _context7.next = 4;
-                break;
-              }
-
-              return _context7.abrupt("return");
-
-            case 4:
               this.changes$.complete();
               localState = this.getLocalState();
-              _context7.next = 8;
+              _context7.next = 4;
               return localState.getDb();
 
-            case 8:
+            case 4:
               db = _context7.sent;
               db.close();
-              delete state.db;
 
-              _dbHelpers.IDB_DATABASE_STATE_BY_NAME.set(this.databaseName, state);
+              _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"]((0, _dbHelpers.getDbName)(this.databaseName, this.collectionName));
 
-            case 12:
+              this.closed = true;
+
+            case 8:
             case "end":
               return _context7.stop();
           }
@@ -765,7 +755,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
             case 0:
               localState = this.getLocalState();
               _context8.next = 3;
-              return localState.removeCollection();
+              return localState.removeDb();
 
             case 3:
               this.closed = true;
@@ -891,7 +881,7 @@ var createBrowserStorageLocalState = /*#__PURE__*/function () {
             databaseState = _context10.sent;
             return _context10.abrupt("return", {
               databaseState: databaseState,
-              changesCollectionName: (0, _dbHelpers.getChangesCollName)(params.collectionName),
+              changesCollectionName: (0, _dbHelpers.getChangesCollName)(),
               primaryPath: primaryPath
             });
 

@@ -7,17 +7,9 @@ import { DBSchema, IDBPDatabase } from "idb";
  *  Can be used to detect migrations.
  */
 export interface BrowserStorageState {
-  getDb: (deleteCollections?: string[]) => Promise<IDBPDatabase<unknown>>;
-  removeCollection: () => Promise<IDBPDatabase<unknown>>;
-  db?: IDBPDatabase<unknown>;
-  newCollections: Array<{
-    collectionName: string;
-    indexes: Array<string | string[]>;
-    primaryPath: string;
-    version: number;
-  }>;
-  metaData: IMetaDB["dbMetaData"]["value"];
-  locked?: Promise<IDBPDatabase<unknown>>;
+  getDb: () => IDBPDatabase<unknown>;
+  removeDb: () => Promise<void>;
+  _db: IDBPDatabase<unknown> | undefined;
 }
 
 export interface IMetaDB extends DBSchema {

@@ -7,8 +7,8 @@ import { DBSchema, IDBPDatabase } from "idb";
  *  Can be used to detect migrations.
  */
 export interface BrowserStorageState {
-  getDb: () => Promise<IDBPDatabase<unknown>>;
-  removeDb: () => Promise<IDBPDatabase<unknown>>;
+  getDb: () => IDBPDatabase<unknown>;
+  removeDb: () => Promise<void>;
   _db: IDBPDatabase<unknown> | undefined;
 }
 
