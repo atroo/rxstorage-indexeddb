@@ -110,17 +110,14 @@ export class RxStorageBrowserInstance<RxDocType>
       const documentInDbCursor = await store.openCursor(id);
       const documentInDb = documentInDbCursor?.value;
       if (!documentInDb) {
+        // insert new document
+        const newRevision = "1-" + createRevision(writeRow.document);
+
         /**
          * It is possible to insert already deleted documents,
          * this can happen on replication.
          */
         const insertedIsDeleted = writeRow.document._deleted ? true : false;
-        if (insertedIsDeleted) {
-          continue;
-        }
-
-        // insert new document
-        const newRevision = "1-" + createRevision(writeRow.document);
 
         const writeDoc = Object.assign({}, writeRow.document, {
           _rev: newRevision,
@@ -164,42 +161,14 @@ export class RxStorageBrowserInstance<RxDocType>
           const newRevHeight = getHeightOfRevision(revInDb) + 1;
           const newRevision =
             newRevHeight + "-" + createRevision(writeRow.document);
-
-          if (
-            writeRow.previous &&
-            !writeRow.previous._deleted &&
-            writeRow.document._deleted
-          ) {
-            await documentInDbCursor.delete();
-            this.addChangeDocumentMeta(id); // TODO: do I need this here.
-            const previous = Object.assign({}, writeRow.previous);
-            previous._rev = newRevision;
-            const change = {
-              id,
-              operation: "DELETE" as "DELETE",
-              previous,
-              doc: null,
-            };
-            eventBulk.events.push({
-              eventId: getEventKey(false, id, newRevision),
-              documentId: id,
-              change,
-              startTime,
-              endTime: Date.now(),
-            });
-            continue;
-          }
-
-          if (writeRow.document._deleted) {
-            throw newRxError("SNH", { args: { writeRow } });
-          }
-
+          const isDeleted = !!writeRow.document._deleted;
           const writeDoc: any = Object.assign({}, writeRow.document, {
             _rev: newRevision,
-            _deleted: false,
+            _deleted: isDeleted,
           });
           await documentInDbCursor.update(writeDoc);
           this.addChangeDocumentMeta(id);
+
           let change: ChangeEvent<RxDocumentData<RxDocType>> | null = null;
           if (
             writeRow.previous &&
@@ -223,10 +192,29 @@ export class RxStorageBrowserInstance<RxDocType>
               previous: writeRow.previous,
               doc: writeDoc,
             };
+          } else if (
+            writeRow.previous &&
+            !writeRow.previous._deleted &&
+            writeDoc._deleted
+          ) {
+            /**
+             * On delete, we send the 'new' rev in the previous property,
+             * to have the equal behavior as pouchdb.
+             */
+            const previous = Object.assign({}, writeRow.previous);
+            previous._rev = newRevision;
+            change = {
+              id,
+              operation: "DELETE",
+              previous,
+              doc: null,
+            };
           }
+
           if (!change) {
             throw newRxError("SNH", { args: { writeRow } });
           }
+
           eventBulk.events.push({
             eventId: getEventKey(false, id, newRevision),
             documentId: id,
