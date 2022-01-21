@@ -13,7 +13,7 @@ export declare class RxStorageBrowserInstance<RxDocType> implements RxStorageIns
     private lastChangefeedSequence;
     constructor(databaseName: string, collectionName: string, options: Readonly<IdbSettings>, schema: Readonly<RxJsonSchema<RxDocType>>, internals: BrowserStorageInternals);
     query(preparedQuery: MangoQuery<RxDocType>): Promise<RxStorageQueryResult<RxDocType>>;
-    bulkWrite(documentWrites: BulkWriteRow<RxDocType>[]): Promise<RxStorageBulkWriteResponse<RxDocType>>;
+    bulkWrite(documentWrites: BulkWriteRow<RxDocType>[], hardDeleteMode?: boolean): Promise<RxStorageBulkWriteResponse<RxDocType>>;
     bulkAddRevisions(documents: RxDocumentData<RxDocType>[]): Promise<void>;
     findDocumentsById(ids: string[], deleted: boolean): Promise<{
         [documentId: string]: RxDocumentData<RxDocType>;

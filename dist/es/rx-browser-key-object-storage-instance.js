@@ -51,14 +51,43 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
   _proto.bulkWrite = /*#__PURE__*/function () {
     var _bulkWrite = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(documentWrites) {
-      var ret, db, txn, store, eventBulk, writeRowById, startTime, _iterator, _step, writeRow, id, documentInDbCursor, writeDoc, docInDb, previous, newRevHeight, newRevision, err, docCpy, endTime, event, previousDoc, doc, eventId, storageChangeEvent;
+      var hardDeleteMode,
+          ret,
+          db,
+          txn,
+          store,
+          eventBulk,
+          writeRowById,
+          startTime,
+          _iterator,
+          _step,
+          writeRow,
+          id,
+          documentInDbCursor,
+          writeDoc,
+          purgeDoc,
+          docInDb,
+          previous,
+          newRevHeight,
+          newRevision,
+          err,
+          docCpy,
+          endTime,
+          event,
+          previousDoc,
+          doc,
+          eventId,
+          storageChangeEvent,
+          _args = arguments;
 
       return _regenerator["default"].wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
+              hardDeleteMode = _args.length > 1 && _args[1] !== undefined ? _args[1] : false;
+
               if (!(documentWrites.length === 0)) {
-                _context.next = 2;
+                _context.next = 3;
                 break;
               }
 
@@ -68,24 +97,24 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
                 }
               });
 
-            case 2:
+            case 3:
               ret = {
                 success: {},
                 error: {}
               };
 
               if (!this.closed) {
-                _context.next = 5;
+                _context.next = 6;
                 break;
               }
 
               return _context.abrupt("return", ret);
 
-            case 5:
-              _context.next = 7;
+            case 6:
+              _context.next = 8;
               return this.getLocalState().getDb();
 
-            case 7:
+            case 8:
               db = _context.sent;
               txn = db.transaction(this.collectionName, "readwrite");
               store = txn.store;
@@ -97,21 +126,22 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
               startTime = Date.now();
               _iterator = _createForOfIteratorHelperLoose(documentWrites);
 
-            case 14:
+            case 15:
               if ((_step = _iterator()).done) {
-                _context.next = 48;
+                _context.next = 58;
                 break;
               }
 
               writeRow = _step.value;
               id = writeRow.document._id;
               writeRowById.set(id, writeRow);
-              _context.next = 20;
+              _context.next = 21;
               return store.openCursor(id);
 
-            case 20:
+            case 21:
               documentInDbCursor = _context.sent;
               writeDoc = Object.assign({}, writeRow.document);
+              purgeDoc = hardDeleteMode && writeDoc._deleted;
               docInDb = documentInDbCursor === null || documentInDbCursor === void 0 ? void 0 : documentInDbCursor.value;
               previous = writeRow.previous ? writeRow.previous : docInDb;
               newRevHeight = previous ? (0, _rxdb.parseRevision)(previous._rev).height + 1 : 1;
@@ -119,12 +149,12 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
               writeDoc._rev = newRevision;
 
               if (!docInDb) {
-                _context.next = 39;
+                _context.next = 46;
                 break;
               }
 
               if (!(!writeRow.previous || docInDb._rev !== writeRow.previous._rev)) {
-                _context.next = 34;
+                _context.next = 36;
                 break;
               }
 
@@ -136,29 +166,58 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
                 writeRow: writeRow
               };
               ret.error[id] = err;
-              return _context.abrupt("continue", 46);
+              return _context.abrupt("continue", 56);
 
-            case 34:
-              docCpy = Object.assign({}, writeDoc);
-              _context.next = 37;
-              return documentInDbCursor.update(docCpy);
+            case 36:
+              if (!purgeDoc) {
+                _context.next = 41;
+                break;
+              }
 
-            case 37:
-              _context.next = 41;
-              break;
+              _context.next = 39;
+              return documentInDbCursor["delete"]();
 
             case 39:
-              _context.next = 41;
-              return store.add(Object.assign({}, writeDoc));
+              _context.next = 44;
+              break;
 
             case 41:
+              docCpy = Object.assign({}, writeDoc);
+              _context.next = 44;
+              return documentInDbCursor.update(docCpy);
+
+            case 44:
+              _context.next = 51;
+              break;
+
+            case 46:
+              if (!purgeDoc) {
+                _context.next = 49;
+                break;
+              }
+
+              _context.next = 51;
+              break;
+
+            case 49:
+              _context.next = 51;
+              return store.add(Object.assign({}, writeDoc));
+
+            case 51:
               ret.success[id] = writeDoc;
               endTime = Date.now();
               event = void 0;
 
               if (!writeRow.previous) {
                 // was insert
-                event = {
+                // TODO: I'm not sure if deleted local document can be saved to db.
+                // Just in case, let's check if doc is purged when we go this route.
+                event = purgeDoc ? {
+                  operation: "DELETE",
+                  doc: null,
+                  id: id,
+                  previous: writeDoc
+                } : {
                   operation: "INSERT",
                   doc: writeDoc,
                   id: id,
@@ -205,16 +264,16 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
                 eventBulk.events.push(storageChangeEvent);
               }
 
-            case 46:
-              _context.next = 14;
+            case 56:
+              _context.next = 15;
               break;
 
-            case 48:
+            case 58:
               txn.commit();
               this.changes$.next(eventBulk);
               return _context.abrupt("return", ret);
 
-            case 51:
+            case 61:
             case "end":
               return _context.stop();
           }

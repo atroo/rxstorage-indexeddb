@@ -10,7 +10,7 @@ export declare class RxBrowserKeyObjectStorageInstance<RxDocType> implements RxS
     readonly instanceId: number;
     private closed;
     constructor(databaseName: string, collectionName: string, options: Readonly<IdbSettings>, internals: BrowserStorageInternals);
-    bulkWrite<RxDocType>(documentWrites: BulkWriteLocalRow<RxDocType>[]): Promise<RxLocalStorageBulkWriteResponse<RxDocType>>;
+    bulkWrite<RxDocType>(documentWrites: BulkWriteLocalRow<RxDocType>[], hardDeleteMode?: boolean): Promise<RxLocalStorageBulkWriteResponse<RxDocType>>;
     findLocalDocumentsById<RxDocType = any>(ids: string[]): Promise<{
         [documentId: string]: RxLocalDocumentData<RxDocType>;
     }>;

@@ -42,7 +42,8 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
   }
 
   async bulkWrite<RxDocType>(
-    documentWrites: BulkWriteLocalRow<RxDocType>[]
+    documentWrites: BulkWriteLocalRow<RxDocType>[],
+    hardDeleteMode = false
   ): Promise<RxLocalStorageBulkWriteResponse<RxDocType>> {
     if (documentWrites.length === 0) {
       throw newRxError("P2", {
@@ -77,6 +78,7 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
       writeRowById.set(id, writeRow);
       const documentInDbCursor = await store.openCursor(id);
       const writeDoc = Object.assign({}, writeRow.document);
+      const purgeDoc = hardDeleteMode && writeDoc._deleted;
       const docInDb = documentInDbCursor?.value;
       const previous = writeRow.previous ? writeRow.previous : docInDb;
       const newRevHeight = previous
@@ -96,10 +98,14 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
           };
           ret.error[id] = err;
           continue;
+        } else if (purgeDoc) {
+          await documentInDbCursor.delete();
         } else {
           const docCpy: any = Object.assign({}, writeDoc);
           await documentInDbCursor.update(docCpy);
         }
+      } else if (purgeDoc) {
+        //
       } else {
         await store.add(Object.assign({}, writeDoc));
       }
@@ -111,12 +117,22 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
       let event: ChangeEvent<RxLocalDocumentData<RxDocType>>;
       if (!writeRow.previous) {
         // was insert
-        event = {
-          operation: "INSERT",
-          doc: writeDoc,
-          id: id,
-          previous: null,
-        };
+
+        // TODO: I'm not sure if deleted local document can be saved to db.
+        // Just in case, let's check if doc is purged when we go this route.
+        event = purgeDoc
+          ? {
+              operation: "DELETE",
+              doc: null,
+              id: id,
+              previous: writeDoc,
+            }
+          : {
+              operation: "INSERT",
+              doc: writeDoc,
+              id: id,
+              previous: null,
+            };
       } else if (writeRow.document._deleted) {
         // was delete
 

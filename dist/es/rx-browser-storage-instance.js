@@ -101,14 +101,40 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
   _proto.bulkWrite = /*#__PURE__*/function () {
     var _bulkWrite = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(documentWrites) {
-      var ret, eventBulk, db, txn, store, _iterator, _step, writeRow, startTime, id, documentInDbCursor, documentInDb, newRevision, insertedIsDeleted, writeDoc, revInDb, err, newRevHeight, _newRevision, isDeleted, _writeDoc, change, previous;
+      var hardDeleteMode,
+          ret,
+          eventBulk,
+          db,
+          txn,
+          store,
+          _iterator,
+          _step,
+          writeRow,
+          startTime,
+          id,
+          documentInDbCursor,
+          documentInDb,
+          newRevision,
+          insertedIsDeleted,
+          writeDoc,
+          revInDb,
+          err,
+          newRevHeight,
+          _newRevision,
+          isDeleted,
+          _writeDoc,
+          change,
+          previous,
+          _args2 = arguments;
 
       return _regenerator["default"].wrap(function _callee2$(_context2) {
         while (1) {
           switch (_context2.prev = _context2.next) {
             case 0:
+              hardDeleteMode = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : false;
+
               if (!(documentWrites.length === 0)) {
-                _context2.next = 2;
+                _context2.next = 3;
                 break;
               }
 
@@ -118,7 +144,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 }
               });
 
-            case 2:
+            case 3:
               ret = {
                 success: {},
                 error: {}
@@ -129,40 +155,40 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               };
 
               if (!this.closed) {
-                _context2.next = 6;
+                _context2.next = 7;
                 break;
               }
 
               return _context2.abrupt("return", ret);
 
-            case 6:
-              _context2.next = 8;
+            case 7:
+              _context2.next = 9;
               return this.getLocalState().getDb();
 
-            case 8:
+            case 9:
               db = _context2.sent;
               txn = db.transaction(this.collectionName, "readwrite");
               store = txn.store;
               _iterator = _createForOfIteratorHelperLoose(documentWrites);
 
-            case 12:
+            case 13:
               if ((_step = _iterator()).done) {
-                _context2.next = 53;
+                _context2.next = 61;
                 break;
               }
 
               writeRow = _step.value;
               startTime = Date.now();
               id = writeRow.document[this.internals.primaryPath];
-              _context2.next = 18;
+              _context2.next = 19;
               return store.openCursor(id);
 
-            case 18:
+            case 19:
               documentInDbCursor = _context2.sent;
               documentInDb = documentInDbCursor === null || documentInDbCursor === void 0 ? void 0 : documentInDbCursor.value;
 
               if (documentInDb) {
-                _context2.next = 31;
+                _context2.next = 34;
                 break;
               }
 
@@ -174,15 +200,24 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                */
 
               insertedIsDeleted = writeRow.document._deleted ? true : false;
+
+              if (!(hardDeleteMode && insertedIsDeleted)) {
+                _context2.next = 26;
+                break;
+              }
+
+              return _context2.abrupt("continue", 59);
+
+            case 26:
               writeDoc = Object.assign({}, writeRow.document, {
                 _rev: newRevision,
                 _deleted: insertedIsDeleted,
                 _attachments: writeRow.document._attachments
               });
-              _context2.next = 26;
+              _context2.next = 29;
               return store.add(writeDoc);
 
-            case 26:
+            case 29:
               this.addChangeDocumentMeta(id);
               eventBulk.events.push({
                 eventId: (0, _utils.getEventKey)(false, id, newRevision),
@@ -197,10 +232,10 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 endTime: Date.now()
               });
               ret.success[id] = writeDoc;
-              _context2.next = 51;
+              _context2.next = 59;
               break;
 
-            case 31:
+            case 34:
               // update existing document
               revInDb = documentInDb._rev; // inserting a deleted document is possible
               // without sending the previous data.
@@ -210,7 +245,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               }
 
               if (!(!writeRow.previous && !documentInDb._deleted || !!writeRow.previous && revInDb !== writeRow.previous._rev)) {
-                _context2.next = 38;
+                _context2.next = 41;
                 break;
               }
 
@@ -222,10 +257,10 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 writeRow: writeRow
               };
               ret.error[id] = err;
-              _context2.next = 51;
+              _context2.next = 59;
               break;
 
-            case 38:
+            case 41:
               newRevHeight = (0, _rxdb.getHeightOfRevision)(revInDb) + 1;
               _newRevision = newRevHeight + "-" + (0, _rxdb.createRevision)(writeRow.document);
               isDeleted = !!writeRow.document._deleted;
@@ -233,10 +268,24 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 _rev: _newRevision,
                 _deleted: isDeleted
               });
-              _context2.next = 44;
+
+              if (!(hardDeleteMode && isDeleted)) {
+                _context2.next = 50;
+                break;
+              }
+
+              _context2.next = 48;
+              return documentInDbCursor["delete"]();
+
+            case 48:
+              _context2.next = 52;
+              break;
+
+            case 50:
+              _context2.next = 52;
               return documentInDbCursor.update(_writeDoc);
 
-            case 44:
+            case 52:
               this.addChangeDocumentMeta(id);
               change = null;
 
@@ -270,7 +319,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               }
 
               if (change) {
-                _context2.next = 49;
+                _context2.next = 57;
                 break;
               }
 
@@ -280,7 +329,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
                 }
               });
 
-            case 49:
+            case 57:
               eventBulk.events.push({
                 eventId: (0, _utils.getEventKey)(false, id, _newRevision),
                 documentId: id,
@@ -290,16 +339,16 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               });
               ret.success[id] = _writeDoc;
 
-            case 51:
-              _context2.next = 12;
+            case 59:
+              _context2.next = 13;
               break;
 
-            case 53:
+            case 61:
               txn.commit();
               this.changes$.next(eventBulk);
               return _context2.abrupt("return", ret);
 
-            case 56:
+            case 64:
             case "end":
               return _context2.stop();
           }
