@@ -1,5 +1,5 @@
 {
-  "name": "atroo-browser-storage",
+  "name": "rx-storage-indexeddb",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/es/index.js",
