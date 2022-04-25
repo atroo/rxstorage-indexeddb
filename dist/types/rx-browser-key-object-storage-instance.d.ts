@@ -11,6 +11,7 @@ export declare class RxBrowserKeyObjectStorageInstance<RxDocType> implements RxS
     private closed;
     constructor(databaseName: string, collectionName: string, options: Readonly<IdbSettings>, internals: BrowserStorageInternals);
     bulkWrite<RxDocType>(documentWrites: BulkWriteLocalRow<RxDocType>[], hardDeleteMode?: boolean): Promise<RxLocalStorageBulkWriteResponse<RxDocType>>;
+    getAll(): Promise<any[]>;
     findLocalDocumentsById<RxDocType = any>(ids: string[]): Promise<{
         [documentId: string]: RxLocalDocumentData<RxDocType>;
     }>;

@@ -288,67 +288,98 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
     return bulkWrite;
   }();
 
-  _proto.findLocalDocumentsById = /*#__PURE__*/function () {
-    var _findLocalDocumentsById = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(ids) {
-      var ret, localState, db, store, _iterator2, _step2, id, documentInDb;
-
+  _proto.getAll = /*#__PURE__*/function () {
+    var _getAll = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2() {
+      var db, txn, store;
       return _regenerator["default"].wrap(function _callee2$(_context2) {
         while (1) {
           switch (_context2.prev = _context2.next) {
             case 0:
+              _context2.next = 2;
+              return this.getLocalState().getDb();
+
+            case 2:
+              db = _context2.sent;
+              txn = db.transaction(this.collectionName, "readwrite");
+              store = txn.store;
+              return _context2.abrupt("return", store.getAll());
+
+            case 6:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2, this);
+    }));
+
+    function getAll() {
+      return _getAll.apply(this, arguments);
+    }
+
+    return getAll;
+  }();
+
+  _proto.findLocalDocumentsById = /*#__PURE__*/function () {
+    var _findLocalDocumentsById = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(ids) {
+      var ret, localState, db, store, _iterator2, _step2, id, documentInDb;
+
+      return _regenerator["default"].wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
               ret = {};
 
               if (!this.closed) {
-                _context2.next = 3;
+                _context3.next = 3;
                 break;
               }
 
-              return _context2.abrupt("return", ret);
+              return _context3.abrupt("return", ret);
 
             case 3:
               localState = this.getLocalState();
-              _context2.next = 6;
+              _context3.next = 6;
               return localState.getDb();
 
             case 6:
-              db = _context2.sent;
-              _context2.next = 9;
+              db = _context3.sent;
+              _context3.next = 9;
               return db.transaction(this.collectionName, "readwrite").store;
 
             case 9:
-              store = _context2.sent;
+              store = _context3.sent;
               _iterator2 = _createForOfIteratorHelperLoose(ids);
 
             case 11:
               if ((_step2 = _iterator2()).done) {
-                _context2.next = 19;
+                _context3.next = 19;
                 break;
               }
 
               id = _step2.value;
-              _context2.next = 15;
+              _context3.next = 15;
               return store.get(id);
 
             case 15:
-              documentInDb = _context2.sent;
+              documentInDb = _context3.sent;
 
               if (documentInDb && !documentInDb._deleted) {
                 ret[id] = documentInDb;
               }
 
             case 17:
-              _context2.next = 11;
+              _context3.next = 11;
               break;
 
             case 19:
-              return _context2.abrupt("return", ret);
+              return _context3.abrupt("return", ret);
 
             case 20:
             case "end":
-              return _context2.stop();
+              return _context3.stop();
           }
         }
-      }, _callee2, this);
+      }, _callee3, this);
     }));
 
     function findLocalDocumentsById(_x2) {
@@ -363,19 +394,19 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
   };
 
   _proto.close = /*#__PURE__*/function () {
-    var _close = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3() {
+    var _close = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4() {
       var localState, db;
-      return _regenerator["default"].wrap(function _callee3$(_context3) {
+      return _regenerator["default"].wrap(function _callee4$(_context4) {
         while (1) {
-          switch (_context3.prev = _context3.next) {
+          switch (_context4.prev = _context4.next) {
             case 0:
               this.changes$.complete();
               localState = this.getLocalState();
-              _context3.next = 4;
+              _context4.next = 4;
               return localState.getDb();
 
             case 4:
-              db = _context3.sent;
+              db = _context4.sent;
               db.close();
 
               _dbHelpers.IDB_DATABASE_STATE_BY_NAME["delete"]((0, _dbHelpers.getDbName)(this.databaseName, this.collectionName));
@@ -384,10 +415,10 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
             case 8:
             case "end":
-              return _context3.stop();
+              return _context4.stop();
           }
         }
-      }, _callee3, this);
+      }, _callee4, this);
     }));
 
     function close() {
@@ -398,14 +429,14 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
   }();
 
   _proto.remove = /*#__PURE__*/function () {
-    var _remove = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4() {
+    var _remove = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5() {
       var localState;
-      return _regenerator["default"].wrap(function _callee4$(_context4) {
+      return _regenerator["default"].wrap(function _callee5$(_context5) {
         while (1) {
-          switch (_context4.prev = _context4.next) {
+          switch (_context5.prev = _context5.next) {
             case 0:
               localState = this.getLocalState();
-              _context4.next = 3;
+              _context5.next = 3;
               return localState.removeDb();
 
             case 3:
@@ -413,10 +444,10 @@ var RxBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
 
             case 4:
             case "end":
-              return _context4.stop();
+              return _context5.stop();
           }
         }
-      }, _callee4, this);
+      }, _callee5, this);
     }));
 
     function remove() {
@@ -446,14 +477,14 @@ function createBrowserKeyValueStorageLocalState(_x3, _x4) {
 }
 
 function _createBrowserKeyValueStorageLocalState() {
-  _createBrowserKeyValueStorageLocalState = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6(params, idbSettings) {
+  _createBrowserKeyValueStorageLocalState = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee7(params, idbSettings) {
     var primaryPath, databaseState;
-    return _regenerator["default"].wrap(function _callee6$(_context6) {
+    return _regenerator["default"].wrap(function _callee7$(_context7) {
       while (1) {
-        switch (_context6.prev = _context6.next) {
+        switch (_context7.prev = _context7.next) {
           case 0:
             primaryPath = "_id";
-            _context6.next = 3;
+            _context7.next = 3;
             return (0, _dbHelpers.createIdbDatabase)({
               databaseName: params.databaseName,
               collectionName: params.collectionName,
@@ -466,8 +497,8 @@ function _createBrowserKeyValueStorageLocalState() {
             });
 
           case 3:
-            databaseState = _context6.sent;
-            return _context6.abrupt("return", {
+            databaseState = _context7.sent;
+            return _context7.abrupt("return", {
               databaseState: databaseState,
               changesCollectionName: (0, _dbHelpers.getChangesCollName)(),
               primaryPath: primaryPath
@@ -475,42 +506,42 @@ function _createBrowserKeyValueStorageLocalState() {
 
           case 5:
           case "end":
-            return _context6.stop();
+            return _context7.stop();
         }
       }
-    }, _callee6);
+    }, _callee7);
   }));
   return _createBrowserKeyValueStorageLocalState.apply(this, arguments);
 }
 
 var createBrowserKeyObjectStorageInstance = /*#__PURE__*/function () {
-  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(_params, idbSettings) {
+  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6(_params, idbSettings) {
     var params, internals, instance;
-    return _regenerator["default"].wrap(function _callee5$(_context5) {
+    return _regenerator["default"].wrap(function _callee6$(_context6) {
       while (1) {
-        switch (_context5.prev = _context5.next) {
+        switch (_context6.prev = _context6.next) {
           case 0:
             params = _objectSpread(_objectSpread({}, _params), {}, {
               databaseName: _params.databaseName + "-key-object"
             });
-            _context5.next = 3;
+            _context6.next = 3;
             return createBrowserKeyValueStorageLocalState(params, idbSettings);
 
           case 3:
-            internals = _context5.sent;
+            internals = _context6.sent;
             instance = new RxBrowserKeyObjectStorageInstance(params.databaseName, params.collectionName, {}, internals);
             /**
              * TODO: should we do extra steps to enable CORRECT multiinstance?
              */
 
-            return _context5.abrupt("return", instance);
+            return _context6.abrupt("return", instance);
 
           case 6:
           case "end":
-            return _context5.stop();
+            return _context6.stop();
         }
       }
-    }, _callee5);
+    }, _callee6);
   }));
 
   return function createBrowserKeyObjectStorageInstance(_x5, _x6) {

@@ -3,6 +3,7 @@ import { createRevision, parseRevision, randomCouchString } from "rxdb";
 import {
   BulkWriteLocalRow,
   EventBulk,
+  RxCollection,
   RxKeyObjectStorageInstanceCreationParams,
   RxLocalDocumentData,
   RxLocalStorageBulkWriteResponse,
@@ -188,6 +189,13 @@ export class RxBrowserKeyObjectStorageInstance<RxDocType>
     txn.commit();
     this.changes$.next(eventBulk);
     return ret;
+  }
+
+  async getAll() {
+    const db = await this.getLocalState().getDb();
+    const txn = db.transaction(this.collectionName, "readwrite");
+    const store = txn.store;
+    return store.getAll();
   }
 
   async findLocalDocumentsById<RxDocType = any>(ids: string[]) {
