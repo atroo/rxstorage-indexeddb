@@ -39,8 +39,6 @@ export const find = async <RxDocType>(
     const index = pouchKeyRangeData.primary
       ? store
       : store.index(pouchKeyRangeData.field);
-    const results = await index.get(keyRange);
-    console.log("RESULTS", results);
     cursor = await index.openCursor(keyRange);
   } else {
     cursor = await store.openCursor();
@@ -62,7 +60,6 @@ export const find = async <RxDocType>(
     query,
     pouchKeyRangeData.inMemoryFields
   );
-  console.log("FIND ROWS", rows);
   return rows.map((row) => {
     return row.doc;
   });

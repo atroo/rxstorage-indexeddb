@@ -84,7 +84,6 @@ export class RxStorageBrowserInstance<RxDocType>
       this.collectionName,
       preparedQuery
     );
-    console.log("ROWS", rows);
     return { documents: rows };
   }
 
