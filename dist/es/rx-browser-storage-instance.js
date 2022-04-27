@@ -91,7 +91,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
             case 4:
               db = _context.sent;
               _context.next = 7;
-              return (0, _find.find)(db, this.collectionName, preparedQuery);
+              return (0, _find.find)(db, this.databaseName, this.collectionName, preparedQuery);
 
             case 7:
               rows = _context.sent;

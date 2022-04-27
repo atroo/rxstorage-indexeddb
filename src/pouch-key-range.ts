@@ -64,7 +64,8 @@ export const generatePouchKeyRange = <RxDocType>(
         queryOpts,
         inMemoryFields: Object.keys(selector),
         field: index.name,
-        notIndexed: index.primary,
+        notIndexed: false,
+        primary: index.primary,
       };
     }
 

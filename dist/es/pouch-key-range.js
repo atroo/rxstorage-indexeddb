@@ -75,7 +75,8 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
         queryOpts: queryOpts,
         inMemoryFields: Object.keys(selector),
         field: index.name,
-        notIndexed: index.primary
+        notIndexed: false,
+        primary: index.primary
       };
     } // index field was not found. use first valid field.
 

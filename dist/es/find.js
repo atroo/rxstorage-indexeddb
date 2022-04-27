@@ -22,7 +22,7 @@ var _require = require("pouchdb-selector-core"),
 
 
 var find = /*#__PURE__*/function () {
-  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db, collectionName, query) {
+  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db, databaseName, collectionName, query) {
     var metaDB, indexesMeta, indexedCols, pouchKeyRangeData, store, cursor, keyRange, index, results, rows;
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
@@ -34,7 +34,7 @@ var find = /*#__PURE__*/function () {
           case 2:
             metaDB = _context.sent;
             _context.next = 5;
-            return metaDB.get("indexedCols", [db.name, collectionName]);
+            return metaDB.get("indexedCols", [databaseName, collectionName]);
 
           case 5:
             indexesMeta = _context.sent;
@@ -48,7 +48,7 @@ var find = /*#__PURE__*/function () {
             }
 
             keyRange = (0, _idbKeyRange.generateKeyRange)(pouchKeyRangeData.queryOpts);
-            index = store.index(pouchKeyRangeData.field);
+            index = pouchKeyRangeData.primary ? store : store.index(pouchKeyRangeData.field);
             _context.next = 14;
             return index.get(keyRange);
 
@@ -101,7 +101,7 @@ var find = /*#__PURE__*/function () {
     }, _callee);
   }));
 
-  return function find(_x, _x2, _x3) {
+  return function find(_x, _x2, _x3, _x4) {
     return _ref.apply(this, arguments);
   };
 }();
@@ -149,7 +149,7 @@ var getRows = /*#__PURE__*/function () {
     }, _callee2);
   }));
 
-  return function getRows(_x4) {
+  return function getRows(_x5) {
     return _ref2.apply(this, arguments);
   };
 }();

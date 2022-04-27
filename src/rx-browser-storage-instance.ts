@@ -78,7 +78,12 @@ export class RxStorageBrowserInstance<RxDocType>
     }
 
     const db = await this.getLocalState().getDb();
-    const rows = await find(db, this.collectionName, preparedQuery);
+    const rows = await find(
+      db,
+      this.databaseName,
+      this.collectionName,
+      preparedQuery
+    );
     console.log("ROWS", rows);
     return { documents: rows };
   }
