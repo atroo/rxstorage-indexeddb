@@ -21,6 +21,8 @@ var _find = require("./find");
 
 var _rxdb = require("rxdb");
 
+var _randomstring = _interopRequireDefault(require("randomstring"));
+
 var _utils = require("./utils");
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
@@ -33,7 +35,12 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-var instanceId = 1; // TODO: attachments: should we add "digest" and "length" to attachment ourself?
+var instanceId = 1;
+
+var createRevision = function createRevision(doc) {
+  return _randomstring["default"].generate(32);
+}; // TODO: attachments: should we add "digest" and "length" to attachment ourself?
+
 
 var RxStorageBrowserInstance = /*#__PURE__*/function () {
   //   public readonly primaryPath: keyof RxDocType;
@@ -193,7 +200,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               }
 
               // insert new document
-              newRevision = "1-" + (0, _rxdb.createRevision)(writeRow.document);
+              newRevision = "1-" + createRevision(writeRow.document);
               /**
                * It is possible to insert already deleted documents,
                * this can happen on replication.
@@ -262,7 +269,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 41:
               newRevHeight = (0, _rxdb.getHeightOfRevision)(revInDb) + 1;
-              _newRevision = newRevHeight + "-" + (0, _rxdb.createRevision)(writeRow.document);
+              _newRevision = newRevHeight + "-" + createRevision(writeRow.document);
               isDeleted = !!writeRow.document._deleted;
               _writeDoc = Object.assign({}, writeRow.document, {
                 _rev: _newRevision,

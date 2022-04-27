@@ -7,6 +7,7 @@ import {
   RxAttachmentData,
   RxAttachmentWriteData,
   RxDocumentData,
+  RxDocumentWriteData,
   RxJsonSchema,
   RxStorageBulkWriteError,
   RxStorageBulkWriteResponse,
@@ -28,15 +29,23 @@ import {
 } from "./db-helpers";
 import { ChangeEvent } from "event-reduce-js/dist/lib/types";
 import { find } from "./find";
-import {
-  createRevision,
-  getHeightOfRevision,
-  parseRevision,
-  randomCouchString,
-} from "rxdb";
+import { getHeightOfRevision, parseRevision, randomCouchString } from "rxdb";
+import randomstring from "randomstring";
 import { getEventKey } from "./utils";
 
 let instanceId = 1;
+
+const createRevision = <RxDocType>(doc: RxDocumentWriteData<RxDocType>) => {
+  /**
+   * rxdb uses cache that breaks (only findOne for some reason)
+   * when you upsert same doc
+   * (in our case we do something like this: delete -> insert -> upsert)
+   * findOne query somehow gets latest "_resultsData" (that was set by "find" query),
+   * but still returns outdated results to user (_resultsDocs$ subject keeps outdated docs)
+   * we need to check this again after we migrate to rxdb 12
+   */
+  return randomstring.generate(32);
+};
 
 // TODO: attachments: should we add "digest" and "length" to attachment ourself?
 
