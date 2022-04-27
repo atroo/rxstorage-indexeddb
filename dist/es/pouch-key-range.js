@@ -453,17 +453,21 @@ function getMultiFieldCoreQueryPlan(userOperator, userValue) {
     case "$eq":
       return {
         startkey: userValue,
-        endkey: userValue
+        endkey: userValue,
+        inclusive_start: true,
+        inclusive_end: true
       };
 
     case "$lte":
       return {
-        endkey: userValue
+        endkey: userValue,
+        inclusive_end: true
       };
 
     case "$gte":
       return {
-        startkey: userValue
+        startkey: userValue,
+        inclusive_start: true
       };
 
     case "$lt":
