@@ -23,7 +23,7 @@ var _require = require("pouchdb-selector-core"),
 
 var find = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db, databaseName, collectionName, query) {
-    var metaDB, indexesMeta, indexedCols, pouchKeyRangeData, store, cursor, keyRange, index, results, rows;
+    var metaDB, indexesMeta, indexedCols, pouchKeyRangeData, store, cursor, keyRange, index, rows;
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -43,38 +43,32 @@ var find = /*#__PURE__*/function () {
             store = db.transaction(collectionName, "readonly").store;
 
             if (!(pouchKeyRangeData.field && pouchKeyRangeData.queryOpts && !pouchKeyRangeData.notIndexed)) {
-              _context.next = 21;
+              _context.next = 17;
               break;
             }
 
             keyRange = (0, _idbKeyRange.generateKeyRange)(pouchKeyRangeData.queryOpts);
             index = pouchKeyRangeData.primary ? store : store.index(pouchKeyRangeData.field);
             _context.next = 14;
-            return index.get(keyRange);
-
-          case 14:
-            results = _context.sent;
-            console.log("RESULTS", results);
-            _context.next = 18;
             return index.openCursor(keyRange);
 
-          case 18:
+          case 14:
             cursor = _context.sent;
-            _context.next = 24;
+            _context.next = 20;
             break;
 
-          case 21:
-            _context.next = 23;
+          case 17:
+            _context.next = 19;
             return store.openCursor();
 
-          case 23:
+          case 19:
             cursor = _context.sent;
 
-          case 24:
-            _context.next = 26;
+          case 20:
+            _context.next = 22;
             return getRows(cursor);
 
-          case 26:
+          case 22:
             rows = _context.sent;
 
             /**
@@ -88,12 +82,11 @@ var find = /*#__PURE__*/function () {
                 doc: row
               };
             }), query, pouchKeyRangeData.inMemoryFields);
-            console.log("FIND ROWS", rows);
             return _context.abrupt("return", rows.map(function (row) {
               return row.doc;
             }));
 
-          case 30:
+          case 25:
           case "end":
             return _context.stop();
         }
