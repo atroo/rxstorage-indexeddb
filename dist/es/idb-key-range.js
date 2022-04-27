@@ -49,16 +49,23 @@ var generateKeyRange = function generateKeyRange(opts) {
   }
 
   try {
+    var start = convertKeys(opts.startkey, opts.compound);
+    var end = convertKeys(opts.endkey, opts.compound);
+
+    if (start === end) {
+      return IDBKeyRange.only(start);
+    }
+
     if (defined(opts, "startkey") && !defined(opts, "endkey")) {
-      return IDBKeyRange.lowerBound(convertKeys(opts.startkey, opts.compound), !opts.inclusiveStart);
+      return IDBKeyRange.lowerBound(start, !opts.inclusiveStart);
     }
 
     if (!defined(opts, "startkey") && defined(opts, "endkey")) {
-      return IDBKeyRange.upperBound(convertKeys(opts.endkey, opts.compound), !opts.inclusiveEnd);
+      return IDBKeyRange.upperBound(end, !opts.inclusiveEnd);
     }
 
     if (defined(opts, "startkey") && defined(opts, "endkey")) {
-      return IDBKeyRange.bound(convertKeys(opts.startkey, opts.compound), convertKeys(opts.endkey, opts.compound), !opts.inclusiveStart, !opts.inclusiveEnd);
+      return IDBKeyRange.bound(start, end, !opts.inclusiveStart, !opts.inclusiveEnd);
     }
 
     return IDBKeyRange.only([0]);

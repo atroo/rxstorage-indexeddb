@@ -68,7 +68,7 @@ export const generatePouchKeyRange = <RxDocType>(
       };
     }
 
-    // index field is was not found. use first valid field.
+    // index field was not found. use first valid field.
     const fields = Object.keys(selector);
     for (let i = 0; i < fields.length; i += 1) {
       const f = fields[i];
@@ -89,7 +89,7 @@ export const generatePouchKeyRange = <RxDocType>(
       delete keyRangeOptsData.selector[f];
       return {
         queryOpts: keyRangeOptsData.queryOpts,
-        inMemoryFields: Object.keys(keyRangeOptsData.selector),
+        inMemoryFields: Object.keys(selector),
         field: f,
         notIndexed: true,
       };

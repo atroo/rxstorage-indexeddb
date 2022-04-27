@@ -21,7 +21,7 @@ export const find = async <RxDocType>(
   const indexedCols = indexesMeta ? indexesMeta.indexes : [];
   const pouchKeyRangeData = generatePouchKeyRange(query, indexedCols);
 
-  const store = db.transaction(collectionName).store;
+  const store = db.transaction(collectionName, "readonly").store;
   let cursor: IDBPCursorWithValue<
     unknown,
     ArrayLike<any>,
@@ -29,11 +29,15 @@ export const find = async <RxDocType>(
     unknown,
     "readonly"
   > | null;
-  if (pouchKeyRangeData.field && pouchKeyRangeData.queryOpts) {
+  if (
+    pouchKeyRangeData.field &&
+    pouchKeyRangeData.queryOpts &&
+    !pouchKeyRangeData.notIndexed
+  ) {
     const keyRange = generateKeyRange(pouchKeyRangeData.queryOpts);
-    const index = pouchKeyRangeData.notIndexed
-      ? store
-      : store.index(pouchKeyRangeData.field);
+    const index = store.index(pouchKeyRangeData.field);
+    const results = await index.get(keyRange);
+    console.log("RESULTS", results);
     cursor = await index.openCursor(keyRange);
   } else {
     cursor = await store.openCursor();
@@ -55,6 +59,7 @@ export const find = async <RxDocType>(
     query,
     pouchKeyRangeData.inMemoryFields
   );
+  console.log("FIND ROWS", rows);
   return rows.map((row) => {
     return row.doc;
   });

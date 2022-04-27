@@ -38,6 +38,14 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 var instanceId = 1;
 
 var createRevision = function createRevision(doc) {
+  /**
+   * rxdb uses cache that breaks (only findOne for some reason)
+   * when you upsert same doc
+   * (in our case we do something like this: delete -> insert -> upsert)
+   * findOne query somehow gets latest "_resultsData" (that was set by "find" query),
+   * but still returns outdated results to user (_resultsDocs$ subject keeps outdated docs)
+   * we need to check this again after we migrate to rxdb 12
+   */
   return _randomstring["default"].generate(32);
 }; // TODO: attachments: should we add "digest" and "length" to attachment ourself?
 
@@ -87,11 +95,12 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 7:
               rows = _context.sent;
+              console.log("ROWS", rows);
               return _context.abrupt("return", {
                 documents: rows
               });
 
-            case 9:
+            case 10:
             case "end":
               return _context.stop();
           }

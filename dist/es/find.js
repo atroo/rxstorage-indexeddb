@@ -23,7 +23,7 @@ var _require = require("pouchdb-selector-core"),
 
 var find = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(db, collectionName, query) {
-    var metaDB, indexesMeta, indexedCols, pouchKeyRangeData, store, cursor, keyRange, index, rows;
+    var metaDB, indexesMeta, indexedCols, pouchKeyRangeData, store, cursor, keyRange, index, results, rows;
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -40,35 +40,41 @@ var find = /*#__PURE__*/function () {
             indexesMeta = _context.sent;
             indexedCols = indexesMeta ? indexesMeta.indexes : [];
             pouchKeyRangeData = (0, _pouchKeyRange.generatePouchKeyRange)(query, indexedCols);
-            store = db.transaction(collectionName).store;
+            store = db.transaction(collectionName, "readonly").store;
 
-            if (!(pouchKeyRangeData.field && pouchKeyRangeData.queryOpts)) {
-              _context.next = 17;
+            if (!(pouchKeyRangeData.field && pouchKeyRangeData.queryOpts && !pouchKeyRangeData.notIndexed)) {
+              _context.next = 21;
               break;
             }
 
             keyRange = (0, _idbKeyRange.generateKeyRange)(pouchKeyRangeData.queryOpts);
-            index = pouchKeyRangeData.notIndexed ? store : store.index(pouchKeyRangeData.field);
+            index = store.index(pouchKeyRangeData.field);
             _context.next = 14;
-            return index.openCursor(keyRange);
+            return index.get(keyRange);
 
           case 14:
+            results = _context.sent;
+            console.log("RESULTS", results);
+            _context.next = 18;
+            return index.openCursor(keyRange);
+
+          case 18:
             cursor = _context.sent;
-            _context.next = 20;
+            _context.next = 24;
             break;
 
-          case 17:
-            _context.next = 19;
+          case 21:
+            _context.next = 23;
             return store.openCursor();
 
-          case 19:
+          case 23:
             cursor = _context.sent;
 
-          case 20:
-            _context.next = 22;
+          case 24:
+            _context.next = 26;
             return getRows(cursor);
 
-          case 22:
+          case 26:
             rows = _context.sent;
 
             /**
@@ -82,11 +88,12 @@ var find = /*#__PURE__*/function () {
                 doc: row
               };
             }), query, pouchKeyRangeData.inMemoryFields);
+            console.log("FIND ROWS", rows);
             return _context.abrupt("return", rows.map(function (row) {
               return row.doc;
             }));
 
-          case 25:
+          case 30:
           case "end":
             return _context.stop();
         }

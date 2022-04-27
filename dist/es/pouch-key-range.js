@@ -77,7 +77,7 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
         field: index.name,
         notIndexed: index.primary
       };
-    } // index field is was not found. use first valid field.
+    } // index field was not found. use first valid field.
 
 
     var fields = Object.keys(selector);
@@ -102,7 +102,7 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
       delete _keyRangeOptsData.selector[f];
       return {
         queryOpts: _keyRangeOptsData.queryOpts,
-        inMemoryFields: Object.keys(_keyRangeOptsData.selector),
+        inMemoryFields: Object.keys(selector),
         field: f,
         notIndexed: true
       };
