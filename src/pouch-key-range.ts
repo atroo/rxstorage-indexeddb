@@ -64,11 +64,12 @@ export const generatePouchKeyRange = <RxDocType>(
         queryOpts,
         inMemoryFields: Object.keys(selector),
         field: index.name,
-        notIndexed: index.primary,
+        notIndexed: false,
+        primary: index.primary,
       };
     }
 
-    // index field is was not found. use first valid field.
+    // index field was not found. use first valid field.
     const fields = Object.keys(selector);
     for (let i = 0; i < fields.length; i += 1) {
       const f = fields[i];
@@ -89,7 +90,7 @@ export const generatePouchKeyRange = <RxDocType>(
       delete keyRangeOptsData.selector[f];
       return {
         queryOpts: keyRangeOptsData.queryOpts,
-        inMemoryFields: Object.keys(keyRangeOptsData.selector),
+        inMemoryFields: Object.keys(selector),
         field: f,
         notIndexed: true,
       };
@@ -452,14 +453,18 @@ function getMultiFieldCoreQueryPlan(userOperator: string, userValue: any) {
       return {
         startkey: userValue,
         endkey: userValue,
+        inclusive_start: true,
+        inclusive_end: true,
       };
     case "$lte":
       return {
         endkey: userValue,
+        inclusive_end: true,
       };
     case "$gte":
       return {
         startkey: userValue,
+        inclusive_start: true,
       };
     case "$lt":
       return {

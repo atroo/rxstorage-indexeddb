@@ -9,19 +9,20 @@ const { filterInMemoryFields } = require("pouchdb-selector-core");
 
 export const find = async <RxDocType>(
   db: IDBPDatabase<unknown>,
+  databaseName: string,
   collectionName: string,
   query: MangoQuery<RxDocType>
 ) => {
   const metaDB = await getDbMeta();
   const indexesMeta = await metaDB.get("indexedCols", [
-    db.name,
+    databaseName,
     collectionName,
   ]);
 
   const indexedCols = indexesMeta ? indexesMeta.indexes : [];
   const pouchKeyRangeData = generatePouchKeyRange(query, indexedCols);
 
-  const store = db.transaction(collectionName).store;
+  const store = db.transaction(collectionName, "readonly").store;
   let cursor: IDBPCursorWithValue<
     unknown,
     ArrayLike<any>,
@@ -29,9 +30,13 @@ export const find = async <RxDocType>(
     unknown,
     "readonly"
   > | null;
-  if (pouchKeyRangeData.field && pouchKeyRangeData.queryOpts) {
+  if (
+    pouchKeyRangeData.field &&
+    pouchKeyRangeData.queryOpts &&
+    !pouchKeyRangeData.notIndexed
+  ) {
     const keyRange = generateKeyRange(pouchKeyRangeData.queryOpts);
-    const index = pouchKeyRangeData.notIndexed
+    const index = pouchKeyRangeData.primary
       ? store
       : store.index(pouchKeyRangeData.field);
     cursor = await index.openCursor(keyRange);

@@ -17,6 +17,7 @@ export interface IPouchKeyRangeData {
   inMemoryFields: string[];
   queryOpts?: IQueryOpts | null;
   notIndexed?: boolean;
+  primary?: boolean;
 }
 
 export interface IIdbKeyRangeOptions extends IQueryOpts {

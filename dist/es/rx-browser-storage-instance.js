@@ -21,6 +21,8 @@ var _find = require("./find");
 
 var _rxdb = require("rxdb");
 
+var _randomstring = _interopRequireDefault(require("randomstring"));
+
 var _utils = require("./utils");
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
@@ -33,7 +35,20 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-var instanceId = 1; // TODO: attachments: should we add "digest" and "length" to attachment ourself?
+var instanceId = 1;
+
+var createRevision = function createRevision(doc) {
+  /**
+   * rxdb uses cache that breaks (only findOne for some reason)
+   * when you upsert same doc
+   * (in our case we do something like this: delete -> insert -> upsert)
+   * findOne query somehow gets latest "_resultsData" (that was set by "find" query),
+   * but still returns outdated results to user (_resultsDocs$ subject keeps outdated docs)
+   * we need to check this again after we migrate to rxdb 12
+   */
+  return _randomstring["default"].generate(32);
+}; // TODO: attachments: should we add "digest" and "length" to attachment ourself?
+
 
 var RxStorageBrowserInstance = /*#__PURE__*/function () {
   //   public readonly primaryPath: keyof RxDocType;
@@ -76,7 +91,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
             case 4:
               db = _context.sent;
               _context.next = 7;
-              return (0, _find.find)(db, this.collectionName, preparedQuery);
+              return (0, _find.find)(db, this.databaseName, this.collectionName, preparedQuery);
 
             case 7:
               rows = _context.sent;
@@ -193,7 +208,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
               }
 
               // insert new document
-              newRevision = "1-" + (0, _rxdb.createRevision)(writeRow.document);
+              newRevision = "1-" + createRevision(writeRow.document);
               /**
                * It is possible to insert already deleted documents,
                * this can happen on replication.
@@ -262,7 +277,7 @@ var RxStorageBrowserInstance = /*#__PURE__*/function () {
 
             case 41:
               newRevHeight = (0, _rxdb.getHeightOfRevision)(revInDb) + 1;
-              _newRevision = newRevHeight + "-" + (0, _rxdb.createRevision)(writeRow.document);
+              _newRevision = newRevHeight + "-" + createRevision(writeRow.document);
               isDeleted = !!writeRow.document._deleted;
               _writeDoc = Object.assign({}, writeRow.document, {
                 _rev: _newRevision,

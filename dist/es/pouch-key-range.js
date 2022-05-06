@@ -75,9 +75,10 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
         queryOpts: queryOpts,
         inMemoryFields: Object.keys(selector),
         field: index.name,
-        notIndexed: index.primary
+        notIndexed: false,
+        primary: index.primary
       };
-    } // index field is was not found. use first valid field.
+    } // index field was not found. use first valid field.
 
 
     var fields = Object.keys(selector);
@@ -102,7 +103,7 @@ var generatePouchKeyRange = function generatePouchKeyRange(query, indexes) {
       delete _keyRangeOptsData.selector[f];
       return {
         queryOpts: _keyRangeOptsData.queryOpts,
-        inMemoryFields: Object.keys(_keyRangeOptsData.selector),
+        inMemoryFields: Object.keys(selector),
         field: f,
         notIndexed: true
       };
@@ -453,17 +454,21 @@ function getMultiFieldCoreQueryPlan(userOperator, userValue) {
     case "$eq":
       return {
         startkey: userValue,
-        endkey: userValue
+        endkey: userValue,
+        inclusive_start: true,
+        inclusive_end: true
       };
 
     case "$lte":
       return {
-        endkey: userValue
+        endkey: userValue,
+        inclusive_end: true
       };
 
     case "$gte":
       return {
-        startkey: userValue
+        startkey: userValue,
+        inclusive_start: true
       };
 
     case "$lt":
